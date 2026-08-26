@@ -7,9 +7,9 @@ export const ROLES = {
 
 export const ROLE_LABELS = {
   [ROLES.REPORTER]: "Community Reporter",
-  [ROLES.UNIVERSITY]: "University",
-  [ROLES.INDUSTRY]: "Industry",
-  [ROLES.ADMIN]: "Admin",
+  [ROLES.UNIVERSITY]: "University / HEI",
+  [ROLES.INDUSTRY]: "Industry Partner",
+  [ROLES.ADMIN]: "Admin / Govt Oversight",
 };
 
 export const ISSUE_CATEGORIES = [
@@ -18,7 +18,38 @@ export const ISSUE_CATEGORIES = [
   "Waste Management",
   "Public Safety",
   "Environment",
+  "Agriculture",
+  "Healthcare",
+  "Education",
+  "Rural Livelihoods",
   "Mobility",
+];
+
+export const JHARKHAND_DISTRICTS = [
+  "Ranchi",
+  "East Singhbhum (Jamshedpur)",
+  "Dhanbad",
+  "Bokaro",
+  "Hazaribagh",
+  "Deoghar",
+  "Ramgarh",
+  "Giridih",
+  "West Singhbhum (Chaibasa)",
+  "Palamu",
+  "Gumla",
+  "Dumka",
+  "Latehar",
+  "Garhwa",
+  "Koderma",
+  "Chatra",
+  "Simdega",
+  "Khunti",
+  "Lohardaga",
+  "Pakur",
+  "Godda",
+  "Sahebganj",
+  "Jamtara",
+  "Seraikela Kharsawan",
 ];
 
 export const ISSUE_STATUSES = [
@@ -33,9 +64,13 @@ export const PRIORITIES = ["High", "Medium", "Low"];
 
 export const DISCIPLINES = [
   "Civil Engineering",
-  "Computer Science",
+  "Computer Science & IoT",
   "Environmental Science",
-  "Urban Planning",
-  "Public Policy",
-  "Design",
+  "Urban & Regional Planning",
+  "Agriculture & Rural Development",
+  "Public Health & Sanitation",
+  "Electrical & Electronics",
+  "Mining & Geological Sciences",
+  "Public Policy & Economics",
+  "Industrial Design",
 ];
