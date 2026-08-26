@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Civic Complaint System</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            width: 450px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 120px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Report a Civic Issue</h1>
+
+    <form action="/complaints" method="post">
+
+        <label>Your Name</label>
+        <input
+            type="text"
+            name="username"
+            placeholder="Enter your name"
+            required
+        >
+
+        <label>Complaint</label>
+        <textarea
+            name="complaint"
+            placeholder="Describe your problem..."
+            required
+        ></textarea>
+
+        <button type="submit">
+            Submit Complaint
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>
