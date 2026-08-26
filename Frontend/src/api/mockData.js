@@ -1,0 +1,211 @@
+import { ROLES } from "../lib/constants";
+
+export const mockUsers = [
+  {
+    id: "u-reporter",
+    name: "Asha Menon",
+    email: "reporter@civicpulse.in",
+    password: "password",
+    role: ROLES.REPORTER,
+    status: "active",
+    org: "Ward 12, Pune",
+  },
+  {
+    id: "u-uni",
+    name: "Dr. Kavita Rao",
+    email: "university@civicpulse.in",
+    password: "password",
+    role: ROLES.UNIVERSITY,
+    status: "active",
+    org: "Pune Institute of Civic Tech",
+  },
+  {
+    id: "u-uni-pending",
+    name: "Prof. Imran Sheikh",
+    email: "pendinguni@civicpulse.in",
+    password: "password",
+    role: ROLES.UNIVERSITY,
+    status: "pending",
+    org: "Western Ghats University",
+  },
+  {
+    id: "u-industry",
+    name: "Rahul Desai",
+    email: "industry@civicpulse.in",
+    password: "password",
+    role: ROLES.INDUSTRY,
+    status: "active",
+    org: "NexCivic Industries",
+  },
+  {
+    id: "u-admin",
+    name: "Meera Iyer",
+    email: "admin@civicpulse.in",
+    password: "password",
+    role: ROLES.ADMIN,
+    status: "active",
+    org: "Municipal Analytics Cell",
+  },
+];
+
+const spark = (seed) =>
+  Array.from({ length: 8 }, (_, i) => ({
+    i,
+    v: 12 + ((seed * (i + 3)) % 18) + i,
+  }));
+
+export const mockAnalytics = {
+  stats: [
+    { label: "Open issues", number: 128, badgeColor: "teal", trendData: spark(2), icon: "alert" },
+    { label: "Universities active", number: 24, badgeColor: "blue", trendData: spark(5), icon: "university" },
+    { label: "Industry partners", number: 17, badgeColor: "amber", trendData: spark(8), icon: "industry" },
+    { label: "Resolved this month", number: 41, badgeColor: "green", trendData: spark(3), icon: "check" },
+  ],
+  monthly: [
+    { month: "Mar", reported: 42, resolved: 18 },
+    { month: "Apr", reported: 51, resolved: 27 },
+    { month: "May", reported: 47, resolved: 33 },
+    { month: "Jun", reported: 63, resolved: 29 },
+    { month: "Jul", reported: 58, resolved: 41 },
+    { month: "Aug", reported: 71, resolved: 38 },
+  ],
+  categories: [
+    { name: "Infrastructure", value: 34 },
+    { name: "Water", value: 22 },
+    { name: "Waste", value: 18 },
+    { name: "Safety", value: 14 },
+    { name: "Other", value: 12 },
+  ],
+};
+
+export const seedIssues = [
+  {
+    id: "iss-101",
+    title: "Collapsed storm drain on FC Road",
+    description:
+      "The drain near the bus stop floods every monsoon, blocking pedestrian access and creating a sanitation hazard for nearby shops.",
+    category: "Infrastructure",
+    status: "Under review",
+    priority: "High",
+    reporterId: "u-reporter",
+    reporterName: "Asha Menon",
+    district: "Pune",
+    block: "Shivajinagar",
+    landmark: "FC Road bus stop",
+    lat: 18.528,
+    lng: 73.849,
+    createdAt: "2026-08-12T09:00:00.000Z",
+    images: [],
+    severity: { flooding: 82, publicRisk: 74, urgency: 88 },
+    assignee: "Pune Institute of Civic Tech",
+    timeline: [
+      { at: "2026-08-12T09:00:00.000Z", label: "Reported by Community Reporter" },
+      { at: "2026-08-13T11:20:00.000Z", label: "AI severity assessment completed" },
+    ],
+  },
+  {
+    id: "iss-102",
+    title: "Open dumping near Mutha riverbank",
+    description:
+      "Household waste is being dumped along a 200m stretch. Odour and leachate are affecting residents in the adjoining colony.",
+    category: "Waste Management",
+    status: "Assigned",
+    priority: "Medium",
+    reporterId: "u-reporter",
+    reporterName: "Asha Menon",
+    district: "Pune",
+    block: "Erandwane",
+    landmark: "Mutha river walkway",
+    lat: 18.508,
+    lng: 73.837,
+    createdAt: "2026-08-08T14:30:00.000Z",
+    images: [],
+    severity: { flooding: 21, publicRisk: 67, urgency: 55 },
+    assignee: "Western Ghats University",
+    timeline: [
+      { at: "2026-08-08T14:30:00.000Z", label: "Reported by Community Reporter" },
+      { at: "2026-08-10T08:00:00.000Z", label: "Assigned to university queue" },
+    ],
+  },
+  {
+    id: "iss-103",
+    title: "Broken streetlights on campus approach road",
+    description:
+      "Six consecutive poles are dark after 8pm, creating a safety risk for students and shift workers.",
+    category: "Public Safety",
+    status: "New",
+    priority: "High",
+    reporterId: "u-reporter",
+    reporterName: "Asha Menon",
+    district: "Pune",
+    block: "Aundh",
+    landmark: "University approach road",
+    lat: 18.561,
+    lng: 73.807,
+    createdAt: "2026-08-20T19:10:00.000Z",
+    images: [],
+    severity: { flooding: 5, publicRisk: 79, urgency: 71 },
+    assignee: null,
+    timeline: [{ at: "2026-08-20T19:10:00.000Z", label: "Reported by Community Reporter" }],
+  },
+  {
+    id: "iss-104",
+    title: "Contaminated community borewell",
+    description:
+      "Water tests from the shared borewell show turbidity after recent construction. Families are buying tankers.",
+    category: "Water & Sanitation",
+    status: "In progress",
+    priority: "High",
+    reporterId: "u-reporter",
+    reporterName: "Asha Menon",
+    district: "Pune",
+    block: "Hadapsar",
+    landmark: "Community well, Lane 4",
+    lat: 18.508,
+    lng: 73.927,
+    createdAt: "2026-07-29T06:45:00.000Z",
+    images: [],
+    severity: { flooding: 12, publicRisk: 91, urgency: 84 },
+    assignee: "Pune Institute of Civic Tech",
+    timeline: [
+      { at: "2026-07-29T06:45:00.000Z", label: "Reported by Community Reporter" },
+      { at: "2026-08-01T10:00:00.000Z", label: "University team formed" },
+      { at: "2026-08-15T16:00:00.000Z", label: "Industry funding approved" },
+    ],
+  },
+];
+
+export const seedProjects = [
+  {
+    id: "prj-201",
+    issueId: "iss-104",
+    title: "Borewell remediation & sensor network",
+    university: "Pune Institute of Civic Tech",
+    industry: "NexCivic Industries",
+    status: "Funded",
+    funded: true,
+    team: [
+      { discipline: "Environmental Science", members: ["Ananya", "Dev"] },
+      { discipline: "Civil Engineering", members: ["Harsh"] },
+    ],
+    proposal:
+      "Install filtration, continuous turbidity sensors, and a community dashboard with fortnightly sampling.",
+    milestones: [
+      { name: "Site survey", due: "2026-08-30", done: true },
+      { name: "Pilot filter", due: "2026-09-20", done: false },
+      { name: "Sensor go-live", due: "2026-10-15", done: false },
+    ],
+  },
+  {
+    id: "prj-202",
+    issueId: "iss-102",
+    title: "Riverbank waste collection protocol",
+    university: "Pune Institute of Civic Tech",
+    industry: null,
+    status: "Awaiting funding",
+    funded: false,
+    team: [{ discipline: "Urban Planning", members: ["Leela", "Omar"] }],
+    proposal: "Segment the bank into collection zones, add CCTV at dump points, and run weekend drives.",
+    milestones: [],
+  },
+];

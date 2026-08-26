@@ -1,0 +1,40 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --color-primary: #0e4b4c;
+  --color-primary-hover: #0a3a3b;
+  --color-highlight: #d7f5de;
+  --color-canvas: #f7f8fa;
+  --color-surface: #ffffff;
+  --font-display: "Merriweather", serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: #1f2937;
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+
+h1,
+h2,
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 12px;
+  z-index: 0;
+}
