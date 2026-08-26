@@ -1,16 +1,23 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Configure reliable DNS servers (Google + Cloudflare) to prevent Windows / ISP SRV querySrv ECONNREFUSED errors with MongoDB Atlas
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+} catch (e) {
+  // Ignore if not supported in some restricted environments
+}
 
 const connectDB = async () => {
   try {
     const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/sahayog_db';
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
     });
-    console.log(`[Sahayog Backend] MongoDB Connected: ${conn.connection.host}`);
+    console.log(`[Sahayog Backend] MongoDB Atlas Connected: ${conn.connection.host}`);
     return conn;
   } catch (err) {
-    console.warn(`[Sahayog Backend] MongoDB Connection Warning: ${err.message}`);
-    console.warn('[Sahayog Backend] Operating with in-memory fallback store if MongoDB is not running locally.');
+    console.error(`[Sahayog Backend] MongoDB Connection Error: ${err.message}`);
     return null;
   }
 };
