@@ -3,18 +3,22 @@ import axiosClient from "../api/axiosClient";
 import { ROLES } from "../lib/constants";
 
 export const useAuthStore = create((set, get) => ({
-  user: JSON.parse(localStorage.getItem("cp_user") || "null"),
-  token: localStorage.getItem("cp_token"),
+  user: JSON.parse(localStorage.getItem("sahayog_user") || localStorage.getItem("cp_user") || "null"),
+  token: localStorage.getItem("sahayog_token") || localStorage.getItem("cp_token"),
   loading: false,
   error: null,
 
   setSession: (token, user) => {
+    localStorage.setItem("sahayog_token", token);
+    localStorage.setItem("sahayog_user", JSON.stringify(user));
     localStorage.setItem("cp_token", token);
     localStorage.setItem("cp_user", JSON.stringify(user));
     set({ token, user, error: null });
   },
 
   clearSession: () => {
+    localStorage.removeItem("sahayog_token");
+    localStorage.removeItem("sahayog_user");
     localStorage.removeItem("cp_token");
     localStorage.removeItem("cp_user");
     set({ token: null, user: null });
@@ -51,10 +55,14 @@ export const useAuthStore = create((set, get) => ({
 
   fetchProfile: async () => {
     if (!get().token) return null;
-    const { data } = await axiosClient.get("/api/users/profile");
-    localStorage.setItem("cp_user", JSON.stringify(data));
-    set({ user: data });
-    return data;
+    try {
+      const { data } = await axiosClient.get("/api/users/profile");
+      localStorage.setItem("sahayog_user", JSON.stringify(data));
+      set({ user: data });
+      return data;
+    } catch {
+      return get().user;
+    }
   },
 
   logout: () => get().clearSession(),
