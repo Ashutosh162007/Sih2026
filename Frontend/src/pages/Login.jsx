@@ -1,0 +1,114 @@
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate } from "react-router-dom";
+import AuthLayout from "../layouts/AuthLayout";
+import { useAuthStore } from "../store/authStore";
+
+const schema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export default function Login() {
+  const login = useAuthStore((s) => s.login);
+  const homeForRole = useAuthStore((s) => s.homeForRole);
+  const error = useAuthStore((s) => s.error);
+  const loading = useAuthStore((s) => s.loading);
+  const navigate = useNavigate();
+  const { register, handleSubmit, setValue, formState } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: { email: "reporter@sahayog.in", password: "password" },
+  });
+
+  async function onSubmit(values) {
+    const user = await login(values.email, values.password);
+    navigate(homeForRole(user));
+  }
+
+  function quickLogin(email) {
+    setValue("email", email);
+    setValue("password", "password");
+  }
+
+  return (
+    <AuthLayout>
+      <h2 className="font-display text-3xl font-bold text-slate-900">Welcome to Sahayog</h2>
+      <p className="mt-1.5 text-sm text-slate-500">Sign in to your collaboration workspace.</p>
+
+      {/* Quick Demo Selector */}
+      <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <p className="text-xs font-semibold text-slate-600 mb-2">Quick Demo Account Switcher:</p>
+        <div className="grid grid-cols-2 gap-1.5 text-xs">
+          <button
+            type="button"
+            onClick={() => quickLogin("reporter@sahayog.in")}
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700"
+          >
+            👤 Citizen Reporter
+          </button>
+          <button
+            type="button"
+            onClick={() => quickLogin("university@sahayog.in")}
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700"
+          >
+            🎓 University / HEI
+          </button>
+          <button
+            type="button"
+            onClick={() => quickLogin("industry@sahayog.in")}
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700"
+          >
+            🏢 Industry / CSR
+          </button>
+          <button
+            type="button"
+            onClick={() => quickLogin("admin@sahayog.in")}
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700"
+          >
+            🛡️ Admin / Govt
+          </button>
+        </div>
+      </div>
+
+      <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
+        <span className="h-px flex-1 bg-slate-200" /> credentials login <span className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <label className="block text-sm font-medium text-slate-700">
+          Email address
+          <input
+            {...register("email")}
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
+          />
+          {formState.errors.email && (
+            <span className="text-xs text-rose-600">{formState.errors.email.message}</span>
+          )}
+        </label>
+        <label className="block text-sm font-medium text-slate-700">
+          Password
+          <input
+            type="password"
+            {...register("password")}
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
+          />
+        </label>
+        {error && <p className="rounded-lg bg-rose-50 p-2 text-sm text-rose-600">{error}</p>}
+        <button
+          disabled={loading}
+          className="w-full rounded-xl bg-[#0E4B4C] py-3 text-sm font-semibold text-white shadow-md shadow-[#0E4B4C]/20 transition hover:bg-[#0b3b3c] disabled:opacity-60"
+        >
+          {loading ? "Signing in..." : "Sign in to Dashboard"}
+        </button>
+      </form>
+
+      <p className="mt-5 text-center text-sm text-slate-500">
+        New to Sahayog?{" "}
+        <Link to="/signup" className="font-semibold text-[#0E4B4C] hover:underline">
+          Create an account
+        </Link>
+      </p>
+    </AuthLayout>
+  );
+}
