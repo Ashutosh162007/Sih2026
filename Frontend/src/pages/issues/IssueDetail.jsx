@@ -101,24 +101,26 @@ export default function IssueDetail() {
           {/* Evidence Photos */}
           <div className="mt-6">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Photographic Evidence</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {issue.images && issue.images.length > 0 ? (
-                issue.images.map((img, idx) => (
-                  <img
-                    key={idx}
-                    alt="Civic Issue Evidence"
-                    className="h-44 w-full rounded-xl object-cover border border-slate-200"
-                    src={img.url || "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=800&q=80"}
-                  />
-                ))
-              ) : (
-                <img
-                  alt="Civic Issue Evidence"
-                  className="h-44 w-full rounded-xl object-cover border border-slate-200"
-                  src="https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=800&q=80"
-                />
-              )}
-            </div>
+            {issue.images && issue.images.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {issue.images.map((img, idx) => {
+                  const src = typeof img === "string" ? img : (img.url || img.preview);
+                  return (
+                    <div key={idx} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm">
+                      <img
+                        alt={img.filename || `Evidence Photo ${idx + 1}`}
+                        className="h-48 w-full object-cover transition hover:scale-105"
+                        src={src}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-xs text-slate-400">
+                No photographic evidence attached for this issue.
+              </div>
+            )}
           </div>
         </div>
 

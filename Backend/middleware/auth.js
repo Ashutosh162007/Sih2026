@@ -37,7 +37,7 @@ const protect = async (req, res, next) => {
           _id: decodedFallback.id || 'u-demo',
           id: decodedFallback.id || 'u-demo',
           name: decodedFallback.name || 'Demo User',
-          role: decodedFallback.role || 'community_reporter',
+          role: decodedFallback.role || 'citizen',
           org: decodedFallback.org || 'Sahayog Network',
           status: 'active',
         };

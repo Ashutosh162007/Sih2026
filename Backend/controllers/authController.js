@@ -32,7 +32,7 @@ const register = async (req, res, next) => {
       name,
       email: email.toLowerCase(),
       password,
-      role: role || 'community_reporter',
+      role: (role === 'community_reporter' ? 'citizen' : role) || 'citizen',
       status,
       org: org || '',
       location: {
@@ -188,7 +188,7 @@ const googleAuth = async (req, res, next) => {
     let user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      const selectedRole = role || 'community_reporter';
+      const selectedRole = (role === 'community_reporter' ? 'citizen' : role) || 'citizen';
       const isPendingRole = ['university', 'industry'].includes(selectedRole);
       const status = isPendingRole ? 'pending' : 'active';
       const selectedDistrict = district || 'Ranchi';

@@ -39,6 +39,33 @@ async function uploadToCloudinary(fileBuffer, originalFilename = 'issue_image.jp
   };
 }
 
+/**
+ * Upload base64 data URI to Cloudinary or return data URI
+ */
+async function uploadDataUriToCloudinary(dataUri, originalFilename = 'issue_image.jpg') {
+  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    try {
+      const result = await cloudinary.uploader.upload(dataUri, {
+        folder: 'sahayog_issues',
+        resource_type: 'image',
+      });
+      return {
+        url: result.secure_url,
+        filename: originalFilename,
+        size: result.bytes || 102400,
+      };
+    } catch (err) {
+      console.error('[Cloudinary] Direct upload failed, falling back to data URI:', err.message);
+    }
+  }
+  return {
+    url: dataUri,
+    filename: originalFilename,
+    size: 102400,
+  };
+}
+
 module.exports = {
   uploadToCloudinary,
+  uploadDataUriToCloudinary,
 };

@@ -85,7 +85,7 @@ export default function ReportIssue() {
         category: data.category,
         description: data.description,
         aiProblemStatement: aiPreviewData?.aiProblemStatement || data.aiProblemStatement,
-        evidence: data.evidence.map((f) => ({ filename: f.filename, size: f.size, url: f.url })),
+        evidence: (data.evidence || []).map((f) => ({ filename: f.filename, size: f.size, url: f.url || f.preview })),
         district: data.district || "Ranchi",
         block: data.block || "Kanke",
         landmark: data.landmark || "",

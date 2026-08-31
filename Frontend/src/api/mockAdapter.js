@@ -17,16 +17,25 @@ function save(key, value) {
 }
 
 let users = load("sahayog_users", mockUsers).map((u) => {
-  if (u.id === "u-reporter" || u.role === ROLES.REPORTER) {
+  if (u.id === "u-reporter" || u.role === "community_reporter" || u.role === "citizen") {
     return {
       ...u,
+      role: "citizen",
       email: u.email === "reporter@sahayog.in" ? "citizen@sahayog.in" : u.email,
       org: "",
     };
   }
   return u;
 });
-let issues = load("sahayog_issues", seedIssues);
+let issues = load("sahayog_issues", seedIssues).map((iss) => {
+  if (Array.isArray(iss.images)) {
+    iss.images = iss.images.filter((img) => {
+      const src = typeof img === "string" ? img : img?.url;
+      return src && !src.includes("photo-1486325212027-8081e485255e");
+    });
+  }
+  return iss;
+});
 let projects = load("sahayog_projects", seedProjects);
 let notifications = load("sahayog_notifications", [
   {
@@ -267,8 +276,13 @@ export async function handleMockRequest(config) {
       landmark: body.landmark || "",
       lat: body.lat || 23.3441,
       lng: body.lng || 85.3096,
-      createdAt: new Date().toISOString(),
-      images: body.evidence || [{ url: "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=800&q=80" }],
+      images: Array.isArray(body.evidence) && body.evidence.length > 0
+        ? body.evidence.map((e) => ({
+            url: e.url || e.preview,
+            filename: e.filename || "evidence.jpg",
+            size: e.size || 102400,
+          }))
+        : [],
       severity: aiAnalysis.severity,
       distanceKm: Math.round(5 + Math.random() * 25),
       nearestUniversities: [
