@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Wand2, ShieldAlert, CheckCircle2, MapPin, AlertCircle, ArrowRight } from "lucide-react";
 import Stepper from "../../components/Stepper";
@@ -7,17 +7,26 @@ import MapLocationPicker from "../../components/MapLocationPicker";
 import AssessmentSlider from "../../components/AssessmentSlider";
 import { ISSUE_CATEGORIES, JHARKHAND_DISTRICTS } from "../../lib/constants";
 import { useWizardStore } from "../../store/wizardStore";
+import { useAuthStore } from "../../store/authStore";
 import axiosClient from "../../api/axiosClient";
 
 const STEPS = ["Basic Info", "Short Description", "Photo Evidence", "Location", "AI Formulation & Review"];
 
 export default function ReportIssue() {
   const { step, data, setStep, next, back, update, reset } = useWizardStore();
+  const user = useAuthStore((s) => s.user);
   const [submitting, setSubmitting] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiPreviewData, setAiPreviewData] = useState(null);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!data.district) {
+      const userDistrict = user?.location?.district || user?.district || "Ranchi";
+      update({ district: userDistrict });
+    }
+  }, [user]);
 
   function canNext() {
     if (step === 0) return data.title && data.category;

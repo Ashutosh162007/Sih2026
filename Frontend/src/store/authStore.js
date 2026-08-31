@@ -39,10 +39,17 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  googleLogin: async (credential, role) => {
+  googleLogin: async (credentialOrPayload, legacyRole) => {
     set({ loading: true, error: null });
     try {
-      const { data } = await axiosClient.post("/api/auth/google", { credential, role });
+      const payload =
+        typeof credentialOrPayload === "object" && credentialOrPayload !== null && !credentialOrPayload.credential
+          ? credentialOrPayload
+          : typeof credentialOrPayload === "object" && credentialOrPayload.credential
+          ? credentialOrPayload
+          : { credential: credentialOrPayload, role: legacyRole };
+
+      const { data } = await axiosClient.post("/api/auth/google", payload);
       get().setSession(data.token, data.user);
       return data.user;
     } catch (err) {

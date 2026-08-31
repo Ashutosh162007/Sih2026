@@ -16,7 +16,16 @@ function save(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-let users = load("sahayog_users", mockUsers);
+let users = load("sahayog_users", mockUsers).map((u) => {
+  if (u.id === "u-reporter" || u.role === ROLES.REPORTER) {
+    return {
+      ...u,
+      email: u.email === "reporter@sahayog.in" ? "citizen@sahayog.in" : u.email,
+      org: "",
+    };
+  }
+  return u;
+});
 let issues = load("sahayog_issues", seedIssues);
 let projects = load("sahayog_projects", seedProjects);
 let notifications = load("sahayog_notifications", [
@@ -149,14 +158,20 @@ export async function handleMockRequest(config) {
   }
 
   if ((m = match(config, "post", "/api/auth/login"))) {
-    const user = users.find((u) => u.email === body.email && u.password === body.password);
+    const user = users.find(
+      (u) =>
+        (u.email === body.email ||
+          (body.email === "citizen@sahayog.in" && u.email === "reporter@sahayog.in") ||
+          (body.email === "reporter@sahayog.in" && u.email === "citizen@sahayog.in")) &&
+        u.password === body.password
+    );
     if (!user) error("Invalid email or password", 401);
     return json(config, { token: tokenFor(user), user: publicUser(user) });
   }
 
   if ((m = match(config, "post", "/api/auth/google"))) {
     let email = "google.user@sahayog.in";
-    let name = "Google Verified Citizen";
+    let name = body.name || "Google Verified Citizen";
     let picture = "";
     if (body.credential) {
       try {
@@ -167,6 +182,8 @@ export async function handleMockRequest(config) {
       } catch (e) {}
     }
     let user = users.find((u) => u.email === email);
+    const selectedDistrict = body.district || "Ranchi";
+    const selectedBlock = body.block || "Kanke";
     if (!user) {
       const selectedRole = body.role || ROLES.REPORTER;
       const isPendingRole = [ROLES.UNIVERSITY, ROLES.INDUSTRY].includes(selectedRole);
@@ -175,12 +192,27 @@ export async function handleMockRequest(config) {
         name,
         email,
         role: selectedRole,
+        district: selectedDistrict,
         status: isPendingRole ? "pending" : "active",
-        org: isPendingRole ? "Registered Entity" : "Ward Citizen Forum",
+        org: body.org || (isPendingRole ? "Registered Entity" : ""),
         picture,
+        location: {
+          district: selectedDistrict,
+          block: selectedBlock,
+          state: "Jharkhand",
+          lat: 23.3441,
+          lng: 85.3096,
+        },
       };
       users.push(user);
       persist();
+    } else {
+      if (body.district) {
+        user.district = body.district;
+        user.location = user.location || {};
+        user.location.district = body.district;
+        persist();
+      }
     }
     return json(config, { token: tokenFor(user), user: publicUser(user) });
   }
@@ -188,14 +220,24 @@ export async function handleMockRequest(config) {
   if ((m = match(config, "post", "/api/auth/register"))) {
     if (users.some((u) => u.email === body.email)) error("Email already registered", 409);
     const pendingRoles = [ROLES.UNIVERSITY, ROLES.INDUSTRY];
+    const selectedDistrict = body.district || "Ranchi";
+    const selectedBlock = body.block || "Kanke";
     const user = {
       id: `u-${Date.now()}`,
       name: body.name,
       email: body.email,
       password: body.password,
       role: body.role,
+      district: selectedDistrict,
       status: pendingRoles.includes(body.role) ? "pending" : "active",
-      org: body.org || "",
+      org: body.org || (pendingRoles.includes(body.role) ? "Registered Entity" : ""),
+      location: {
+        district: selectedDistrict,
+        block: selectedBlock,
+        state: "Jharkhand",
+        lat: 23.3441,
+        lng: 85.3096,
+      },
     };
     users.push(user);
     persist();

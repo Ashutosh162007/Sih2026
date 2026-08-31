@@ -20,7 +20,7 @@ export default function Login() {
   const navigate = useNavigate();
   const { register, handleSubmit, setValue, formState } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { email: "reporter@sahayog.in", password: "password" },
+    defaultValues: { email: "citizen@sahayog.in", password: "password" },
   });
 
   async function onSubmit(values) {
@@ -77,7 +77,7 @@ export default function Login() {
         <div className="grid grid-cols-2 gap-1.5 text-xs">
           <button
             type="button"
-            onClick={() => quickLogin("reporter@sahayog.in")}
+            onClick={() => quickLogin("citizen@sahayog.in")}
             className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700"
           >
             👤 Citizen

@@ -129,7 +129,7 @@ const login = async (req, res, next) => {
 // @access  Public
 const googleAuth = async (req, res, next) => {
   try {
-    const { credential, accessToken, role } = req.body;
+    const { credential, accessToken, role, district, block, org, lat, lng } = req.body;
     let email, name, picture, googleId;
 
     if (credential) {
@@ -191,6 +191,8 @@ const googleAuth = async (req, res, next) => {
       const selectedRole = role || 'community_reporter';
       const isPendingRole = ['university', 'industry'].includes(selectedRole);
       const status = isPendingRole ? 'pending' : 'active';
+      const selectedDistrict = district || 'Ranchi';
+      const selectedBlock = block || 'Kanke';
 
       user = await User.create({
         name: name || 'Google User',
@@ -198,13 +200,14 @@ const googleAuth = async (req, res, next) => {
         googleId,
         picture: picture || '',
         role: selectedRole,
+        org: org || (isPendingRole ? 'Registered Entity' : ''),
         status,
         location: {
-          district: 'Ranchi',
-          block: 'Kanke',
+          district: selectedDistrict,
+          block: selectedBlock,
           state: 'Jharkhand',
-          lat: 23.3441,
-          lng: 85.3096,
+          lat: lat || 23.3441,
+          lng: lng || 85.3096,
         },
       });
 
@@ -225,6 +228,11 @@ const googleAuth = async (req, res, next) => {
       }
       if (picture && !user.picture) {
         user.picture = picture;
+        needsSave = true;
+      }
+      if (district && (!user.location || !user.location.district)) {
+        user.location = user.location || {};
+        user.location.district = district;
         needsSave = true;
       }
       if (needsSave) {

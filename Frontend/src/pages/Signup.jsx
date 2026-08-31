@@ -29,6 +29,9 @@ export default function Signup() {
     defaultValues: { role: ROLES.REPORTER, district: "Ranchi" },
   });
   const role = watch("role");
+  const district = watch("district");
+  const org = watch("org");
+  const name = watch("name");
 
   async function onSubmit(values) {
     const user = await registerUser(values);
@@ -43,7 +46,13 @@ export default function Signup() {
   async function handleGoogleSuccess(credentialResponse) {
     if (credentialResponse.credential) {
       try {
-        const user = await googleLogin(credentialResponse.credential, role);
+        const user = await googleLogin({
+          credential: credentialResponse.credential,
+          role,
+          district: district || "Ranchi",
+          org,
+          name,
+        });
         if (user.status === "pending") {
           navigate("/signup/pending");
           return;

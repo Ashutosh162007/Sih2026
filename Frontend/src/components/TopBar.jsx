@@ -15,7 +15,7 @@ import {
   Briefcase,
   BookOpen,
 } from "lucide-react";
-import { ROLE_LABELS } from "../lib/constants";
+import { ROLE_LABELS, ROLES } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
 import axiosClient from "../api/axiosClient";
 import { formatDate } from "../lib/format";
@@ -177,7 +177,7 @@ export default function TopBar() {
                 </div>
               </div>
 
-              {user?.org && (
+              {user?.org && user?.role !== ROLES.REPORTER && user?.role !== "community_reporter" && (
                 <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
                   <Building2 size={16} className="text-blue-600 shrink-0" />
                   <div className="min-w-0 flex-1">
@@ -192,7 +192,7 @@ export default function TopBar() {
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] text-slate-400 font-medium">Location</p>
                   <p className="font-semibold text-slate-800">
-                    {user?.location?.district || "Ranchi"}, {user?.location?.block || "Kanke"} (Jharkhand)
+                    {user?.location?.district || user?.district || "Ranchi"}, {user?.location?.block || user?.block || "Kanke"} (Jharkhand)
                   </p>
                 </div>
               </div>

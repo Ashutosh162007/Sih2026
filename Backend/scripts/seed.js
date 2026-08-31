@@ -33,11 +33,11 @@ const seedData = async () => {
     const users = await User.create([
       {
         name: 'Asha Menon',
-        email: 'reporter@sahayog.in',
+        email: 'citizen@sahayog.in',
         password: 'password',
         role: 'community_reporter',
         status: 'active',
-        org: 'Ward 12 Citizen Forum, Ranchi',
+        org: '',
         location: { district: 'Ranchi', block: 'Kanke', lat: 23.3441, lng: 85.3096 },
       },
       {

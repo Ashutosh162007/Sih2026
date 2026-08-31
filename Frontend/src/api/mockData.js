@@ -4,11 +4,11 @@ export const mockUsers = [
   {
     id: "u-reporter",
     name: "Asha Menon",
-    email: "reporter@sahayog.in",
+    email: "citizen@sahayog.in",
     password: "password",
     role: ROLES.REPORTER,
     status: "active",
-    org: "Ward 12 Citizen Forum, Ranchi",
+    org: "",
   },
   {
     id: "u-uni",
