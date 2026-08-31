@@ -98,7 +98,7 @@ const createIssue = async (req, res, next) => {
       timeline: [
         {
           at: new Date(),
-          label: 'Reported by Community Reporter',
+          label: 'Reported by Citizen',
           actor: reporterName,
           role: 'community_reporter',
         },

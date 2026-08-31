@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 
-export default function AuthLayout({ children, headline = "Empowering Societal Innovation in Jharkhand" }) {
+export default function AuthLayout({ children, headline = "Empowering Societal Innovation" }) {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <div
@@ -20,7 +20,7 @@ export default function AuthLayout({ children, headline = "Empowering Societal I
           </Link>
           <div>
             <span className="rounded-md bg-[#D7F5DE]/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#D7F5DE]">
-              Problem Statement 26043
+              Collaborative Innovation Portal
             </span>
             <h1 className="font-display mt-4 max-w-md text-4xl font-bold leading-tight">{headline}</h1>
             <p className="mt-4 max-w-md text-sm text-white/80 leading-relaxed">
@@ -29,7 +29,7 @@ export default function AuthLayout({ children, headline = "Empowering Societal I
             </p>
           </div>
           <div className="text-xs text-white/60">
-            National Education Policy (NEP) 2020 Experiential Learning Network
+            Empowering Citizen Innovation & Research Partnerships
           </div>
         </div>
       </div>

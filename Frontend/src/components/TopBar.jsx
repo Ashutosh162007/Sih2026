@@ -1,5 +1,20 @@
 import { useState, useEffect } from "react";
-import { Bell, Search, Sparkles, CheckCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  Bell,
+  Search,
+  Sparkles,
+  CheckCheck,
+  User,
+  Mail,
+  Building2,
+  MapPin,
+  ShieldCheck,
+  LogOut,
+  X,
+  Briefcase,
+  BookOpen,
+} from "lucide-react";
 import { ROLE_LABELS } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
 import axiosClient from "../api/axiosClient";
@@ -7,7 +22,10 @@ import { formatDate } from "../lib/format";
 
 export default function TopBar() {
   const user = useAuthStore((s) => s.user);
-  const [open, setOpen] = useState(false);
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
+  const [openNotifs, setOpenNotifs] = useState(false);
+  const [openProfile, setOpenProfile] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -56,8 +74,9 @@ export default function TopBar() {
         <button
           type="button"
           onClick={() => {
-            setOpen((v) => !v);
-            if (!open && unreadCount > 0) markAllRead();
+            setOpenNotifs((v) => !v);
+            setOpenProfile(false);
+            if (!openNotifs && unreadCount > 0) markAllRead();
           }}
           className="relative rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50 transition"
           aria-label="Notifications"
@@ -70,7 +89,7 @@ export default function TopBar() {
           )}
         </button>
 
-        {open && (
+        {openNotifs && (
           <div className="absolute right-0 z-30 mt-2 w-84 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
               <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
@@ -105,15 +124,121 @@ export default function TopBar() {
         )}
       </div>
 
-      {/* User Avatar */}
-      <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0E4B4C] text-sm font-bold text-white shadow-sm shadow-[#0E4B4C]/25">
-          {user?.name?.slice(0, 1) || "S"}
-        </div>
-        <div className="hidden sm:block text-left">
-          <p className="text-sm font-semibold leading-tight text-slate-900">{user?.name || "User"}</p>
-          <p className="text-[11px] text-slate-500 font-medium">{ROLE_LABELS[user?.role] || "User"}</p>
-        </div>
+      {/* User Avatar & Profile Trigger */}
+      <div className="relative pl-2 border-l border-slate-200">
+        <button
+          type="button"
+          onClick={() => {
+            setOpenProfile((v) => !v);
+            setOpenNotifs(false);
+          }}
+          className="flex items-center gap-3 rounded-xl p-1 hover:bg-slate-50 transition cursor-pointer"
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0E4B4C] text-sm font-bold text-white shadow-sm shadow-[#0E4B4C]/25 ring-2 ring-transparent hover:ring-teal-300 transition">
+            {user?.name?.slice(0, 1) || "S"}
+          </div>
+          <div className="hidden sm:block text-left">
+            <p className="text-sm font-semibold leading-tight text-slate-900">{user?.name || "User"}</p>
+            <p className="text-[11px] text-slate-500 font-medium">{ROLE_LABELS[user?.role] || "User"}</p>
+          </div>
+        </button>
+
+        {/* Profile Details Modal / Dropdown */}
+        {openProfile && (
+          <div className="absolute right-0 z-40 mt-2 w-88 rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E4B4C] text-lg font-bold text-white shadow-md shadow-[#0E4B4C]/20">
+                  {user?.name?.slice(0, 1) || "U"}
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-slate-900 text-base">{user?.name}</h3>
+                  <span className="inline-block mt-0.5 rounded-md bg-[#D7F5DE] px-2 py-0.5 text-[11px] font-semibold text-[#0E4B4C]">
+                    {ROLE_LABELS[user?.role] || user?.role}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpenProfile(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Profile Information List */}
+            <div className="mt-4 space-y-3 text-xs text-slate-600">
+              <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
+                <Mail size={16} className="text-[#0E4B4C] shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-slate-400 font-medium">Email Address</p>
+                  <p className="font-semibold text-slate-800 truncate">{user?.email || "—"}</p>
+                </div>
+              </div>
+
+              {user?.org && (
+                <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
+                  <Building2 size={16} className="text-blue-600 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] text-slate-400 font-medium">Organization / Institution</p>
+                    <p className="font-semibold text-slate-800 truncate">{user.org}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
+                <MapPin size={16} className="text-amber-600 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-slate-400 font-medium">Location</p>
+                  <p className="font-semibold text-slate-800">
+                    {user?.location?.district || "Ranchi"}, {user?.location?.block || "Kanke"} (Jharkhand)
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
+                <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-slate-400 font-medium">Account Status</p>
+                  <p className="font-semibold capitalize text-emerald-700">
+                    {user?.status || "Active"} · Verified
+                  </p>
+                </div>
+              </div>
+
+              {user?.disciplines && user.disciplines.length > 0 && (
+                <div className="rounded-xl bg-slate-50 p-2.5">
+                  <p className="text-[10px] text-slate-400 font-medium mb-1 flex items-center gap-1">
+                    <BookOpen size={12} /> Faculty Disciplines
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {user.disciplines.map((d) => (
+                      <span key={d} className="rounded bg-white border border-slate-200 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="mt-5 pt-3 border-t border-slate-100 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenProfile(false);
+                  logout();
+                  navigate("/login");
+                }}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition"
+              >
+                <LogOut size={14} /> Sign out
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

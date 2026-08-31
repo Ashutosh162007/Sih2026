@@ -26,7 +26,7 @@ export default function IndustryProjects() {
     
     const allDone = milestones.every((m) => m.done);
     if (allDone) {
-      setToast(`All milestones for "${project.title}" completed! The issue is marked Resolved and the Citizen Reporter has been notified.`);
+      setToast(`All milestones for "${project.title}" completed! The issue is marked Resolved and the Citizen has been notified.`);
     } else {
       setToast("Milestone updated.");
     }

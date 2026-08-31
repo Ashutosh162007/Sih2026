@@ -82,7 +82,7 @@ export default function ProposalWizard() {
           <div>
             <p className="text-sm font-medium text-slate-700 mb-1">Constitute Multidisciplinary Student & Faculty Team</p>
             <p className="text-xs text-slate-500 mb-4">
-              NEP 2020 promotes cross-disciplinary innovation (e.g. Civil + IoT/Computer Science + Environmental Science).
+              Bring together complementary disciplines (e.g. Civil Engineering + IoT/Computer Science + Environmental Science).
             </p>
             <TeamBuilder team={team} onChange={setTeam} />
           </div>

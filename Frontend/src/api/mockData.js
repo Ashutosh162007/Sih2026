@@ -106,7 +106,7 @@ export const seedIssues = [
       { name: "Ranchi University", distanceKm: 3.2, matchScore: 88 },
     ],
     timeline: [
-      { at: "2026-08-12T09:00:00.000Z", label: "Reported by Community Reporter" },
+      { at: "2026-08-12T09:00:00.000Z", label: "Reported by Citizen" },
       { at: "2026-08-13T11:20:00.000Z", label: "AI structured problem statement synthesized" },
       { at: "2026-08-14T10:00:00.000Z", label: "Routed to nearest HEI: BIT Mesra (12.4 km away)" },
     ],
@@ -137,7 +137,7 @@ export const seedIssues = [
       { name: "Birla Institute of Technology (BIT) Mesra", distanceKm: 42.1, matchScore: 94 },
     ],
     timeline: [
-      { at: "2026-07-29T06:45:00.000Z", label: "Reported by Community Reporter" },
+      { at: "2026-07-29T06:45:00.000Z", label: "Reported by Citizen" },
       { at: "2026-08-01T10:00:00.000Z", label: "University multidisciplinary team formed" },
       { at: "2026-08-15T16:00:00.000Z", label: "Industry funding (₹3,50,000) approved by Tata Steel CSR with 60-day completion deadline" },
     ],
@@ -167,7 +167,7 @@ export const seedIssues = [
     nearestUniversities: [
       { name: "Birla Institute of Technology (BIT) Mesra", distanceKm: 8.5, matchScore: 96 },
     ],
-    timeline: [{ at: "2026-08-20T19:10:00.000Z", label: "Reported by Community Reporter" }],
+    timeline: [{ at: "2026-08-20T19:10:00.000Z", label: "Reported by Citizen" }],
   },
 ];
 

@@ -111,7 +111,7 @@ const seedData = async () => {
           { universityId: 'uni-ranchi-univ', name: 'Ranchi University', distanceKm: 3.2, district: 'Ranchi', matchScore: 88 },
         ],
         timeline: [
-          { at: new Date(Date.now() - 5 * 86400000), label: 'Reported by Community Reporter', actor: reporter.name, role: 'community_reporter' },
+          { at: new Date(Date.now() - 5 * 86400000), label: 'Reported by Citizen', actor: reporter.name, role: 'community_reporter' },
           { at: new Date(Date.now() - 4 * 86400000), label: 'AI severity assessment completed (Score: 86%)', actor: 'Sahayog AI', role: 'system' },
           { at: new Date(Date.now() - 3 * 86400000), label: `Assigned to ${uni.org} queue`, actor: 'Routing Engine', role: 'system' },
         ],
@@ -141,7 +141,7 @@ const seedData = async () => {
           { universityId: 'uni-bau-ranchi', name: 'Birsa Agricultural University', distanceKm: 48.0, district: 'Ranchi', matchScore: 89 },
         ],
         timeline: [
-          { at: new Date(Date.now() - 10 * 86400000), label: 'Reported by Community Reporter', actor: reporter.name, role: 'community_reporter' },
+          { at: new Date(Date.now() - 10 * 86400000), label: 'Reported by Citizen', actor: reporter.name, role: 'community_reporter' },
           { at: new Date(Date.now() - 8 * 86400000), label: 'AI formulated structured research problem', actor: 'Sahayog AI', role: 'system' },
           { at: new Date(Date.now() - 6 * 86400000), label: `Multidisciplinary team assembled by ${uni.org}`, actor: uni.name, role: 'university' },
           { at: new Date(Date.now() - 2 * 86400000), label: `Industry grant ₹3,50,000 approved by ${industry.org}`, actor: industry.name, role: 'industry' },
@@ -171,7 +171,7 @@ const seedData = async () => {
           { universityId: 'uni-bau-ranchi', name: 'Birsa Agricultural University', distanceKm: 18.2, district: 'Ranchi', matchScore: 98 },
         ],
         timeline: [
-          { at: new Date(Date.now() - 2 * 86400000), label: 'Reported by Community Reporter', actor: reporter.name, role: 'community_reporter' },
+          { at: new Date(Date.now() - 2 * 86400000), label: 'Reported by Citizen', actor: reporter.name, role: 'community_reporter' },
         ],
       },
     ]);

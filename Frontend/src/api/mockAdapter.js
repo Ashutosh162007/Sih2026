@@ -154,6 +154,37 @@ export async function handleMockRequest(config) {
     return json(config, { token: tokenFor(user), user: publicUser(user) });
   }
 
+  if ((m = match(config, "post", "/api/auth/google"))) {
+    let email = "google.user@sahayog.in";
+    let name = "Google Verified Citizen";
+    let picture = "";
+    if (body.credential) {
+      try {
+        const payload = JSON.parse(atob(body.credential.split(".")[1]));
+        email = payload.email || email;
+        name = payload.name || name;
+        picture = payload.picture || picture;
+      } catch (e) {}
+    }
+    let user = users.find((u) => u.email === email);
+    if (!user) {
+      const selectedRole = body.role || ROLES.REPORTER;
+      const isPendingRole = [ROLES.UNIVERSITY, ROLES.INDUSTRY].includes(selectedRole);
+      user = {
+        id: `u-google-${Date.now()}`,
+        name,
+        email,
+        role: selectedRole,
+        status: isPendingRole ? "pending" : "active",
+        org: isPendingRole ? "Registered Entity" : "Ward Citizen Forum",
+        picture,
+      };
+      users.push(user);
+      persist();
+    }
+    return json(config, { token: tokenFor(user), user: publicUser(user) });
+  }
+
   if ((m = match(config, "post", "/api/auth/register"))) {
     if (users.some((u) => u.email === body.email)) error("Email already registered", 409);
     const pendingRoles = [ROLES.UNIVERSITY, ROLES.INDUSTRY];
@@ -204,7 +235,7 @@ export async function handleMockRequest(config) {
       ],
       assignee: null,
       timeline: [
-        { at: new Date().toISOString(), label: "Reported by Community Reporter" },
+        { at: new Date().toISOString(), label: "Reported by Citizen" },
         { at: new Date().toISOString(), label: `AI synthesized formal problem statement (${aiAnalysis.priority} Priority, ${aiAnalysis.severity.score}% severity)` },
         { at: new Date().toISOString(), label: "Routed to nearest Higher Education Institutions" },
       ],

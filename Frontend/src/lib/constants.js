@@ -6,7 +6,7 @@ export const ROLES = {
 };
 
 export const ROLE_LABELS = {
-  [ROLES.REPORTER]: "Community Reporter",
+  [ROLES.REPORTER]: "Citizen",
   [ROLES.UNIVERSITY]: "University / HEI",
   [ROLES.INDUSTRY]: "Industry Partner",
   [ROLES.ADMIN]: "Admin / Govt Oversight",
