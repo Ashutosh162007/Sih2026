@@ -1,12 +1,14 @@
 export const ROLES = {
-  REPORTER: "community_reporter",
+  CITIZEN: "citizen",
+  REPORTER: "citizen",
   UNIVERSITY: "university",
   INDUSTRY: "industry",
   ADMIN: "admin",
 };
 
 export const ROLE_LABELS = {
-  [ROLES.REPORTER]: "Community Reporter",
+  citizen: "Citizen",
+  community_reporter: "Citizen",
   [ROLES.UNIVERSITY]: "University / HEI",
   [ROLES.INDUSTRY]: "Industry Partner",
   [ROLES.ADMIN]: "Admin / Govt Oversight",

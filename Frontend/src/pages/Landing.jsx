@@ -15,9 +15,6 @@ export default function Landing() {
             </div>
             <div>
               <span className="font-display text-2xl font-bold tracking-tight text-[#0E4B4C]">Sahayog</span>
-              <span className="ml-2 rounded-md bg-[#D7F5DE] px-2 py-0.5 text-xs font-semibold text-[#0E4B4C]">
-                SIH 26043
-              </span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -72,7 +69,7 @@ export default function Landing() {
             </div>
             <div className="mt-8 flex items-center gap-6 text-xs text-slate-500">
               <span className="flex items-center gap-1.5 font-medium">
-                <CheckCircle2 size={16} className="text-emerald-600" /> NEP 2020 Aligned
+                <CheckCircle2 size={16} className="text-emerald-600" /> AI Problem Structuring
               </span>
               <span className="flex items-center gap-1.5 font-medium">
                 <CheckCircle2 size={16} className="text-emerald-600" /> Proximity Haversine Routing
@@ -85,7 +82,7 @@ export default function Landing() {
           <div className="lg:col-span-5">
             <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-3 shadow-xl">
               <img
-                alt="Jharkhand Societal Innovation"
+                alt="Societal Innovation"
                 className="h-80 w-full rounded-2xl object-cover"
                 src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1400&q=80"
               />
@@ -124,7 +121,7 @@ export default function Landing() {
               </div>
               <h3 className="mt-4 font-display text-lg font-bold text-slate-900">1. Citizen Reporting</h3>
               <p className="mt-2 text-sm text-slate-600">
-                Community reporters describe local issues with a brief summary, photo, and geolocation coordinates.
+                Citizens describe local issues with a brief summary, photo, and geolocation coordinates.
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-[#F7F8FA] p-6 transition hover:shadow-md">
@@ -163,7 +160,7 @@ export default function Landing() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="font-display text-2xl font-bold text-slate-900">Platform Impact Dashboard</h2>
-            <p className="text-sm text-slate-500">Real-time indicators across Jharkhand districts</p>
+            <p className="text-sm text-slate-500">Real-time indicators across districts</p>
           </div>
           <Link to="/admin/dashboard" className="text-sm font-semibold text-[#0E4B4C] hover:underline">
             View full analytics →
@@ -179,8 +176,8 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
         <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 Sahayog — Societal Innovation Collaboration Platform (SIH 26043). All rights reserved.</p>
-          <p className="font-medium text-[#0E4B4C]">Aligned with National Education Policy (NEP) 2020</p>
+          <p>© 2026 Sahayog — Societal Innovation Collaboration Platform. All rights reserved.</p>
+          <p className="font-medium text-[#0E4B4C]">Collaborative Civic Problem Solving</p>
         </div>
       </footer>
     </div>

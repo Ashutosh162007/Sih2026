@@ -16,8 +16,26 @@ function save(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-let users = load("sahayog_users", mockUsers);
-let issues = load("sahayog_issues", seedIssues);
+let users = load("sahayog_users", mockUsers).map((u) => {
+  if (u.id === "u-reporter" || u.role === "community_reporter" || u.role === "citizen") {
+    return {
+      ...u,
+      role: "citizen",
+      email: u.email === "reporter@sahayog.in" ? "citizen@sahayog.in" : u.email,
+      org: "",
+    };
+  }
+  return u;
+});
+let issues = load("sahayog_issues", seedIssues).map((iss) => {
+  if (Array.isArray(iss.images)) {
+    iss.images = iss.images.filter((img) => {
+      const src = typeof img === "string" ? img : img?.url;
+      return src && !src.includes("photo-1486325212027-8081e485255e");
+    });
+  }
+  return iss;
+});
 let projects = load("sahayog_projects", seedProjects);
 let notifications = load("sahayog_notifications", [
   {
@@ -149,22 +167,86 @@ export async function handleMockRequest(config) {
   }
 
   if ((m = match(config, "post", "/api/auth/login"))) {
-    const user = users.find((u) => u.email === body.email && u.password === body.password);
+    const user = users.find(
+      (u) =>
+        (u.email === body.email ||
+          (body.email === "citizen@sahayog.in" && u.email === "reporter@sahayog.in") ||
+          (body.email === "reporter@sahayog.in" && u.email === "citizen@sahayog.in")) &&
+        u.password === body.password
+    );
     if (!user) error("Invalid email or password", 401);
+    return json(config, { token: tokenFor(user), user: publicUser(user) });
+  }
+
+  if ((m = match(config, "post", "/api/auth/google"))) {
+    let email = "google.user@sahayog.in";
+    let name = body.name || "Google Verified Citizen";
+    let picture = "";
+    if (body.credential) {
+      try {
+        const payload = JSON.parse(atob(body.credential.split(".")[1]));
+        email = payload.email || email;
+        name = payload.name || name;
+        picture = payload.picture || picture;
+      } catch (e) {}
+    }
+    let user = users.find((u) => u.email === email);
+    const selectedDistrict = body.district || "Ranchi";
+    const selectedBlock = body.block || "Kanke";
+    if (!user) {
+      const selectedRole = body.role || ROLES.REPORTER;
+      const isPendingRole = [ROLES.UNIVERSITY, ROLES.INDUSTRY].includes(selectedRole);
+      user = {
+        id: `u-google-${Date.now()}`,
+        name,
+        email,
+        role: selectedRole,
+        district: selectedDistrict,
+        status: isPendingRole ? "pending" : "active",
+        org: body.org || (isPendingRole ? "Registered Entity" : ""),
+        picture,
+        location: {
+          district: selectedDistrict,
+          block: selectedBlock,
+          state: "Jharkhand",
+          lat: 23.3441,
+          lng: 85.3096,
+        },
+      };
+      users.push(user);
+      persist();
+    } else {
+      if (body.district) {
+        user.district = body.district;
+        user.location = user.location || {};
+        user.location.district = body.district;
+        persist();
+      }
+    }
     return json(config, { token: tokenFor(user), user: publicUser(user) });
   }
 
   if ((m = match(config, "post", "/api/auth/register"))) {
     if (users.some((u) => u.email === body.email)) error("Email already registered", 409);
     const pendingRoles = [ROLES.UNIVERSITY, ROLES.INDUSTRY];
+    const selectedDistrict = body.district || "Ranchi";
+    const selectedBlock = body.block || "Kanke";
     const user = {
       id: `u-${Date.now()}`,
       name: body.name,
       email: body.email,
       password: body.password,
       role: body.role,
+      district: selectedDistrict,
       status: pendingRoles.includes(body.role) ? "pending" : "active",
-      org: body.org || "",
+      org: body.org || (pendingRoles.includes(body.role) ? "Registered Entity" : ""),
+      location: {
+        district: selectedDistrict,
+        block: selectedBlock,
+        state: "Jharkhand",
+        lat: 23.3441,
+        lng: 85.3096,
+      },
     };
     users.push(user);
     persist();
@@ -194,8 +276,13 @@ export async function handleMockRequest(config) {
       landmark: body.landmark || "",
       lat: body.lat || 23.3441,
       lng: body.lng || 85.3096,
-      createdAt: new Date().toISOString(),
-      images: body.evidence || [{ url: "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=800&q=80" }],
+      images: Array.isArray(body.evidence) && body.evidence.length > 0
+        ? body.evidence.map((e) => ({
+            url: e.url || e.preview,
+            filename: e.filename || "evidence.jpg",
+            size: e.size || 102400,
+          }))
+        : [],
       severity: aiAnalysis.severity,
       distanceKm: Math.round(5 + Math.random() * 25),
       nearestUniversities: [
@@ -204,7 +291,7 @@ export async function handleMockRequest(config) {
       ],
       assignee: null,
       timeline: [
-        { at: new Date().toISOString(), label: "Reported by Community Reporter" },
+        { at: new Date().toISOString(), label: "Reported by Citizen" },
         { at: new Date().toISOString(), label: `AI synthesized formal problem statement (${aiAnalysis.priority} Priority, ${aiAnalysis.severity.score}% severity)` },
         { at: new Date().toISOString(), label: "Routed to nearest Higher Education Institutions" },
       ],

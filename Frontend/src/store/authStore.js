@@ -39,10 +39,33 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  googleLogin: async (credentialOrPayload, legacyRole) => {
+    set({ loading: true, error: null });
+    try {
+      const payload =
+        typeof credentialOrPayload === "object" && credentialOrPayload !== null && !credentialOrPayload.credential
+          ? credentialOrPayload
+          : typeof credentialOrPayload === "object" && credentialOrPayload.credential
+          ? credentialOrPayload
+          : { credential: credentialOrPayload, role: legacyRole };
+
+      const { data } = await axiosClient.post("/api/auth/google", payload);
+      get().setSession(data.token, data.user);
+      return data.user;
+    } catch (err) {
+      const message = err.response?.data?.message || "Google authentication failed";
+      set({ error: message });
+      throw err;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   register: async (payload) => {
     set({ loading: true, error: null });
     try {
       const { data } = await axiosClient.post("/api/auth/register", payload);
+      get().setSession(data.token, data.user);
       return data.user;
     } catch (err) {
       const message = err.response?.data?.message || "Registration failed";

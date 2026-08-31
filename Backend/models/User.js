@@ -18,14 +18,24 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Please provide a password'],
+      required: function () {
+        return !this.googleId;
+      },
       minlength: 6,
       select: false,
     },
+    googleId: {
+      type: String,
+      sparse: true,
+    },
+    picture: {
+      type: String,
+      default: '',
+    },
     role: {
       type: String,
-      enum: ['community_reporter', 'university', 'industry', 'admin'],
-      default: 'community_reporter',
+        enum: ['citizen', 'university', 'industry', 'admin'],
+        default: 'citizen',
     },
     status: {
       type: String,

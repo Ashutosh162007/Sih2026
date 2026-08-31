@@ -16,7 +16,11 @@ import { ROLES, ROLE_LABELS } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
 
 const NAV = {
-  [ROLES.REPORTER]: [
+  citizen: [
+    { to: "/my-issues", label: "My Reported Issues", icon: ClipboardList },
+    { to: "/report", label: "Report New Issue", icon: PlusCircle },
+  ],
+  community_reporter: [
     { to: "/my-issues", label: "My Reported Issues", icon: ClipboardList },
     { to: "/report", label: "Report New Issue", icon: PlusCircle },
   ],
@@ -39,9 +43,9 @@ export default function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
-  const items = NAV[user?.role] || [];
+  const items = NAV[user?.role] || NAV.citizen || [];
   const cta =
-    user?.role === ROLES.REPORTER
+    user?.role === "citizen" || user?.role === "community_reporter" || user?.role === ROLES.REPORTER
       ? { to: "/report", label: "+ Report Civic Issue" }
       : user?.role === ROLES.UNIVERSITY
         ? { to: "/university/queue", label: "Explore Issue Queue" }
@@ -112,8 +116,8 @@ export default function Sidebar() {
           <LogOut size={18} /> Sign out
         </button>
         <div className="mt-2 flex items-center justify-between px-3 text-[11px] text-slate-400">
-          <span>SIH 26043</span>
-          <span className="rounded bg-emerald-100 text-emerald-800 px-1 py-0.2 font-medium">NEP 2020</span>
+          <span>Sahayog Network</span>
+          <span className="rounded bg-teal-50 text-teal-800 px-1.5 py-0.5 font-medium">Active</span>
         </div>
       </div>
     </aside>

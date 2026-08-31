@@ -50,22 +50,10 @@ export default function MapLocationPicker({ value, onChange }) {
             onChange({ ...value, lat: pos.coords.latitude, lng: pos.coords.longitude });
           });
         }}
-        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-primary"
+        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-primary shadow-sm hover:bg-slate-50 transition"
       >
         <LocateFixed size={16} /> Use current location
       </button>
-      <div className="grid gap-3 sm:grid-cols-3">
-        {["district", "block", "landmark"].map((field) => (
-          <label key={field} className="block text-sm">
-            <span className="mb-1 block capitalize text-slate-600">{field}</span>
-            <input
-              value={value?.[field] || ""}
-              onChange={(e) => onChange({ ...value, [field]: e.target.value })}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none focus:border-primary"
-            />
-          </label>
-        ))}
-      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ const Notification = require('../models/Notification');
 const RoutingAssignment = require('../models/RoutingAssignment');
 const { analyzeProblemWithAI } = require('../services/aiService');
 const { rankUniversitiesForIssue } = require('../services/routingService');
-const { uploadToCloudinary } = require('../services/cloudinaryService');
+const { uploadToCloudinary, uploadDataUriToCloudinary } = require('../services/cloudinaryService');
 
 // @desc    Preview AI synthesis & severity without persisting
 // @route   POST /api/issues/ai-preview
@@ -62,14 +62,22 @@ const createIssue = async (req, res, next) => {
     // 3. Process Uploaded Images / Evidence
     let images = [];
     if (req.file) {
-      const uploaded = await uploadToCloudinary(req.file.buffer, req.file.originalname, req.file.mimetype);
-      images.push(uploaded);
-    } else if (Array.isArray(evidence)) {
-      images = evidence.map((e) => ({
-        url: e.url || 'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=800&q=80',
-        filename: e.filename || 'evidence.jpg',
-        size: e.size || 102400,
-      }));
+       const uploaded = await uploadToCloudinary(req.file.buffer, req.file.originalname, req.file.mimetype);
+       images.push(uploaded);
+    } else if (Array.isArray(evidence) && evidence.length > 0) {
+      images = await Promise.all(
+        evidence.map(async (e) => {
+          if (e.url && e.url.startsWith('data:image')) {
+            return await uploadDataUriToCloudinary(e.url, e.filename || 'evidence.jpg');
+          }
+          return {
+            url: e.url || e.preview,
+            filename: e.filename || 'evidence.jpg',
+            size: e.size || 102400,
+          };
+        })
+      );
+      images = images.filter((img) => img.url);
     }
 
     const reporterName = req.user?.name || req.body.reporterName || 'Asha Menon';
@@ -98,9 +106,9 @@ const createIssue = async (req, res, next) => {
       timeline: [
         {
           at: new Date(),
-          label: 'Reported by Community Reporter',
+          label: 'Reported by Citizen',
           actor: reporterName,
-          role: 'community_reporter',
+          role: 'citizen',
         },
         {
           at: new Date(),
@@ -288,7 +296,7 @@ const updateIssueStatus = async (req, res, next) => {
     if (status === 'Resolved') {
       await Notification.create({
         recipient: issue.reporter,
-        recipientRole: 'community_reporter',
+        recipientRole: 'citizen',
         issueId: String(issue._id),
         title: 'Issue Resolved! 🎉',
         message: `Your reported issue "${issue.title}" has been successfully resolved through university innovation and industry collaboration.`,

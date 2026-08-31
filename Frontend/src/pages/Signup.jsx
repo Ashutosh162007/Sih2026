@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import AuthLayout from "../layouts/AuthLayout";
 import { ROLES, ROLE_LABELS, JHARKHAND_DISTRICTS } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
@@ -18,6 +19,7 @@ const schema = z.object({
 export default function Signup() {
   const registerUser = useAuthStore((s) => s.register);
   const login = useAuthStore((s) => s.login);
+  const googleLogin = useAuthStore((s) => s.googleLogin);
   const homeForRole = useAuthStore((s) => s.homeForRole);
   const error = useAuthStore((s) => s.error);
   const loading = useAuthStore((s) => s.loading);
@@ -27,6 +29,9 @@ export default function Signup() {
     defaultValues: { role: ROLES.REPORTER, district: "Ranchi" },
   });
   const role = watch("role");
+  const district = watch("district");
+  const org = watch("org");
+  const name = watch("name");
 
   async function onSubmit(values) {
     const user = await registerUser(values);
@@ -38,6 +43,27 @@ export default function Signup() {
     navigate(homeForRole(session));
   }
 
+  async function handleGoogleSuccess(credentialResponse) {
+    if (credentialResponse.credential) {
+      try {
+        const user = await googleLogin({
+          credential: credentialResponse.credential,
+          role,
+          district: district || "Ranchi",
+          org,
+          name,
+        });
+        if (user.status === "pending") {
+          navigate("/signup/pending");
+          return;
+        }
+        navigate(homeForRole(user));
+      } catch (err) {
+        // Handled in store
+      }
+    }
+  }
+
   return (
     <AuthLayout headline="Join the Sahayog Innovation Network">
       <h2 className="font-display text-3xl font-bold text-slate-900">Create account</h2>
@@ -45,7 +71,29 @@ export default function Signup() {
         Citizens get instant access; University and Industry accounts undergo verification.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+      {/* Google Sign-up Button */}
+      <div className="mt-6 flex flex-col items-center justify-center">
+        <div className="w-full flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              console.error("Google Sign-up Error");
+            }}
+            useOneTap
+            shape="rectangular"
+            theme="outline"
+            size="large"
+            text="signup_with"
+            width="100%"
+          />
+        </div>
+      </div>
+
+      <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
+        <span className="h-px flex-1 bg-slate-200" /> or register with email <span className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <label className="block text-sm font-medium text-slate-700">
           Full Name / Representative Name
           <input

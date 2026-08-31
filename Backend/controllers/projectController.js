@@ -177,7 +177,7 @@ const fundProject = async (req, res, next) => {
       // Notify citizen reporter
       await Notification.create({
         recipient: issue.reporter,
-        recipientRole: 'community_reporter',
+        recipientRole: 'citizen',
         issueId: String(issue._id),
         projectId: String(project._id),
         title: 'Project Funded & Execution Started! 🚀',
@@ -248,7 +248,7 @@ const updateMilestones = async (req, res, next) => {
         // Notify citizen
         await Notification.create({
           recipient: issue.reporter,
-          recipientRole: 'community_reporter',
+          recipientRole: 'citizen',
           issueId: String(issue._id),
           title: 'Civic Issue Resolved! ✅',
           message: `Great news! The solution for "${issue.title}" has been successfully deployed and verified.`,

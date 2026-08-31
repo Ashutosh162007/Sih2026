@@ -36,7 +36,6 @@ app.get('/', (req, res) => {
     name: 'Sahayog API — Societal Innovation Collaboration Platform',
     version: '1.0.0',
     status: 'online',
-    problemStatementId: '26043',
     docs: '/api/health',
   });
 });
