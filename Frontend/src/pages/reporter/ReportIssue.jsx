@@ -5,7 +5,7 @@ import Stepper from "../../components/Stepper";
 import FileDropzone from "../../components/FileDropzone";
 import MapLocationPicker from "../../components/MapLocationPicker";
 import AssessmentSlider from "../../components/AssessmentSlider";
-import { ISSUE_CATEGORIES, JHARKHAND_DISTRICTS } from "../../lib/constants";
+import { ISSUE_CATEGORIES, JHARKHAND_DISTRICTS, JHARKHAND_DISTRICT_COORDS, DEFAULT_JHARKHAND_COORDS } from "../../lib/constants";
 import { useWizardStore } from "../../store/wizardStore";
 import { useAuthStore } from "../../store/authStore";
 import axiosClient from "../../api/axiosClient";
@@ -24,7 +24,8 @@ export default function ReportIssue() {
   useEffect(() => {
     if (!data.district) {
       const userDistrict = user?.location?.district || user?.district || "Ranchi";
-      update({ district: userDistrict });
+      const coords = JHARKHAND_DISTRICT_COORDS[userDistrict] || DEFAULT_JHARKHAND_COORDS;
+      update({ district: userDistrict, lat: coords.lat, lng: coords.lng });
     }
   }, [user]);
 
@@ -195,7 +196,11 @@ export default function ReportIssue() {
                 District (Jharkhand)
                 <select
                   value={data.district || "Ranchi"}
-                  onChange={(e) => update({ district: e.target.value })}
+                  onChange={(e) => {
+                    const selectedDistrict = e.target.value;
+                    const coords = JHARKHAND_DISTRICT_COORDS[selectedDistrict] || DEFAULT_JHARKHAND_COORDS;
+                    update({ district: selectedDistrict, lat: coords.lat, lng: coords.lng });
+                  }}
                   className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-[#0E4B4C]"
                 >
                   {JHARKHAND_DISTRICTS.map((d) => (
