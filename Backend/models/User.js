@@ -49,10 +49,13 @@ const UserSchema = new mongoose.Schema(
       default: false,
     },
     otp: {
-      code: { type: String, select: false },
-      expiresAt: { type: Date, select: false },
-      attempts: { type: Number, default: 0, select: false },
-      lastSentAt: { type: Date, select: false },
+      type: {
+        code: String,
+        expiresAt: Date,
+        attempts: { type: Number, default: 0 },
+        lastSentAt: Date,
+      },
+      select: false,
     },
     failedLoginAttempts: {
       type: Number,

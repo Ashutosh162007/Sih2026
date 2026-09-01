@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import BrandLogo from "../components/BrandLogo";
 
 export default function AuthLayout({ children, headline = "Empowering Societal Innovation" }) {
   return (
@@ -15,7 +15,7 @@ export default function AuthLayout({ children, headline = "Empowering Societal I
       >
         <div className="absolute inset-0 flex flex-col justify-between p-12 text-white">
           <Link to="/" className="flex items-center gap-2 font-display text-3xl font-bold">
-            <Sparkles className="text-[#D7F5DE]" size={28} />
+            <BrandLogo className="h-10 w-10" inverted />
             Sahayog
           </Link>
           <div>

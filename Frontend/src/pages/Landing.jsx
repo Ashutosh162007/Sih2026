@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Sparkles, MapPin, Building2, Briefcase, Award, ArrowRight, ShieldCheck, CheckCircle2 } from "lucide-react";
 import StatCard from "../components/StatCard";
+import BrandLogo from "../components/BrandLogo";
 import { mockAnalytics } from "../api/mockData";
 
 export default function Landing() {
@@ -10,9 +11,7 @@ export default function Landing() {
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0E4B4C] text-white shadow-md shadow-[#0E4B4C]/20">
-              <Sparkles size={22} className="text-[#D7F5DE]" />
-            </div>
+            <BrandLogo className="h-10 w-10 shadow-md shadow-[#0E4B4C]/20" />
             <div>
               <span className="font-display text-2xl font-bold tracking-tight text-[#0E4B4C]">Sahayog</span>
             </div>

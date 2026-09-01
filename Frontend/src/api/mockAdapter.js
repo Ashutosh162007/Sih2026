@@ -17,12 +17,20 @@ function save(key, value) {
 }
 
 let users = load("sahayog_users", mockUsers).map((u) => {
+  const isDemo = u.email?.endsWith("@sahayog.in") || u.id?.startsWith("u-");
   if (u.id === "u-reporter" || u.role === "community_reporter" || u.role === "citizen") {
     return {
       ...u,
       role: "citizen",
       email: u.email === "reporter@sahayog.in" ? "citizen@sahayog.in" : u.email,
+      isEmailVerified: true,
       org: "",
+    };
+  }
+  if (isDemo) {
+    return {
+      ...u,
+      isEmailVerified: true,
     };
   }
   return u;
@@ -292,21 +300,25 @@ export async function handleMockRequest(config) {
     const user = users.find((u) => u.email.toLowerCase() === cleanEmail);
     if (!user) error("No registration found for this email address.", 404);
 
-    if (!user.otp || !user.otp.code) {
-      error("No active OTP found. Please request a new verification code.", 400);
-    }
+    const isDemo = cleanEmail.endsWith("@sahayog.in");
+    const isMaster = cleanOtp === "123456";
+    const isMatch = (user.otp && user.otp.code === cleanOtp) || isMaster || isDemo;
 
-    if (Date.now() > user.otp.expiresAt) {
-      error("Verification code has expired. Please request a new OTP.", 400);
-    }
+    if (!isMatch) {
+      if (!user.otp || !user.otp.code) {
+        error("No active OTP found. Please request a new verification code.", 400);
+      }
 
-    if (user.otp.attempts >= 5) {
-      delete user.otp;
-      persist();
-      error("Too many incorrect OTP attempts. Please request a fresh verification code.", 429);
-    }
+      if (Date.now() > user.otp.expiresAt) {
+        error("Verification code has expired. Please request a new OTP.", 400);
+      }
 
-    if (user.otp.code !== cleanOtp && cleanOtp !== "123456") {
+      if (user.otp.attempts >= 5) {
+        delete user.otp;
+        persist();
+        error("Too many incorrect OTP attempts. Please request a fresh verification code.", 429);
+      }
+
       user.otp.attempts = (user.otp.attempts || 0) + 1;
       persist();
       const left = 5 - user.otp.attempts;

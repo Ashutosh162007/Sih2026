@@ -9,11 +9,11 @@ import {
   MapPin,
   PlusCircle,
   ShieldCheck,
-  Sparkles,
   Users,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
+import BrandLogo from "./BrandLogo";
 
 const NAV = {
   citizen: [
@@ -55,9 +55,7 @@ export default function Sidebar() {
     <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
       {/* Brand Header */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-100">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0E4B4C] text-white shadow-sm shadow-[#0E4B4C]/25">
-          <Sparkles size={18} className="text-[#D7F5DE]" />
-        </div>
+        <BrandLogo className="h-9 w-9 shadow-sm shadow-[#0E4B4C]/25" />
         <div>
           <p className="font-display text-lg font-bold text-[#0E4B4C] leading-none">Sahayog</p>
           <p className="text-[11px] text-slate-400 mt-0.5">Societal Innovation Portal</p>

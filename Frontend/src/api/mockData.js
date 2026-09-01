@@ -8,6 +8,7 @@ export const mockUsers = [
     password: "password",
     role: ROLES.REPORTER,
     status: "active",
+    isEmailVerified: true,
     org: "",
   },
   {
@@ -17,6 +18,7 @@ export const mockUsers = [
     password: "password",
     role: ROLES.UNIVERSITY,
     status: "active",
+    isEmailVerified: true,
     org: "Birla Institute of Technology (BIT) Mesra",
   },
   {
@@ -26,6 +28,7 @@ export const mockUsers = [
     password: "password",
     role: ROLES.UNIVERSITY,
     status: "pending",
+    isEmailVerified: true,
     org: "Kolhan University Chaibasa",
   },
   {
@@ -35,6 +38,7 @@ export const mockUsers = [
     password: "password",
     role: ROLES.INDUSTRY,
     status: "active",
+    isEmailVerified: true,
     org: "Tata Steel CSR & Sustainability",
   },
   {
@@ -44,6 +48,7 @@ export const mockUsers = [
     password: "password",
     role: ROLES.ADMIN,
     status: "active",
+    isEmailVerified: true,
     org: "Jharkhand State Innovation Council",
   },
 ];
