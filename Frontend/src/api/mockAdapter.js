@@ -300,9 +300,10 @@ export async function handleMockRequest(config) {
 
     notifications.unshift({
       id: `notif-${Date.now()}`,
-      title: `New ${issue.priority} Priority Issue Reported`,
-      message: `A new ${issue.category} challenge in ${issue.district} is now in the university queue.`,
+      title: `Challenge Registered & AI Evaluated 📋`,
+      message: `Your report "${issue.title}" was analyzed (${issue.priority} Priority, ${aiAnalysis.severity.score}% severity) and routed to nearest universities.`,
       type: "issue_reported",
+      issueId: issue.id,
       read: false,
       createdAt: new Date().toISOString(),
     });
@@ -338,13 +339,83 @@ export async function handleMockRequest(config) {
     if (!issue) error("Issue not found", 404);
     issue.status = body.status;
     issue.timeline.push({ at: new Date().toISOString(), label: `Status updated to ${body.status}` });
+    
+    notifications.unshift({
+      id: `notif-${Date.now()}`,
+      title: `Ticket Status Updated: ${body.status}`,
+      message: `Your issue ticket "${issue.title}" status has been updated to "${body.status}".`,
+      type: "status_update",
+      issueId: issue.id,
+      read: false,
+      createdAt: new Date().toISOString(),
+    });
+
     persist();
     return json(config, issue);
+  }
+
+  if ((m = match(config, "post", "/api/issues/:id/feedback"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    
+    issue.feedback = {
+      rating: Number(body.rating) || 5,
+      comment: body.comment || "",
+      verifiedByCitizen: body.verifiedByCitizen ?? true,
+      submittedAt: new Date().toISOString(),
+    };
+
+    issue.timeline.push({
+      at: new Date().toISOString(),
+      label: `Citizen Verified on Ground & Rated ⭐ ${issue.feedback.rating}/5${body.comment ? ` — "${body.comment}"` : ""}`,
+      actor: auth?.name || issue.reporterName || "Citizen Reporter",
+      role: "citizen",
+    });
+
+    notifications.unshift({
+      id: `notif-${Date.now()}`,
+      title: `Citizen Verified Resolution! ⭐ ${issue.feedback.rating}/5`,
+      message: `The citizen reporter verified resolution of "${issue.title}" with a ${issue.feedback.rating}/5 satisfaction rating.`,
+      type: "feedback_submitted",
+      issueId: issue.id,
+      read: false,
+      createdAt: new Date().toISOString(),
+    });
+
+    persist();
+    return json(config, { success: true, feedback: issue.feedback, issue });
   }
 
   if ((m = match(config, "get", "/api/university/queue"))) {
     const list = issues.filter((i) => ["New", "Under review", "Assigned"].includes(i.status));
     return json(config, list);
+  }
+
+  if ((m = match(config, "post", "/api/university/issues/:id/claim"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    const uniName = auth?.org || "Birla Institute of Technology (BIT) Mesra";
+    issue.status = "Assigned";
+    issue.assignee = uniName;
+    issue.timeline.push({
+      at: new Date().toISOString(),
+      label: `Claimed by ${uniName} for multidisciplinary team formation`,
+      actor: uniName,
+      role: "university",
+    });
+
+    notifications.unshift({
+      id: `notif-${Date.now()}`,
+      title: `University Claimed Ticket 🏛️`,
+      message: `${uniName} claimed your challenge "${issue.title}" and is mobilizing faculty and student research teams.`,
+      type: "team_formed",
+      issueId: issue.id,
+      read: false,
+      createdAt: new Date().toISOString(),
+    });
+
+    persist();
+    return json(config, { success: true, issue });
   }
 
   if ((m = match(config, "post", "/api/projects/:issueId/teams"))) {
@@ -372,7 +443,24 @@ export async function handleMockRequest(config) {
     }
     const issue = issues.find((i) => i.id === m.params.issueId);
     if (issue) {
-      issue.timeline.push({ at: new Date().toISOString(), label: `Team assembled by ${uniName}` });
+      issue.status = "Assigned";
+      issue.assignee = uniName;
+      issue.timeline.push({
+        at: new Date().toISOString(),
+        label: `Multidisciplinary team assembled by ${uniName}`,
+        actor: uniName,
+        role: "university",
+      });
+
+      notifications.unshift({
+        id: `notif-${Date.now()}`,
+        title: `University Team Assembled! 🎓`,
+        message: `${uniName} formed a student-faculty team for "${issue.title}" and is drafting the solution proposal.`,
+        type: "team_formed",
+        issueId: issue.id,
+        read: false,
+        createdAt: new Date().toISOString(),
+      });
     }
     persist();
     return json(config, project);
@@ -408,16 +496,23 @@ export async function handleMockRequest(config) {
     if (issue) {
       issue.status = "Assigned";
       issue.assignee = uniName;
-      issue.timeline.push({ at: new Date().toISOString(), label: `Proposal submitted to industry partners by ${uniName}` });
+      issue.timeline.push({
+        at: new Date().toISOString(),
+        label: `Solution proposal submitted to industry partners by ${uniName}`,
+        actor: uniName,
+        role: "university",
+      });
+
+      notifications.unshift({
+        id: `notif-${Date.now()}`,
+        title: `Technical Proposal Submitted! 📝`,
+        message: `${uniName} completed the technical proposal for "${project.title}" and submitted it for CSR industry funding.`,
+        type: "proposal_submitted",
+        issueId: issue.id,
+        read: false,
+        createdAt: new Date().toISOString(),
+      });
     }
-    notifications.unshift({
-      id: `notif-${Date.now()}`,
-      title: "New Proposal Awaiting Industry Funding",
-      message: `${uniName} submitted proposal for "${project.title}".`,
-      type: "proposal_submitted",
-      read: false,
-      createdAt: new Date().toISOString(),
-    });
     persist();
     return json(config, project, 201);
   }
@@ -446,17 +541,20 @@ export async function handleMockRequest(config) {
       issue.timeline.push({
         at: new Date().toISOString(),
         label: `Funding (₹${project.fundingAmount.toLocaleString("en-IN")}) approved by ${industryName}. Target completion: ${project.deadline}`,
+        actor: industryName,
+        role: "industry",
+      });
+
+      notifications.unshift({
+        id: `notif-${Date.now()}`,
+        title: `Project Funded & Execution Started! 🚀`,
+        message: `${industryName} approved ₹${project.fundingAmount.toLocaleString("en-IN")} funding for "${issue.title}". Target delivery: ${project.deadline}.`,
+        type: "funding_approved",
+        issueId: issue.id,
+        read: false,
+        createdAt: new Date().toISOString(),
       });
     }
-
-    notifications.unshift({
-      id: `notif-${Date.now()}`,
-      title: "Funding Approved & Deadline Set! 🚀",
-      message: `${industryName} committed ₹${project.fundingAmount.toLocaleString("en-IN")} with target deadline ${project.deadline}.`,
-      type: "funding_approved",
-      read: false,
-      createdAt: new Date().toISOString(),
-    });
 
     persist();
     return json(config, project);
@@ -465,27 +563,53 @@ export async function handleMockRequest(config) {
   if ((m = match(config, "patch", "/api/projects/:projectId/milestones"))) {
     const project = projects.find((p) => p.id === m.params.projectId);
     if (!project) error("Project not found", 404);
+    const prevMilestones = project.milestones || [];
     project.milestones = body.milestones || project.milestones;
+    const issue = issues.find((i) => i.id === project.issueId);
     
+    // Check if any milestone was newly completed
+    const newlyCompleted = project.milestones.find((m, i) => m.done && !prevMilestones[i]?.done);
+    if (newlyCompleted && issue) {
+      issue.timeline.push({
+        at: new Date().toISOString(),
+        label: `Milestone completed: ${newlyCompleted.name}`,
+        actor: project.university || "University Team",
+        role: "university",
+      });
+
+      notifications.unshift({
+        id: `notif-${Date.now()}`,
+        title: `Milestone Achieved! ⚙️`,
+        message: `University team achieved milestone: "${newlyCompleted.name}" for "${project.title}".`,
+        type: "milestone_completed",
+        issueId: issue.id,
+        read: false,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
     // If all milestones completed, resolve issue and notify reporter
     if (project.milestones.length > 0 && project.milestones.every((m) => m.done)) {
       project.status = "Completed";
-      const issue = issues.find((i) => i.id === project.issueId);
       if (issue) {
         issue.status = "Resolved";
         issue.timeline.push({
           at: new Date().toISOString(),
           label: "All innovation milestones completed. Issue marked as Resolved!",
+          actor: "Sahayog Platform",
+          role: "system",
+        });
+
+        notifications.unshift({
+          id: `notif-${Date.now() + 1}`,
+          title: `Civic Issue Resolved & Verified! ✅`,
+          message: `Great news! The solution for "${project.title}" has been successfully deployed and verified on the ground.`,
+          type: "issue_resolved",
+          issueId: issue.id,
+          read: false,
+          createdAt: new Date().toISOString(),
         });
       }
-      notifications.unshift({
-        id: `notif-${Date.now()}`,
-        title: "Civic Issue Resolved! ✅",
-        message: `The solution for "${project.title}" has been successfully completed and deployed.`,
-        type: "issue_resolved",
-        read: false,
-        createdAt: new Date().toISOString(),
-      });
     }
     persist();
     return json(config, project);

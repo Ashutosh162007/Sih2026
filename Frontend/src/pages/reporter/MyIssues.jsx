@@ -45,6 +45,7 @@ export default function MyIssues() {
             status={issue.status}
             priority={issue.priority}
             category={issue.category}
+            timeline={issue.timeline || []}
             metadata={{
               assignee: issue.assignee ? `Assigned to ${issue.assignee}` : "Routing to nearest universities",
               date: issue.createdAt,

@@ -14,41 +14,44 @@ import {
 } from "lucide-react";
 import { ROLES, ROLE_LABELS } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
-
-const NAV = {
-  citizen: [
-    { to: "/my-issues", label: "My Reported Issues", icon: ClipboardList },
-    { to: "/report", label: "Report New Issue", icon: PlusCircle },
-  ],
-  community_reporter: [
-    { to: "/my-issues", label: "My Reported Issues", icon: ClipboardList },
-    { to: "/report", label: "Report New Issue", icon: PlusCircle },
-  ],
-  [ROLES.UNIVERSITY]: [
-    { to: "/university/dashboard", label: "University Dashboard", icon: LayoutDashboard },
-    { to: "/university/queue", label: "Nearest Issue Queue", icon: MapPin },
-    { to: "/university/projects", label: "Innovation Projects", icon: FolderKanban },
-  ],
-  [ROLES.INDUSTRY]: [
-    { to: "/industry/queue", label: "Incoming Proposals", icon: ClipboardList },
-    { to: "/industry/projects", label: "Funded Projects", icon: FolderKanban },
-  ],
-  [ROLES.ADMIN]: [
-    { to: "/admin/dashboard", label: "State Analytics", icon: LayoutDashboard },
-    { to: "/admin/verify-accounts", label: "Verify Accounts", icon: ShieldCheck },
-  ],
-};
+import { useLanguageStore } from "../store/languageStore";
 
 export default function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const t = useLanguageStore((s) => s.t);
   const navigate = useNavigate();
+
+  const NAV = {
+    citizen: [
+      { to: "/my-issues", label: t("navMyIssues"), icon: ClipboardList },
+      { to: "/report", label: t("navReportIssue"), icon: PlusCircle },
+    ],
+    community_reporter: [
+      { to: "/my-issues", label: t("navMyIssues"), icon: ClipboardList },
+      { to: "/report", label: t("navReportIssue"), icon: PlusCircle },
+    ],
+    [ROLES.UNIVERSITY]: [
+      { to: "/university/dashboard", label: t("university"), icon: LayoutDashboard },
+      { to: "/university/queue", label: t("navCampusQueue"), icon: MapPin },
+      { to: "/university/projects", label: t("navProjects"), icon: FolderKanban },
+    ],
+    [ROLES.INDUSTRY]: [
+      { to: "/industry/queue", label: t("navCsrQueue"), icon: ClipboardList },
+      { to: "/industry/projects", label: t("navFundedProjects"), icon: FolderKanban },
+    ],
+    [ROLES.ADMIN]: [
+      { to: "/admin/dashboard", label: t("navAdminAnalytics"), icon: LayoutDashboard },
+      { to: "/admin/verify-accounts", label: t("navVerifyAccounts"), icon: ShieldCheck },
+    ],
+  };
+
   const items = NAV[user?.role] || NAV.citizen || [];
   const cta =
     user?.role === "citizen" || user?.role === "community_reporter" || user?.role === ROLES.REPORTER
-      ? { to: "/report", label: "+ Report Civic Issue" }
+      ? { to: "/report", label: `+ ${t("navReportIssue")}` }
       : user?.role === ROLES.UNIVERSITY
-        ? { to: "/university/queue", label: "Explore Issue Queue" }
+        ? { to: "/university/queue", label: t("navCampusQueue") }
         : null;
 
   return (

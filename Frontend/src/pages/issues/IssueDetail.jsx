@@ -4,6 +4,8 @@ import { Sparkles, MapPin, Building2, Calendar, User, ArrowRight, CheckCircle2 }
 import AssessmentSlider from "../../components/AssessmentSlider";
 import StatusBadge from "../../components/StatusBadge";
 import TeamBuilder from "../../components/TeamBuilder";
+import TicketProgressTracker from "../../components/TicketProgressTracker";
+import CitizenFeedbackCard from "../../components/CitizenFeedbackCard";
 import axiosClient from "../../api/axiosClient";
 import { formatDate } from "../../lib/format";
 import { ROLES } from "../../lib/constants";
@@ -14,12 +16,20 @@ export default function IssueDetail() {
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const [issue, setIssue] = useState(null);
+  const [project, setProject] = useState(null);
   const [team, setTeam] = useState([]);
   const [claiming, setClaiming] = useState(false);
 
   useEffect(() => {
     axiosClient.get(`/api/issues/${id}`).then((res) => {
       setIssue(res.data);
+      axiosClient
+        .get(`/api/university/projects`)
+        .then((pRes) => {
+          const match = (pRes.data || []).find((p) => p.issueId === id || p.issueId === res.data.id || p.issueId === res.data._id);
+          if (match) setProject(match);
+        })
+        .catch(() => {});
     });
   }, [id]);
 
@@ -49,10 +59,33 @@ export default function IssueDetail() {
     }
   }
 
+  function handleFeedbackSubmitted(updated) {
+    if (updated?.issue) {
+      setIssue(updated.issue);
+    } else {
+      setIssue((prev) => ({
+        ...prev,
+        feedback: updated?.feedback || updated,
+      }));
+    }
+  }
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[65%_35%] pb-16">
-      {/* Main Content */}
-      <section className="space-y-6">
+    <div className="space-y-6 pb-16">
+      {/* Amazon-Style Live Ticket Progress Tracker */}
+      <TicketProgressTracker issue={issue} project={project} />
+
+      {/* Citizen Feedback & 5-Star Resolution Verification Card (when Resolved) */}
+      {(issue.status === "Resolved" || issue.feedback) && (
+        <CitizenFeedbackCard
+          issue={issue}
+          onFeedbackSubmitted={handleFeedbackSubmitted}
+        />
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-[65%_35%]">
+        {/* Main Content */}
+        <section className="space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge label={issue.priority} variant="priority" />
@@ -207,6 +240,7 @@ export default function IssueDetail() {
           </div>
         )}
       </aside>
+      </div>
     </div>
   );
 }
