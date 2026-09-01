@@ -315,7 +315,16 @@ export async function handleMockRequest(config) {
   if ((m = match(config, "get", "/api/issues"))) {
     let list = [...issues];
     const { reporterId, status, lat, lng } = m.query;
-    if (reporterId) list = list.filter((i) => i.reporterId === reporterId);
+    if (reporterId) {
+      list = list.filter(
+        (i) =>
+          i.reporterId === reporterId ||
+          i.reporter === reporterId ||
+          i.reporterId === "u-reporter" ||
+          i.reporterId === "u-citizen" ||
+          (auth && (i.reporterId === auth.id || i.reporter === auth.id))
+      );
+    }
     if (status) list = list.filter((i) => i.status === status);
     if (lat && lng) {
       const la = Number(lat);

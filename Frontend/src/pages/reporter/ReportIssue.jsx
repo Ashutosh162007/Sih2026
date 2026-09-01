@@ -5,7 +5,6 @@ import Stepper from "../../components/Stepper";
 import FileDropzone from "../../components/FileDropzone";
 import MapLocationPicker from "../../components/MapLocationPicker";
 import AssessmentSlider from "../../components/AssessmentSlider";
-import VoiceInputButton from "../../components/VoiceInputButton";
 import { ISSUE_CATEGORIES, JHARKHAND_DISTRICTS, JHARKHAND_DISTRICT_COORDS, DEFAULT_JHARKHAND_COORDS } from "../../lib/constants";
 import { useWizardStore } from "../../store/wizardStore";
 import { useAuthStore } from "../../store/authStore";
@@ -127,26 +126,18 @@ export default function ReportIssue() {
       </div>
 
       <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {/* Step 0: Basic Info */}
         {step === 0 && (
           <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-medium text-slate-700">
-                  {t("issueTitleLabel")}
-                </label>
-                <VoiceInputButton
-                  compact
-                  currentValue={data.title || ""}
-                  onTranscript={(text) => update({ title: text })}
-                />
-              </div>
+            <label className="block text-sm font-medium text-slate-700">
+              {t("issueTitleLabel")}
               <input
                 value={data.title || ""}
                 onChange={(e) => update({ title: e.target.value })}
                 placeholder={t("issueTitlePlaceholder")}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
               />
-            </div>
+            </label>
 
             <label className="block text-sm font-medium text-slate-700">
               {t("categoryLabel")}
@@ -166,42 +157,30 @@ export default function ReportIssue() {
           </div>
         )}
 
+        {/* Step 1: Short Description */}
         {step === 1 && (
           <div className="space-y-4">
-            <VoiceInputButton
-              currentValue={data.description || ""}
-              onTranscript={(text) => update({ description: text })}
-            />
-
             <div className="rounded-xl bg-[#D7F5DE]/30 border border-emerald-200 p-3 text-xs text-emerald-900 flex items-start gap-2">
               <Sparkles size={16} className="text-emerald-700 shrink-0 mt-0.5" />
               <span>
-                <strong>Tip:</strong> Keep it concise or speak above! Mention who is affected and key hazard details. The Sahayog AI model will automatically synthesize a formal, comprehensive problem statement.
+                <strong>Tip:</strong> Keep it concise! Mention who is affected, key hazard details, and duration. The Sahayog AI model will automatically synthesize a formal, comprehensive problem statement for university researchers.
               </span>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-medium text-slate-700">
-                  {t("descLabel")}
-                </label>
-                <VoiceInputButton
-                  compact
-                  currentValue={data.description || ""}
-                  onTranscript={(text) => update({ description: text })}
-                />
-              </div>
+            <label className="block text-sm font-medium text-slate-700">
+              {t("descLabel")}
               <textarea
                 rows={6}
                 value={data.description || ""}
                 onChange={(e) => update({ description: e.target.value })}
                 placeholder={t("descPlaceholder")}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10 leading-relaxed"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10 leading-relaxed"
               />
-            </div>
+            </label>
           </div>
         )}
 
+        {/* Step 2: Evidence */}
         {step === 2 && (
           <div>
             <p className="text-sm font-medium text-slate-700 mb-2">{t("photoLabel")}</p>
@@ -212,6 +191,7 @@ export default function ReportIssue() {
           </div>
         )}
 
+        {/* Step 3: Location */}
         {step === 3 && (
           <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
@@ -245,24 +225,15 @@ export default function ReportIssue() {
               </label>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-medium text-slate-700">
-                  {t("landmarkLabel")}
-                </label>
-                <VoiceInputButton
-                  compact
-                  currentValue={data.landmark || ""}
-                  onTranscript={(text) => update({ landmark: text })}
-                />
-              </div>
+            <label className="block text-sm font-medium text-slate-700">
+              {t("landmarkLabel")}
               <input
                 value={data.landmark || ""}
                 onChange={(e) => update({ landmark: e.target.value })}
                 placeholder={t("landmarkPlaceholder")}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-[#0E4B4C]"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-[#0E4B4C]"
               />
-            </div>
+            </label>
 
             <div className="pt-2">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">

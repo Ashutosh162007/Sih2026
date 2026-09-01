@@ -1,24 +1,28 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Sparkles, MapPin, Building2, Calendar, User, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Sparkles, MapPin, Building2, Calendar, User, ArrowRight, CheckCircle2, Award } from "lucide-react";
 import AssessmentSlider from "../../components/AssessmentSlider";
 import StatusBadge from "../../components/StatusBadge";
 import TeamBuilder from "../../components/TeamBuilder";
 import TicketProgressTracker from "../../components/TicketProgressTracker";
 import CitizenFeedbackCard from "../../components/CitizenFeedbackCard";
+import CsrImpactCertificateModal from "../../components/CsrImpactCertificateModal";
 import axiosClient from "../../api/axiosClient";
 import { formatDate } from "../../lib/format";
 import { ROLES } from "../../lib/constants";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 export default function IssueDetail() {
   const { id } = useParams();
   const user = useAuthStore((s) => s.user);
+  const { t } = useLanguageStore();
   const navigate = useNavigate();
   const [issue, setIssue] = useState(null);
   const [project, setProject] = useState(null);
   const [team, setTeam] = useState([]);
   const [claiming, setClaiming] = useState(false);
+  const [showCertModal, setShowCertModal] = useState(false);
 
   useEffect(() => {
     axiosClient.get(`/api/issues/${id}`).then((res) => {
@@ -36,7 +40,7 @@ export default function IssueDetail() {
   if (!issue) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-sm text-slate-500 animate-pulse">Loading civic challenge details…</p>
+        <p className="text-sm text-slate-500 animate-pulse">{t("aiSynthesizing")}</p>
       </div>
     );
   }
@@ -70,6 +74,8 @@ export default function IssueDetail() {
     }
   }
 
+  const isFundedOrResolved = issue.status === "Resolved" || issue.status === "Funded" || project?.funded;
+
   return (
     <div className="space-y-6 pb-16">
       {/* Amazon-Style Live Ticket Progress Tracker */}
@@ -87,14 +93,27 @@ export default function IssueDetail() {
         {/* Main Content */}
         <section className="space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge label={issue.priority} variant="priority" />
-            <StatusBadge label={issue.status} />
-            <StatusBadge label={issue.category} variant="category" />
-            {issue.distanceKm && (
-              <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                📍 {issue.distanceKm} km from campus
-              </span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge label={issue.priority} variant="priority" />
+              <StatusBadge label={issue.status} />
+              <StatusBadge label={issue.category} variant="category" />
+              {issue.distanceKm && (
+                <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                  📍 {issue.distanceKm} {t("kmFromCampus")}
+                </span>
+              )}
+            </div>
+
+            {isFundedOrResolved && (
+              <button
+                type="button"
+                onClick={() => setShowCertModal(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-teal-300 bg-teal-50/60 px-3 py-1.5 text-xs font-bold text-[#0E4B4C] hover:bg-teal-100/80 transition cursor-pointer shadow-xs"
+              >
+                <Award size={14} className="text-teal-700" />
+                <span>{t("exportCsrCert")}</span>
+              </button>
             )}
           </div>
 
@@ -104,7 +123,7 @@ export default function IssueDetail() {
 
           <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-500 border-b border-slate-100 pb-4">
             <span className="flex items-center gap-1 font-medium text-slate-700">
-              <User size={14} className="text-teal-700" /> {issue.reporterName || "Citizen"}
+              <User size={14} className="text-teal-700" /> {issue.reporterName || t("citizen")}
             </span>
             <span className="flex items-center gap-1">
               <MapPin size={14} /> {issue.district}, {issue.block} {issue.landmark ? `(${issue.landmark})` : ""}
@@ -115,7 +134,7 @@ export default function IssueDetail() {
           </div>
 
           <div className="mt-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Citizen Description</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{t("citizenDescription")}</h3>
             <p className="mt-1.5 text-sm text-slate-700 leading-relaxed">{issue.description}</p>
           </div>
 
@@ -123,7 +142,7 @@ export default function IssueDetail() {
           {issue.aiProblemStatement && (
             <div className="mt-6 rounded-xl border border-teal-200 bg-[#D7F5DE]/25 p-4">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0E4B4C]">
-                <Sparkles size={16} /> AI-Synthesized Problem Statement
+                <Sparkles size={16} /> {t("aiSynthesizedTitle")}
               </div>
               <div className="mt-2.5 text-xs text-slate-800 font-mono whitespace-pre-wrap leading-relaxed">
                 {issue.aiProblemStatement}
@@ -133,7 +152,7 @@ export default function IssueDetail() {
 
           {/* Evidence Photos */}
           <div className="mt-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Photographic Evidence</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{t("evidencePhotos")}</h3>
             {issue.images && issue.images.length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 {issue.images.map((img, idx) => {
@@ -159,13 +178,13 @@ export default function IssueDetail() {
 
         {/* Timeline */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="font-display text-lg font-bold text-slate-900">Project & Status Timeline</h3>
+          <h3 className="font-display text-lg font-bold text-slate-900">{t("liveActivityFeed")}</h3>
           <ol className="mt-4 relative border-l border-teal-200 ml-3 space-y-4 text-xs">
-            {issue.timeline?.map((t, idx) => (
+            {issue.timeline?.map((timelineItem, idx) => (
               <li key={idx} className="ml-4">
                 <span className="absolute -left-1.5 mt-1 h-3 w-3 rounded-full border-2 border-white bg-[#0E4B4C]" />
-                <p className="font-semibold text-slate-800">{t.label}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">{formatDate(t.at)} {t.actor ? `· ${t.actor}` : ""}</p>
+                <p className="font-semibold text-slate-800">{timelineItem.label}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">{formatDate(timelineItem.at)} {timelineItem.actor ? `· ${timelineItem.actor}` : ""}</p>
               </li>
             ))}
           </ol>
@@ -177,16 +196,16 @@ export default function IssueDetail() {
         {/* Severity Assessment */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="font-display text-base font-bold text-slate-900 flex items-center gap-2">
-            <Sparkles size={16} className="text-[#0E4B4C]" /> AI Severity Scorecard
+            <Sparkles size={16} className="text-[#0E4B4C]" /> {t("compositeScore")}
           </h2>
           <div className="mt-4 space-y-4">
-            <AssessmentSlider label="Physical / Flooding Vulnerability" value={issue.severity?.flooding || 65} />
-            <AssessmentSlider label="Public Safety & Health Risk" value={issue.severity?.publicRisk || 80} />
-            <AssessmentSlider label="Urgency for Intervention" value={issue.severity?.urgency || 85} />
+            <AssessmentSlider label={t("publicRisk")} value={issue.severity?.flooding || 65} />
+            <AssessmentSlider label={t("publicRisk")} value={issue.severity?.publicRisk || 80} />
+            <AssessmentSlider label={t("urgencyLevel")} value={issue.severity?.urgency || 85} />
             <div className="rounded-xl bg-slate-50 p-3 text-center border border-slate-100">
-              <span className="text-xs text-slate-500 font-medium">Composite Severity Score: </span>
+              <span className="text-xs text-slate-500 font-medium">{t("compositeScore")}: </span>
               <span className="text-sm font-bold text-teal-800">
-                {issue.severity?.score || 82} / 100 ({issue.priority} Priority)
+                {issue.severity?.score || 82} / 100 ({issue.priority})
               </span>
             </div>
           </div>
@@ -195,7 +214,7 @@ export default function IssueDetail() {
         {/* Nearest Universities Routing */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="font-display text-base font-bold text-slate-900 flex items-center gap-2">
-            <Building2 size={16} className="text-blue-600" /> Nearest Higher Education Hubs
+            <Building2 size={16} className="text-blue-600" /> {t("nearestRoutingTitle")}
           </h3>
           <p className="text-xs text-slate-500 mt-1">Calculated via Geodesic Haversine algorithm</p>
           <div className="mt-3 space-y-2.5 text-xs">
@@ -204,17 +223,17 @@ export default function IssueDetail() {
                 <div key={idx} className="flex items-center justify-between rounded-xl border border-slate-100 bg-[#F7F8FA] p-2.5">
                   <div>
                     <p className="font-semibold text-slate-800">{uni.name}</p>
-                    <p className="text-[11px] text-slate-500">{uni.distanceKm} km away</p>
+                    <p className="text-[11px] text-slate-500">{uni.distanceKm} {t("kmFromCampus")}</p>
                   </div>
                   <span className="rounded-md bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 text-[10px]">
-                    {idx === 0 ? "Priority 1" : "Priority 2"}
+                    {idx === 0 ? t("priority1") : t("priority2")}
                   </span>
                 </div>
               ))
             ) : (
               <div className="rounded-xl border border-slate-100 bg-[#F7F8FA] p-2.5">
                 <p className="font-semibold text-slate-800">Birla Institute of Technology (BIT) Mesra</p>
-                <p className="text-[11px] text-slate-500">12.4 km away · Nearest Campus</p>
+                <p className="text-[11px] text-slate-500">12.4 km · {t("nearestCampus")}</p>
               </div>
             )}
           </div>
@@ -224,23 +243,31 @@ export default function IssueDetail() {
         {user?.role === ROLES.UNIVERSITY && (
           <div className="rounded-2xl border border-teal-200 bg-white p-5 shadow-sm">
             <h3 className="font-display text-base font-bold text-slate-900 mb-1">
-              Assemble Multidisciplinary Team
+              {t("assembleTeamTitle")}
             </h3>
             <p className="text-xs text-slate-500 mb-3">
-              Constitute student and faculty teams across disciplines to prepare the solution proposal.
+              {t("assembleTeamSubtitle")}
             </p>
             <TeamBuilder team={team} onChange={setTeam} />
             <button
               type="button"
               onClick={saveTeam}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0E4B4C] py-3 text-sm font-bold text-white shadow-md shadow-[#0E4B4C]/20 hover:bg-[#0b3b3c] transition"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0E4B4C] py-3 text-sm font-bold text-white shadow-md shadow-[#0E4B4C]/20 hover:bg-[#0b3b3c] transition cursor-pointer"
             >
-              Save Team & Draft Proposal <ArrowRight size={16} />
+              {t("saveTeamDraftProposal")} <ArrowRight size={16} />
             </button>
           </div>
         )}
       </aside>
       </div>
+
+      {/* Printable 1-Page A4 PDF CSR Impact Certificate Modal */}
+      <CsrImpactCertificateModal
+        isOpen={showCertModal}
+        onClose={() => setShowCertModal(false)}
+        issue={issue}
+        project={project}
+      />
     </div>
   );
 }

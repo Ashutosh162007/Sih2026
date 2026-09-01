@@ -19,8 +19,19 @@ import { useLanguageStore } from "../store/languageStore";
 export default function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const t = useLanguageStore((s) => s.t);
+  const { language, t } = useLanguageStore();
   const navigate = useNavigate();
+
+  const getRoleLabel = () => {
+    if (!user?.role) return t("citizen");
+    if (user.role === "citizen" || user.role === "community_reporter" || user.role === ROLES.REPORTER) {
+      return t("citizen");
+    }
+    if (user.role === ROLES.UNIVERSITY) return t("university");
+    if (user.role === ROLES.INDUSTRY) return t("industry");
+    if (user.role === ROLES.ADMIN) return t("admin");
+    return ROLE_LABELS[user.role] || user.role;
+  };
 
   const NAV = {
     citizen: [
@@ -62,8 +73,8 @@ export default function Sidebar() {
           <Sparkles size={18} className="text-[#D7F5DE]" />
         </div>
         <div>
-          <p className="font-display text-lg font-bold text-[#0E4B4C] leading-none">Sahayog</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Societal Innovation Portal</p>
+          <p className="font-display text-lg font-bold text-[#0E4B4C] leading-none">{t("portalBrand")}</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">{t("portalSubtitle")}</p>
         </div>
       </div>
 
@@ -72,7 +83,7 @@ export default function Sidebar() {
         <div className="mx-3 mt-3 rounded-xl bg-[#F7F8FA] border border-slate-200/70 p-2.5">
           <p className="text-xs font-semibold text-slate-800 truncate">{user.name}</p>
           <p className="text-[11px] text-teal-700 font-medium truncate">
-            {user.org || ROLE_LABELS[user.role]}
+            {user.org || getRoleLabel()}
           </p>
         </div>
       )}
@@ -114,13 +125,13 @@ export default function Sidebar() {
             logout();
             navigate("/login");
           }}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
         >
-          <LogOut size={18} /> Sign out
+          <LogOut size={18} /> {t("signOut")}
         </button>
         <div className="mt-2 flex items-center justify-between px-3 text-[11px] text-slate-400">
-          <span>Sahayog Network</span>
-          <span className="rounded bg-teal-50 text-teal-800 px-1.5 py-0.5 font-medium">Active</span>
+          <span>{t("networkOverview")}</span>
+          <span className="rounded bg-teal-50 text-teal-800 px-1.5 py-0.5 font-medium">{t("networkActive")}</span>
         </div>
       </div>
     </aside>

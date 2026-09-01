@@ -322,6 +322,13 @@ const updateIssueStatus = async (req, res, next) => {
       status: issue.status,
       timeline: issue.timeline,
     });
+    } catch (err) {
+
+    next(err);
+
+  }
+
+};
 // @desc    Submit citizen verification & 5-star rating feedback
 // @route   POST /api/issues/:id/feedback
 // @access  Public / Private
