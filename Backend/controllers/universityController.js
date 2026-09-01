@@ -1,5 +1,6 @@
 const Issue = require('../models/Issue');
 const Project = require('../models/Project');
+const Notification = require('../models/Notification');
 const { calculateHaversineDistance } = require('../services/routingService');
 
 // @desc    Get university issue queue (sorted by proximity & relevance)
@@ -101,6 +102,17 @@ const claimIssue = async (req, res, next) => {
     });
 
     await issue.save();
+
+    if (issue.reporter) {
+      await Notification.create({
+        recipient: issue.reporter,
+        recipientRole: 'citizen',
+        issueId: String(issue._id),
+        title: 'University Claimed Ticket 🏛️',
+        message: `${uniName} claimed your issue "${issue.title}" and is mobilizing faculty and student research teams.`,
+        type: 'team_formed',
+      });
+    }
 
     res.json({
       success: true,

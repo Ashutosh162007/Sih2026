@@ -8,6 +8,7 @@ const {
   getIssues,
   getIssueById,
   updateIssueStatus,
+  submitFeedback,
 } = require('../controllers/issueController');
 
 router.post('/ai-preview', previewAI);
@@ -19,5 +20,6 @@ router.route('/:id')
   .get(getIssueById);
 
 router.patch('/:id/status', protect, updateIssueStatus);
+router.post('/:id/feedback', submitFeedback);
 
 module.exports = router;

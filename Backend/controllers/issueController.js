@@ -132,7 +132,7 @@ const createIssue = async (req, res, next) => {
       status: 'queued',
     });
 
-    // 6. Notify Universities
+    // 6. Notify Universities & Citizen Reporter
     await Notification.create({
       recipientRole: 'university',
       issueId: String(issue._id),
@@ -140,6 +140,17 @@ const createIssue = async (req, res, next) => {
       message: `A new ${aiAnalysis.category} issue in ${district} (${nearestUniversities[0]?.distanceKm} km from campus) is awaiting team formation.`,
       type: 'issue_reported',
     });
+
+    if (req.user?._id) {
+      await Notification.create({
+        recipient: req.user._id,
+        recipientRole: 'citizen',
+        issueId: String(issue._id),
+        title: 'Challenge Registered & AI Evaluated 📋',
+        message: `Your report "${issue.title}" was analyzed (${aiAnalysis.priority} Priority, ${aiAnalysis.severity.score}% severity) and routed to nearest higher education institutions.`,
+        type: 'issue_reported',
+      });
+    }
 
     // Format response to match frontend interface
     const responseData = {
@@ -311,6 +322,49 @@ const updateIssueStatus = async (req, res, next) => {
       status: issue.status,
       timeline: issue.timeline,
     });
+// @desc    Submit citizen verification & 5-star rating feedback
+// @route   POST /api/issues/:id/feedback
+// @access  Public / Private
+const submitFeedback = async (req, res, next) => {
+  try {
+    const { rating, comment, verifiedByCitizen } = req.body;
+    const issue = await Issue.findById(req.params.id);
+
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    issue.feedback = {
+      rating: Number(rating) || 5,
+      comment: comment || '',
+      verifiedByCitizen: verifiedByCitizen ?? true,
+      submittedAt: new Date(),
+    };
+
+    issue.timeline.push({
+      at: new Date(),
+      label: `Citizen Verified on Ground & Rated ⭐ ${issue.feedback.rating}/5${comment ? ` — "${comment}"` : ''}`,
+      actor: req.user?.name || issue.reporterName || 'Citizen Reporter',
+      role: 'citizen',
+    });
+
+    await issue.save();
+
+    // Alert admin & university
+    await Notification.create({
+      recipientRole: 'university',
+      issueId: String(issue._id),
+      title: `Citizen Verified Resolution! ⭐ ${issue.feedback.rating}/5`,
+      message: `The citizen reporter verified resolution of "${issue.title}" with a ${issue.feedback.rating}/5 rating.`,
+      type: 'feedback_submitted',
+    });
+
+    res.json({
+      success: true,
+      message: 'Citizen feedback and verification logged successfully',
+      feedback: issue.feedback,
+      issue,
+    });
   } catch (err) {
     next(err);
   }
@@ -322,4 +376,5 @@ module.exports = {
   getIssues,
   getIssueById,
   updateIssueStatus,
+  submitFeedback,
 };

@@ -121,6 +121,12 @@ const IssueSchema = new mongoose.Schema(
         role: { type: String },
       },
     ],
+    feedback: {
+      rating: { type: Number, min: 1, max: 5 },
+      comment: { type: String, default: '' },
+      verifiedByCitizen: { type: Boolean, default: true },
+      submittedAt: { type: Date },
+    },
   },
   {
     timestamps: true,
