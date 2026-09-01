@@ -15,41 +15,21 @@ const protect = async (req, res, next) => {
   try {
     const secret = process.env.JWT_SECRET || 'sahayog_sih2026_jwt_secret_dev_key_2026';
     
-    // Check if token is standard JWT or encoded demo token
-    try {
-      const decoded = jwt.verify(token, secret);
-      const user = await User.findById(decoded.id);
-      if (user) {
-        req.user = user;
-        return next();
-      }
-    } catch {
-      // Fallback for btoa demo token
-      try {
-        const decodedFallback = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
-        const user = await User.findById(decodedFallback.id) || await User.findOne({ email: decodedFallback.email });
-        if (user) {
-          req.user = user;
-          return next();
-        }
-        // Fallback synthetic mock user object
-        req.user = {
-          _id: decodedFallback.id || 'u-demo',
-          id: decodedFallback.id || 'u-demo',
-          name: decodedFallback.name || 'Demo User',
-          role: decodedFallback.role || 'citizen',
-          org: decodedFallback.org || 'Sahayog Network',
-          status: 'active',
-        };
-        return next();
-      } catch {
-        return res.status(401).json({ success: false, message: 'Token is invalid or expired' });
-      }
+    // Verify standard JWT token with secret
+    const decoded = jwt.verify(token, secret);
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'User account not found for this token' });
     }
 
-    return res.status(401).json({ success: false, message: 'User not found for this token' });
+    req.user = user;
+    return next();
   } catch (err) {
-    return res.status(401).json({ success: false, message: 'Not authorized to access this route', error: err.message });
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+    }
+    return res.status(401).json({ success: false, message: 'Invalid authentication token. Access denied.' });
   }
 };
 
