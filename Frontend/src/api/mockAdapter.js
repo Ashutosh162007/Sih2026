@@ -349,7 +349,6 @@ export async function handleMockRequest(config) {
     return json(config, {
       success: true,
       message: `A new 6-digit verification code has been sent to ${cleanEmail}.`,
-      previewOtp: otpCode,
     });
   }
 
@@ -460,7 +459,6 @@ export async function handleMockRequest(config) {
         requireOtp: true,
         email: cleanEmail,
         message: `Verification code sent to ${cleanEmail}. Please enter the 6-digit code to activate your account.`,
-        previewOtp: otpCode,
       },
       201
     );

@@ -95,7 +95,6 @@ export default function Signup() {
   const [otpError, setOtpError] = useState("");
   const [otpSuccess, setOtpSuccess] = useState("");
   const [resendCountdown, setResendCountdown] = useState(60);
-  const [previewOtp, setPreviewOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
   const otpInputsRef = useRef([]);
@@ -149,7 +148,6 @@ export default function Signup() {
       const response = await registerUser(values);
       if (response && response.requireOtp) {
         setPendingEmail(response.email || values.email);
-        setPreviewOtp(response.previewOtp || "");
         setShowOtpModal(true);
         setOtpError("");
         setOtpSuccess(response.message || "A 6-digit verification code has been sent to your email.");
@@ -230,7 +228,6 @@ export default function Signup() {
     setOtpSuccess("");
     try {
       const result = await resendOtp(pendingEmail);
-      setPreviewOtp(result.previewOtp || "");
       setOtpSuccess(result.message || "A new 6-digit verification code has been sent.");
       setResendCountdown(60);
       setOtpDigits(["", "", "", "", "", ""]);
@@ -466,31 +463,8 @@ export default function Signup() {
             </div>
 
             <p className="mt-4 text-sm text-slate-600">
-              We sent a 6-digit verification code to <span className="font-semibold text-slate-900">{pendingEmail}</span>.
+              We sent a 6-digit verification code to <span className="font-semibold text-slate-900">{pendingEmail}</span>. Please check your inbox and enter the code below.
             </p>
-
-            {/* Dev Helper Banner */}
-            {previewOtp && (
-              <div className="mt-3 rounded-xl border border-teal-200 bg-teal-50/80 p-2.5 text-xs text-teal-800 flex items-center justify-between">
-                <div>
-                  <span className="font-semibold">Demo OTP Code: </span>
-                  <span className="font-mono text-sm tracking-wider font-bold bg-white px-2 py-0.5 rounded border border-teal-300">
-                    {previewOtp}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const digits = previewOtp.split("").slice(0, 6);
-                    setOtpDigits(digits);
-                    otpInputsRef.current[5]?.focus();
-                  }}
-                  className="text-xs font-semibold text-[#0E4B4C] underline hover:text-[#0b3b3c] cursor-pointer"
-                >
-                  Auto-fill
-                </button>
-              </div>
-            )}
 
             {/* 6 OTP Input Boxes */}
             <form onSubmit={handleVerifyOtpSubmit} className="mt-5 space-y-4">

@@ -284,7 +284,6 @@ const register = async (req, res, next) => {
       requireOtp: true,
       email: cleanEmail,
       message: `Verification code sent to ${cleanEmail}. Please enter the 6-digit code to activate your account.`,
-      previewOtp: process.env.NODE_ENV === 'production' ? undefined : otpCode,
     });
   } catch (err) {
     next(err);
@@ -318,36 +317,33 @@ const verifyOtp = async (req, res, next) => {
       });
     }
 
-    const isDemoAccount = cleanEmail.endsWith('@sahayog.in');
-    const isMasterCode = (process.env.NODE_ENV !== 'production' && cleanOtp === '123456');
-    const isCodeMatch = user.otp && user.otp.code === cleanOtp;
+    if (!user.otp || !user.otp.code) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active OTP found. Please request a new verification code.',
+      });
+    }
 
-    if (!isCodeMatch && !isMasterCode && !isDemoAccount) {
-      if (!user.otp || !user.otp.code) {
-        return res.status(400).json({
-          success: false,
-          message: 'No active OTP found. Please request a new verification code.',
-        });
-      }
+    // Check expiration
+    if (new Date() > new Date(user.otp.expiresAt)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification code has expired. Please request a new OTP.',
+      });
+    }
 
-      // Check expiration
-      if (new Date() > new Date(user.otp.expiresAt)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Verification code has expired. Please request a new OTP.',
-        });
-      }
+    // Brute-force protection on OTP
+    if (user.otp.attempts >= 5) {
+      user.otp = undefined;
+      await user.save();
+      return res.status(429).json({
+        success: false,
+        message: 'Too many incorrect OTP attempts. Please request a fresh verification code.',
+      });
+    }
 
-      // Brute-force protection on OTP
-      if (user.otp.attempts >= 5) {
-        user.otp = undefined;
-        await user.save();
-        return res.status(429).json({
-          success: false,
-          message: 'Too many incorrect OTP attempts. Please request a fresh verification code.',
-        });
-      }
-
+    // Strict OTP match check
+    if (user.otp.code !== cleanOtp) {
       user.otp.attempts = (user.otp.attempts || 0) + 1;
       await user.save();
       const remaining = 5 - user.otp.attempts;
@@ -439,7 +435,6 @@ const resendOtp = async (req, res, next) => {
     res.json({
       success: true,
       message: `A new 6-digit verification code has been sent to ${cleanEmail}.`,
-      previewOtp: process.env.NODE_ENV === 'production' ? undefined : otpCode,
     });
   } catch (err) {
     next(err);
