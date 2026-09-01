@@ -5,11 +5,11 @@ const empty = {
   category: "",
   description: "",
   evidence: [],
-  district: "",
+  district: "Ranchi",
   block: "",
   landmark: "",
-  lat: 18.5204,
-  lng: 73.8567,
+  lat: 23.3441,
+  lng: 85.3096,
 };
 
 export const useWizardStore = create((set, get) => ({
