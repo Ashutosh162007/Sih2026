@@ -17,12 +17,20 @@ function save(key, value) {
 }
 
 let users = load("sahayog_users", mockUsers).map((u) => {
+  const isDemo = u.email?.endsWith("@sahayog.in") || u.id?.startsWith("u-");
   if (u.id === "u-reporter" || u.role === "community_reporter" || u.role === "citizen") {
     return {
       ...u,
       role: "citizen",
       email: u.email === "reporter@sahayog.in" ? "citizen@sahayog.in" : u.email,
+      isEmailVerified: true,
       org: "",
+    };
+  }
+  if (isDemo) {
+    return {
+      ...u,
+      isEmailVerified: true,
     };
   }
   return u;
@@ -153,6 +161,98 @@ function computeAIAnalysis({ title, description, category, district, block }) {
   };
 }
 
+// ==========================================
+// MOCK SECURITY & VALIDATION UTILITIES
+// ==========================================
+
+const DISPOSABLE_EMAIL_DOMAINS = new Set([
+  'fake.com',
+  'test.com',
+  'example.com',
+  'tempmail.com',
+  '10minutemail.com',
+  'mailinator.com',
+  'guerrillamail.com',
+  'trashmail.com',
+  'yopmail.com',
+  'sharklasers.com',
+  'dispostable.com',
+  'getairmail.com',
+  'throwawaymail.com',
+  'fakeinbox.com',
+  'tempmailaddress.com',
+  'inboxkitten.com',
+  'burnermail.io',
+  'dropmail.me',
+  'crazymailing.com',
+]);
+
+const FAKE_NAME_BLACKLIST = new Set([
+  'test',
+  'tester',
+  'testing',
+  'fake',
+  'fakeuser',
+  'dummy',
+  'dummyuser',
+  'unknown',
+  'anonymous',
+  'asdf',
+  'asdfgh',
+  'qwerty',
+  'admin',
+  'administrator',
+  'noname',
+  'no name',
+  'user',
+  'user123',
+  'temp',
+  'tempuser',
+  'sample',
+]);
+
+function validateMockRegistration({ name, email, password }) {
+  if (!name || name.trim().length < 3) {
+    error("Full name must be at least 3 characters long.", 400);
+  }
+  const cleanName = name.trim();
+  if (!/^[a-zA-Z\u00C0-\u024F\s.'-]+$/.test(cleanName)) {
+    error("Name contains invalid characters. Numbers and symbols are not allowed.", 400);
+  }
+  if (/[-']{2,}/.test(cleanName) || /^\s*[-']|[-']\s*$/.test(cleanName)) {
+    error("Name contains invalid punctuation formatting.", 400);
+  }
+  const lettersOnly = cleanName.replace(/[^a-zA-Z]/g, '');
+  if (lettersOnly.length < 3) {
+    error("Full name must contain at least 3 letters.", 400);
+  }
+  const normalizedName = lettersOnly.toLowerCase();
+  if (FAKE_NAME_BLACKLIST.has(normalizedName)) {
+    error("Please provide a genuine full name (e.g., Dr. Ramesh Sharma / Priya Verma).", 400);
+  }
+
+  if (!email || !email.includes("@")) {
+    error("Please provide a valid email address.", 400);
+  }
+  const cleanEmail = email.trim().toLowerCase();
+  const [localPart, domain] = cleanEmail.split("@");
+  if (DISPOSABLE_EMAIL_DOMAINS.has(domain)) {
+    error("Disposable or fake email domains are not permitted. Please use a legitimate email.", 400);
+  }
+  const fakePrefixes = ['fake', 'dummy', 'test', 'temp', 'asdf', 'qwerty', '12345'];
+  if (fakePrefixes.includes(localPart)) {
+    error("Please provide a real personal or institutional email address.", 400);
+  }
+
+  if (!password || password.length < 8) {
+    error("Password must be at least 8 characters long.", 400);
+  }
+  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/.test(password)) {
+    error("Password must include uppercase, lowercase, numeric digit, and special symbol.", 400);
+  }
+  return cleanEmail;
+}
+
 export async function handleMockRequest(config) {
   await delay();
   const body = typeof config.data === "string" ? JSON.parse(config.data || "{}") : config.data || {};
@@ -167,15 +267,89 @@ export async function handleMockRequest(config) {
   }
 
   if ((m = match(config, "post", "/api/auth/login"))) {
+    const cleanEmail = (body.email || "").trim().toLowerCase();
     const user = users.find(
       (u) =>
-        (u.email === body.email ||
-          (body.email === "citizen@sahayog.in" && u.email === "reporter@sahayog.in") ||
-          (body.email === "reporter@sahayog.in" && u.email === "citizen@sahayog.in")) &&
+        (u.email.toLowerCase() === cleanEmail ||
+          (cleanEmail === "citizen@sahayog.in" && u.email === "reporter@sahayog.in") ||
+          (cleanEmail === "reporter@sahayog.in" && u.email === "citizen@sahayog.in")) &&
         u.password === body.password
     );
     if (!user) error("Invalid email or password", 401);
+
+    if (user.isEmailVerified === false) {
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      user.otp = { code: otpCode, expiresAt: Date.now() + 10 * 60 * 1000, attempts: 0 };
+      persist();
+      return json(config, {
+        success: false,
+        requireOtp: true,
+        email: user.email,
+        message: "Your email address is not verified yet. A 6-digit verification code has been sent.",
+        previewOtp: otpCode,
+      });
+    }
+
     return json(config, { token: tokenFor(user), user: publicUser(user) });
+  }
+
+  if ((m = match(config, "post", "/api/auth/verify-otp"))) {
+    const cleanEmail = (body.email || "").trim().toLowerCase();
+    const cleanOtp = String(body.otp || "").trim();
+
+    const user = users.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (!user) error("No registration found for this email address.", 404);
+
+    const isDemo = cleanEmail.endsWith("@sahayog.in");
+    const isMaster = cleanOtp === "123456";
+    const isMatch = (user.otp && user.otp.code === cleanOtp) || isMaster || isDemo;
+
+    if (!isMatch) {
+      if (!user.otp || !user.otp.code) {
+        error("No active OTP found. Please request a new verification code.", 400);
+      }
+
+      if (Date.now() > user.otp.expiresAt) {
+        error("Verification code has expired. Please request a new OTP.", 400);
+      }
+
+      if (user.otp.attempts >= 5) {
+        delete user.otp;
+        persist();
+        error("Too many incorrect OTP attempts. Please request a fresh verification code.", 429);
+      }
+
+      user.otp.attempts = (user.otp.attempts || 0) + 1;
+      persist();
+      const left = 5 - user.otp.attempts;
+      error(`Invalid 6-digit verification code. (${left} attempt(s) left)`, 400);
+    }
+
+    user.isEmailVerified = true;
+    delete user.otp;
+    persist();
+
+    return json(config, {
+      success: true,
+      message: "Email address successfully verified! Welcome to Sahayog.",
+      token: tokenFor(user),
+      user: publicUser(user),
+    });
+  }
+
+  if ((m = match(config, "post", "/api/auth/resend-otp"))) {
+    const cleanEmail = (body.email || "").trim().toLowerCase();
+    const user = users.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (!user) error("No account found for this email address.", 404);
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otp = { code: otpCode, expiresAt: Date.now() + 10 * 60 * 1000, attempts: 0, lastSentAt: Date.now() };
+    persist();
+
+    return json(config, {
+      success: true,
+      message: `A new 6-digit verification code has been sent to ${cleanEmail}.`,
+    });
   }
 
   if ((m = match(config, "post", "/api/auth/google"))) {
@@ -203,6 +377,7 @@ export async function handleMockRequest(config) {
         role: selectedRole,
         district: selectedDistrict,
         status: isPendingRole ? "pending" : "active",
+        isEmailVerified: true,
         org: body.org || (isPendingRole ? "Registered Entity" : ""),
         picture,
         location: {
@@ -216,6 +391,7 @@ export async function handleMockRequest(config) {
       users.push(user);
       persist();
     } else {
+      user.isEmailVerified = true;
       if (body.district) {
         user.district = body.district;
         user.location = user.location || {};
@@ -227,30 +403,65 @@ export async function handleMockRequest(config) {
   }
 
   if ((m = match(config, "post", "/api/auth/register"))) {
-    if (users.some((u) => u.email === body.email)) error("Email already registered", 409);
+    const cleanEmail = validateMockRegistration(body);
+
+    const existingUser = users.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (existingUser && existingUser.isEmailVerified !== false) {
+      error("An account with this email already exists and is verified. Please log in.", 409);
+    }
+
     const pendingRoles = [ROLES.UNIVERSITY, ROLES.INDUSTRY];
     const selectedDistrict = body.district || "Ranchi";
     const selectedBlock = body.block || "Kanke";
-    const user = {
-      id: `u-${Date.now()}`,
-      name: body.name,
-      email: body.email,
-      password: body.password,
-      role: body.role,
-      district: selectedDistrict,
-      status: pendingRoles.includes(body.role) ? "pending" : "active",
-      org: body.org || (pendingRoles.includes(body.role) ? "Registered Entity" : ""),
-      location: {
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    let user = existingUser;
+    if (user) {
+      user.name = body.name.trim();
+      user.password = body.password;
+      user.role = body.role;
+      user.status = pendingRoles.includes(body.role) ? "pending" : "active";
+      user.org = body.org || (pendingRoles.includes(body.role) ? "Registered Entity" : "");
+      user.otp = { code: otpCode, expiresAt: Date.now() + 10 * 60 * 1000, attempts: 0, lastSentAt: Date.now() };
+    } else {
+      user = {
+        id: `u-${Date.now()}`,
+        name: body.name.trim(),
+        email: cleanEmail,
+        password: body.password,
+        role: body.role,
         district: selectedDistrict,
-        block: selectedBlock,
-        state: "Jharkhand",
-        lat: 23.3441,
-        lng: 85.3096,
-      },
-    };
-    users.push(user);
+        status: pendingRoles.includes(body.role) ? "pending" : "active",
+        isEmailVerified: false,
+        org: body.org || (pendingRoles.includes(body.role) ? "Registered Entity" : ""),
+        location: {
+          district: selectedDistrict,
+          block: selectedBlock,
+          state: "Jharkhand",
+          lat: 23.3441,
+          lng: 85.3096,
+        },
+        otp: {
+          code: otpCode,
+          expiresAt: Date.now() + 10 * 60 * 1000,
+          attempts: 0,
+          lastSentAt: Date.now(),
+        },
+      };
+      users.push(user);
+    }
     persist();
-    return json(config, { user: publicUser(user) }, 201);
+
+    return json(
+      config,
+      {
+        success: true,
+        requireOtp: true,
+        email: cleanEmail,
+        message: `Verification code sent to ${cleanEmail}. Please enter the 6-digit code to activate your account.`,
+      },
+      201
+    );
   }
 
   if ((m = match(config, "get", "/api/users/profile"))) {
