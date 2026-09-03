@@ -72,16 +72,43 @@ export default function TopBar() {
 
       <div className="flex-1" />
 
-      {/* Language Switcher Toggle */}
-      <button
-        type="button"
-        onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-        className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:border-[#0E4B4C] hover:bg-white hover:text-[#0E4B4C] transition cursor-pointer shadow-xs"
-        title="Switch Language / भाषा बदलें"
-      >
-        <Languages size={15} className="text-[#0E4B4C]" />
-        <span>{language === "en" ? "हिंदी" : "English"}</span>
-      </button>
+      {/* Language Switcher 3-Way Selector */}
+      <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-xs">
+        <Languages size={14} className="ml-1.5 mr-0.5 text-[#0E4B4C] hidden sm:block" />
+        <button
+          type="button"
+          onClick={() => setLanguage("en")}
+          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+            language === "en"
+              ? "bg-[#0E4B4C] text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          EN
+        </button>
+        <button
+          type="button"
+          onClick={() => setLanguage("hi")}
+          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+            language === "hi"
+              ? "bg-[#0E4B4C] text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          हिंदी
+        </button>
+        <button
+          type="button"
+          onClick={() => setLanguage("kht")}
+          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+            language === "kht"
+              ? "bg-[#0E4B4C] text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          खोरठा
+        </button>
+      </div>
 
       {/* Notifications Drawer */}
       <div className="relative">
@@ -107,16 +134,17 @@ export default function TopBar() {
           <div className="absolute right-0 z-30 mt-2 w-92 rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 px-1">
               <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Bell size={16} className="text-[#0E4B4C]" /> Live Notifications
+                <Bell size={16} className="text-[#0E4B4C]" /> {t("liveNotifications")}
               </p>
               <button
                 type="button"
                 onClick={markAllRead}
                 className="text-xs font-semibold text-teal-700 hover:text-[#0E4B4C] hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <CheckCheck size={14} /> Mark all read
+                <CheckCheck size={14} /> {t("markAllRead")}
               </button>
             </div>
+
             <div className="mt-3 max-h-88 space-y-2.5 overflow-y-auto pr-1">
               {notifications.map((n) => (
                 <div
@@ -126,7 +154,7 @@ export default function TopBar() {
                     if (n.issueId) {
                       navigate(`/issues/${n.issueId}`);
                     } else if (n.type === "account_verified" || n.type === "admin_alert") {
-                      navigate("/admin/verify");
+                      navigate("/admin/verify-accounts");
                     }
                   }}
                   className={`rounded-2xl border p-3 text-xs transition cursor-pointer hover:scale-[1.01] ${
@@ -146,14 +174,14 @@ export default function TopBar() {
                     <span>{formatDate(n.createdAt || new Date())}</span>
                     {n.issueId && (
                       <span className="font-bold text-[#0E4B4C] hover:underline">
-                        View Progress Tracker &rarr;
+                        {t("viewProgressTracker")}
                       </span>
                     )}
                   </div>
                 </div>
               ))}
               {notifications.length === 0 && (
-                <p className="py-6 text-center text-xs text-slate-400">No new notifications.</p>
+                <p className="py-6 text-center text-xs text-slate-400">{t("noNotifications")}</p>
               )}
             </div>
           </div>
@@ -208,7 +236,7 @@ export default function TopBar() {
               <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
                 <Mail size={16} className="text-[#0E4B4C] shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-slate-400 font-medium">Email Address</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{t("emailAddress")}</p>
                   <p className="font-semibold text-slate-800 truncate">{user?.email || "—"}</p>
                 </div>
               </div>
@@ -217,7 +245,7 @@ export default function TopBar() {
                 <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
                   <Building2 size={16} className="text-blue-600 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] text-slate-400 font-medium">Organization / Institution</p>
+                    <p className="text-[10px] text-slate-400 font-medium">{t("organization")}</p>
                     <p className="font-semibold text-slate-800 truncate">{user.org}</p>
                   </div>
                 </div>
@@ -226,7 +254,7 @@ export default function TopBar() {
               <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
                 <MapPin size={16} className="text-amber-600 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-slate-400 font-medium">Location</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{t("district")}</p>
                   <p className="font-semibold text-slate-800">
                     {user?.location?.district || user?.district || "Ranchi"}, {user?.location?.block || user?.block || "Kanke"} (Jharkhand)
                   </p>
@@ -236,9 +264,9 @@ export default function TopBar() {
               <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
                 <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-slate-400 font-medium">Account Status</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{t("role")}</p>
                   <p className="font-semibold capitalize text-emerald-700">
-                    {user?.status || "Active"} · Verified
+                    {user?.status || "Active"} · {t("networkActive")}
                   </p>
                 </div>
               </div>
@@ -246,7 +274,7 @@ export default function TopBar() {
               {user?.disciplines && user.disciplines.length > 0 && (
                 <div className="rounded-xl bg-slate-50 p-2.5">
                   <p className="text-[10px] text-slate-400 font-medium mb-1 flex items-center gap-1">
-                    <BookOpen size={12} /> Faculty Disciplines
+                    <BookOpen size={12} /> {t("department")}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {user.disciplines.map((d) => (
@@ -268,9 +296,9 @@ export default function TopBar() {
                   logout();
                   navigate("/login");
                 }}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition cursor-pointer"
               >
-                <LogOut size={14} /> Sign out
+                <LogOut size={14} /> {t("signOut")}
               </button>
             </div>
           </div>

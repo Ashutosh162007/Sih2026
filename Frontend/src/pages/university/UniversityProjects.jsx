@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, FolderKanban, PlusCircle } from "lucide-react";
 import ListItemCard from "../../components/ListItemCard";
 import axiosClient from "../../api/axiosClient";
+import { useLanguageStore } from "../../store/languageStore";
 
 export default function UniversityProjects() {
+  const { t } = useLanguageStore();
   const [projects, setProjects] = useState([]);
   const navigate = useNavigate();
 
@@ -16,17 +18,17 @@ export default function UniversityProjects() {
     <div className="pb-16">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold text-slate-900">University Innovation Projects</h1>
+          <h1 className="font-display text-3xl font-bold text-slate-900">{t("navProjects")}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Multidisciplinary faculty and student research projects formulated for grassroots civic challenges.
+            {t("uniDashboardSubtitle")}
           </p>
         </div>
         <button
           type="button"
           onClick={() => navigate("/university/queue")}
-          className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-[#0E4B4C]/20 hover:bg-[#0b3b3c]"
+          className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-[#0E4B4C]/20 hover:bg-[#0b3b3c] cursor-pointer"
         >
-          <PlusCircle size={15} /> Claim From Queue
+          <PlusCircle size={15} /> {t("claimBtn")}
         </button>
       </div>
 
@@ -42,7 +44,7 @@ export default function UniversityProjects() {
               description={p.proposal}
               status={p.status}
               metadata={{
-                assignee: p.industry ? `Sponsored by ${p.industry} (₹${(p.fundingAmount || 350000).toLocaleString("en-IN")})` : "Awaiting Industry Partner",
+                assignee: p.industry ? `Sponsored by ${p.industry} (₹${(p.fundingAmount || 350000).toLocaleString("en-IN")})` : t("pendingProposals"),
               }}
             />
           </div>
@@ -51,8 +53,8 @@ export default function UniversityProjects() {
         {projects.length === 0 && (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500 shadow-sm">
             <FolderKanban size={32} className="mx-auto mb-3 text-teal-600" />
-            <p className="font-semibold text-slate-800">No active research projects formulated yet.</p>
-            <p className="mt-1 text-xs text-slate-400">Explore the nearest issue queue to claim challenges and assemble teams.</p>
+            <p className="font-semibold text-slate-800">{t("noReportedIssues")}</p>
+            <p className="mt-1 text-xs text-slate-400">{t("uniDashboardSubtitle")}</p>
           </div>
         )}
       </div>
