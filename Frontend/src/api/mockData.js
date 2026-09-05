@@ -1,4 +1,5 @@
 import { ROLES } from "../lib/constants";
+import { UNIVERSITY_CAMPUSES } from "../lib/collegeRegistry";
 
 export const mockUsers = [
   {
@@ -11,16 +12,16 @@ export const mockUsers = [
     isEmailVerified: true,
     org: "",
   },
-  {
-    id: "u-uni",
-    name: "Dr. Kavita Rao",
-    email: "university@sahayog.in",
+  ...UNIVERSITY_CAMPUSES.map((c, i) => ({
+    id: `u-uni-${i}`,
+    name: c.adminName,
+    email: c.email,
     password: "password",
     role: ROLES.UNIVERSITY,
     status: "active",
     isEmailVerified: true,
-    org: "Birla Institute of Technology (BIT) Mesra",
-  },
+    org: c.org,
+  })),
   {
     id: "u-uni-pending",
     name: "Prof. Imran Sheikh",

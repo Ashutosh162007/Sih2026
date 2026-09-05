@@ -129,4 +129,10 @@ const IssueSchema = new mongoose.Schema(
   }
 );
 
+// Common query patterns: status queues, district filters, reporter lookups
+IssueSchema.index({ status: 1, createdAt: -1 });
+IssueSchema.index({ district: 1, createdAt: -1 });
+IssueSchema.index({ reporter: 1, createdAt: -1 });
+IssueSchema.index({ category: 1 });
+
 module.exports = mongoose.model('Issue', IssueSchema);

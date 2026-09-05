@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -28,6 +28,21 @@ export default function TopBar() {
   const [openProfile, setOpenProfile] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setOpenNotifs(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setOpenProfile(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   const fetchNotifs = async () => {
     try {
@@ -70,7 +85,7 @@ export default function TopBar() {
       <div className="flex-1" />
 
       {/* Notifications Drawer */}
-      <div className="relative">
+      <div className="relative" ref={notifRef}>
         <button
           type="button"
           onClick={() => {
@@ -125,7 +140,7 @@ export default function TopBar() {
       </div>
 
       {/* User Avatar & Profile Trigger */}
-      <div className="relative pl-2 border-l border-slate-200">
+      <div className="relative pl-2 border-l border-slate-200" ref={profileRef}>
         <button
           type="button"
           onClick={() => {

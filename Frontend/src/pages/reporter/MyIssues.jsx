@@ -32,7 +32,7 @@ export default function MyIssues() {
           onClick={() => navigate("/report")}
           className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-[#0E4B4C]/20 hover:bg-[#0b3b3c] transition"
         >
-          <PlusCircle size={15} /> Report New Issue
+          <PlusCircle size={15} /> Report Issue
         </button>
       </div>
 
