@@ -37,7 +37,6 @@ const seedData = async () => {
         password: 'password',
         role: 'citizen',
         status: 'active',
-        isEmailVerified: true,
         org: '',
         location: { district: 'Ranchi', block: 'Kanke', lat: 23.3441, lng: 85.3096 },
       },
@@ -47,10 +46,42 @@ const seedData = async () => {
         password: 'password',
         role: 'university',
         status: 'active',
-        isEmailVerified: true,
         org: 'Birla Institute of Technology (BIT) Mesra',
         location: { district: 'Ranchi', block: 'Mesra', lat: 23.4123, lng: 85.4399 },
-        disciplines: ['Civil Engineering', 'Computer Science', 'Environmental Science', 'Urban Planning'],
+        disciplines: ['Civil Engineering', 'Computer Science & IoT', 'Environmental Science', 'Urban & Regional Planning'],
+      },
+      {
+        name: 'Prof. Rajesh Verma (Dean Academics)',
+        email: 'nitjamshedpur@sahayog.in',
+        password: 'password',
+        role: 'university',
+        status: 'active',
+        isEmailVerified: true,
+        org: 'National Institute of Technology, Jamshedpur',
+        location: { district: 'East Singhbhum (Jamshedpur)', block: 'Adityapur', lat: 22.7938, lng: 86.1532 },
+        disciplines: ['Civil Engineering', 'Computer Science & IoT', 'Electrical & Electronics', 'Mining & Geological Sciences'],
+      },
+      {
+        name: 'Dr. Sunita Devi (Director Extension)',
+        email: 'bau@sahayog.in',
+        password: 'password',
+        role: 'university',
+        status: 'active',
+        isEmailVerified: true,
+        org: 'Birsa Agricultural University, Ranchi',
+        location: { district: 'Ranchi', block: 'Kanke', lat: 23.4241, lng: 85.3220 },
+        disciplines: ['Agriculture & Rural Development', 'Environmental Science', 'Public Health & Sanitation'],
+      },
+      {
+        name: 'Dr. Alok Pathak (Registrar)',
+        email: 'vinoba@sahayog.in',
+        password: 'password',
+        role: 'university',
+        status: 'active',
+        isEmailVerified: true,
+        org: 'Vinoba Bhave University, Hazaribagh',
+        location: { district: 'Hazaribagh', block: 'Hazaribagh', lat: 23.9925, lng: 85.3637 },
+        disciplines: ['Agriculture & Rural Development', 'Public Policy & Economics', 'Urban & Regional Planning'],
       },
       {
         name: 'Prof. Imran Sheikh',
@@ -58,7 +89,6 @@ const seedData = async () => {
         password: 'password',
         role: 'university',
         status: 'pending',
-        isEmailVerified: true,
         org: 'Kolhan University Chaibasa',
         location: { district: 'West Singhbhum', block: 'Chaibasa', lat: 22.5604, lng: 85.8118 },
         disciplines: ['Tribal Studies', 'Rural Livelihoods', 'Social Sciences'],
@@ -69,7 +99,6 @@ const seedData = async () => {
         password: 'password',
         role: 'industry',
         status: 'active',
-        isEmailVerified: true,
         org: 'Tata Steel CSR & Sustainability',
         location: { district: 'East Singhbhum', block: 'Jamshedpur', lat: 22.8046, lng: 86.2029 },
       },
@@ -79,15 +108,14 @@ const seedData = async () => {
         password: 'password',
         role: 'admin',
         status: 'active',
-        isEmailVerified: true,
         org: 'Jharkhand State Innovation Council',
         location: { district: 'Ranchi', block: 'Dhurwa', lat: 23.3150, lng: 85.2890 },
       },
     ]);
 
-    const reporter = users[0];
-    const uni = users[1];
-    const industry = users[3];
+    const reporter = users.find((u) => u.role === 'citizen');
+    const uni = users.find((u) => u.email === 'university@sahayog.in');
+    const industry = users.find((u) => u.role === 'industry');
 
     // Seed Issues (1 clean sample issue for testing university & industry queue)
     const issues = await Issue.create([

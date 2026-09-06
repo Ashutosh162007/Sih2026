@@ -41,6 +41,18 @@ const saveTeam = async (req, res, next) => {
         role: 'university',
       });
       await issue.save();
+
+      if (issue.reporter) {
+        await Notification.create({
+          recipient: issue.reporter,
+          recipientRole: 'citizen',
+          issueId: String(issue._id),
+          projectId: String(project._id),
+          title: 'University Team Assembled! 🎓',
+          message: `${uniName} has assembled a student-faculty innovation team for "${issue.title}".`,
+          type: 'team_formed',
+        });
+      }
     }
 
     res.json({
@@ -109,6 +121,18 @@ const submitProposal = async (req, res, next) => {
         role: 'university',
       });
       await issue.save();
+
+      if (issue.reporter) {
+        await Notification.create({
+          recipient: issue.reporter,
+          recipientRole: 'citizen',
+          issueId: String(issue._id),
+          projectId: String(project._id),
+          title: 'Technical Proposal Submitted! 📝',
+          message: `${uniName} submitted the solution proposal for "${project.title}" to Industry CSR sponsors.`,
+          type: 'proposal_submitted',
+        });
+      }
     }
 
     // Notify Industry Partners
@@ -226,7 +250,34 @@ const updateMilestones = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
+    const prevMilestones = project.milestones || [];
     project.milestones = milestones;
+
+    const issue = await Issue.findById(project.issueId).catch(() => null);
+
+    // Notify citizen if a milestone was newly completed
+    const newlyCompleted = milestones.find((m, i) => m.done && !prevMilestones[i]?.done);
+    if (newlyCompleted && issue) {
+      issue.timeline.push({
+        at: new Date(),
+        label: `Milestone completed: ${newlyCompleted.name}`,
+        actor: project.university || 'University Team',
+        role: 'university',
+      });
+      await issue.save();
+
+      if (issue.reporter) {
+        await Notification.create({
+          recipient: issue.reporter,
+          recipientRole: 'citizen',
+          issueId: String(issue._id),
+          projectId: String(project._id),
+          title: 'Milestone Achieved! ⚙️',
+          message: `University team completed milestone: "${newlyCompleted.name}" for "${project.title}".`,
+          type: 'milestone_completed',
+        });
+      }
+    }
 
     // Check if all milestones are completed
     const allDone = milestones.length > 0 && milestones.every((m) => m.done);
@@ -234,7 +285,6 @@ const updateMilestones = async (req, res, next) => {
       project.status = 'Completed';
 
       // Update linked issue to Resolved
-      const issue = await Issue.findById(project.issueId).catch(() => null);
       if (issue) {
         issue.status = 'Resolved';
         issue.timeline.push({
@@ -246,14 +296,17 @@ const updateMilestones = async (req, res, next) => {
         await issue.save();
 
         // Notify citizen
-        await Notification.create({
-          recipient: issue.reporter,
-          recipientRole: 'citizen',
-          issueId: String(issue._id),
-          title: 'Civic Issue Resolved! ✅',
-          message: `Great news! The solution for "${issue.title}" has been successfully deployed and verified.`,
-          type: 'issue_resolved',
-        });
+        if (issue.reporter) {
+          await Notification.create({
+            recipient: issue.reporter,
+            recipientRole: 'citizen',
+            issueId: String(issue._id),
+            projectId: String(project._id),
+            title: 'Civic Issue Resolved & Verified! ✅',
+            message: `Great news! The solution for "${issue.title}" has been successfully deployed and verified.`,
+            type: 'issue_resolved',
+          });
+        }
       }
     }
 
