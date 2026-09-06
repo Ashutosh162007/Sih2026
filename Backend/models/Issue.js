@@ -121,6 +121,12 @@ const IssueSchema = new mongoose.Schema(
         role: { type: String },
       },
     ],
+    feedback: {
+      rating: { type: Number, min: 1, max: 5 },
+      comment: { type: String, default: '' },
+      verifiedByCitizen: { type: Boolean, default: true },
+      submittedAt: { type: Date },
+    },
   },
   {
     timestamps: true,
@@ -128,5 +134,11 @@ const IssueSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+// Common query patterns: status queues, district filters, reporter lookups
+IssueSchema.index({ status: 1, createdAt: -1 });
+IssueSchema.index({ district: 1, createdAt: -1 });
+IssueSchema.index({ reporter: 1, createdAt: -1 });
+IssueSchema.index({ category: 1 });
 
 module.exports = mongoose.model('Issue', IssueSchema);

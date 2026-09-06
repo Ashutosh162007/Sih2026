@@ -4,8 +4,10 @@ import { Sparkles, MapPin, Building2, ArrowRight } from "lucide-react";
 import StatCard from "../../components/StatCard";
 import ListItemCard from "../../components/ListItemCard";
 import axiosClient from "../../api/axiosClient";
+import { useLanguageStore } from "../../store/languageStore";
 
 export default function UniversityDashboard() {
+  const { t } = useLanguageStore();
   const [queue, setQueue] = useState([]);
   const [projects, setProjects] = useState([]);
   const navigate = useNavigate();
@@ -17,29 +19,29 @@ export default function UniversityDashboard() {
 
   return (
     <div className="pb-16">
-      <h1 className="font-display text-3xl font-bold text-slate-900">University Innovation Dashboard</h1>
+      <h1 className="font-display text-3xl font-bold text-slate-900">{t("uniDashboardTitle")}</h1>
       <p className="mt-1 text-sm text-slate-500">
-        Overview of nearby civic problems, multidisciplinary research projects, and industry sponsorships.
+        {t("uniDashboardSubtitle")}
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon="alert" label="Queued Issues" number={queue.length} trendData={[{ i: 0, v: 4 }, { i: 1, v: 7 }]} />
-        <StatCard icon="university" badgeColor="blue" label="Active Projects" number={projects.length} trendData={[{ i: 0, v: 2 }, { i: 1, v: 5 }]} />
-        <StatCard icon="industry" badgeColor="amber" label="Awaiting Funding" number={projects.filter((p) => !p.funded).length} trendData={[{ i: 0, v: 3 }, { i: 1, v: 4 }]} />
-        <StatCard icon="check" badgeColor="green" label="Industry Funded" number={projects.filter((p) => p.funded).length} trendData={[{ i: 0, v: 1 }, { i: 1, v: 3 }]} />
+        <StatCard icon="alert" label={t("navCampusQueue")} number={queue.length} trendData={[{ i: 0, v: 4 }, { i: 1, v: 7 }]} />
+        <StatCard icon="university" badgeColor="blue" label={t("navProjects")} number={projects.length} trendData={[{ i: 0, v: 2 }, { i: 1, v: 5 }]} />
+        <StatCard icon="industry" badgeColor="amber" label={t("pendingProposals")} number={projects.filter((p) => !p.funded).length} trendData={[{ i: 0, v: 3 }, { i: 1, v: 4 }]} />
+        <StatCard icon="check" badgeColor="green" label={t("navFundedProjects")} number={projects.filter((p) => p.funded).length} trendData={[{ i: 0, v: 1 }, { i: 1, v: 3 }]} />
       </div>
 
       <div className="mt-10 flex items-center justify-between">
         <div>
-          <h2 className="font-display text-xl font-bold text-slate-900">Nearest Grassroots Challenges</h2>
+          <h2 className="font-display text-xl font-bold text-slate-900">{t("nearestRoutingTitle")}</h2>
           <p className="text-xs text-slate-500">Auto-routed based on proximity to campus</p>
         </div>
         <button
           type="button"
           onClick={() => navigate("/university/queue")}
-          className="text-xs font-bold text-[#0E4B4C] hover:underline"
+          className="text-xs font-bold text-[#0E4B4C] hover:underline cursor-pointer"
         >
-          View all in queue →
+          {t("navCampusQueue")} →
         </button>
       </div>
 
@@ -52,7 +54,7 @@ export default function UniversityDashboard() {
           >
             <div className="flex items-center justify-between mb-1.5">
               <span className="rounded-md bg-[#D7F5DE] px-2 py-0.5 text-[11px] font-bold text-[#0E4B4C]">
-                📍 {issue.distanceKm ? `${issue.distanceKm} km away` : "Nearby"}
+                📍 {issue.distanceKm ? `${issue.distanceKm} ${t("kmFromCampus")}` : t("nearestCampus")}
               </span>
               <span className="text-[11px] text-slate-400">{issue.district}, {issue.block}</span>
             </div>

@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Calendar, DollarSign, CheckCircle2, Building2, Clock, CheckCheck } from "lucide-react";
+import { Sparkles, Calendar, DollarSign, CheckCircle2, Building2, Clock, CheckCheck, Award, Printer } from "lucide-react";
 import StatCard from "../../components/StatCard";
 import ListItemCard from "../../components/ListItemCard";
+import CsrImpactCertificateModal from "../../components/CsrImpactCertificateModal";
 import axiosClient from "../../api/axiosClient";
 import { formatDate } from "../../lib/format";
 
 export default function IndustryProjects() {
   const [projects, setProjects] = useState([]);
   const [toast, setToast] = useState("");
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showCertModal, setShowCertModal] = useState(false);
 
   async function load() {
     const { data } = await axiosClient.get("/api/university/projects");
@@ -90,19 +93,33 @@ export default function IndustryProjects() {
           return (
             <div key={p.id || p._id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div>
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-md bg-emerald-50 text-emerald-800 text-xs font-bold px-2.5 py-0.5 border border-emerald-200">
                     Sponsorship: ₹{(p.fundingAmount || 350000).toLocaleString("en-IN")}
                   </span>
-                  <span className="ml-2 text-xs font-medium text-slate-500">
+                  <span className="text-xs font-medium text-slate-500">
                     Lead: <strong>{p.university}</strong>
                   </span>
                 </div>
-                {p.deadline && (
-                  <span className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                    <Calendar size={14} className="text-teal-700" /> Deadline: {formatDate(p.deadline)}
-                  </span>
-                )}
+
+                <div className="flex items-center gap-3">
+                  {p.deadline && (
+                    <span className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                      <Calendar size={14} className="text-teal-700" /> Deadline: {formatDate(p.deadline)}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProject(p);
+                      setShowCertModal(true);
+                    }}
+                    className="flex items-center gap-1.5 rounded-xl border border-teal-300 bg-white px-3 py-1.5 text-xs font-bold text-[#0E4B4C] hover:bg-teal-50/80 transition cursor-pointer shadow-xs"
+                  >
+                    <Award size={14} className="text-teal-700" />
+                    <span>CSR Impact Certificate</span>
+                  </button>
+                </div>
               </div>
 
               <div className="mt-4">
@@ -160,6 +177,13 @@ export default function IndustryProjects() {
           </div>
         )}
       </div>
+
+      {/* Printable 1-Page A4 PDF CSR Impact Certificate Modal */}
+      <CsrImpactCertificateModal
+        isOpen={showCertModal}
+        onClose={() => setShowCertModal(false)}
+        project={selectedProject}
+      />
     </div>
   );
 }
