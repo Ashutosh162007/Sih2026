@@ -1,4 +1,3 @@
-import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ROLES } from "./lib/constants";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -7,28 +6,22 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import SignupPending from "./pages/SignupPending";
-
-const ReportIssue = lazy(() => import("./pages/reporter/ReportIssue"));
-const MyIssues = lazy(() => import("./pages/reporter/MyIssues"));
-const IssueDetail = lazy(() => import("./pages/issues/IssueDetail"));
-const UniversityDashboard = lazy(() => import("./pages/university/UniversityDashboard"));
-const UniversityQueue = lazy(() => import("./pages/university/UniversityQueue"));
-const UniversityProjects = lazy(() => import("./pages/university/UniversityProjects"));
-const ProposalWizard = lazy(() => import("./pages/university/ProposalWizard"));
-const IndustryQueue = lazy(() => import("./pages/industry/IndustryQueue"));
-const IndustryProjects = lazy(() => import("./pages/industry/IndustryProjects"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const VerifyAccounts = lazy(() => import("./pages/admin/VerifyAccounts"));
-
-function PageLoader() {
-  return <div className="flex min-h-[60vh] items-center justify-center text-sm text-slate-500">Loading…</div>;
-}
+import ReportIssue from "./pages/reporter/ReportIssue";
+import MyIssues from "./pages/reporter/MyIssues";
+import IssueDetail from "./pages/issues/IssueDetail";
+import UniversityDashboard from "./pages/university/UniversityDashboard";
+import UniversityQueue from "./pages/university/UniversityQueue";
+import UniversityProjects from "./pages/university/UniversityProjects";
+import ProposalWizard from "./pages/university/ProposalWizard";
+import IndustryQueue from "./pages/industry/IndustryQueue";
+import IndustryProjects from "./pages/industry/IndustryProjects";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import VerifyAccounts from "./pages/admin/VerifyAccounts";
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
+      <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
@@ -59,8 +52,7 @@ export default function App() {
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+      </Routes>
     </BrowserRouter>
   );
 }

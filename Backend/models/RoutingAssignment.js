@@ -34,7 +34,4 @@ const RoutingAssignmentSchema = new mongoose.Schema(
   }
 );
 
-RoutingAssignmentSchema.index({ issueId: 1 }, { unique: true });
-RoutingAssignmentSchema.index({ status: 1, routedAt: -1 });
-
 module.exports = mongoose.model('RoutingAssignment', RoutingAssignmentSchema);
