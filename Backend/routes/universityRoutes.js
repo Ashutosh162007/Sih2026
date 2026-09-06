@@ -5,6 +5,6 @@ const { protect, authorize } = require('../middleware/auth');
 
 router.get('/queue', getQueue);
 router.get('/projects', getUniversityProjects);
-router.post('/issues/:id/claim', protect, authorize('university'), claimIssue);
+router.post('/issues/:id/claim', protect, claimIssue);
 
 module.exports = router;

@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   MapPin,
-  Plus,
+  PlusCircle,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -16,8 +16,14 @@ import { useAuthStore } from "../store/authStore";
 import BrandLogo from "./BrandLogo";
 
 const NAV = {
-  citizen: [{ to: "/my-issues", label: "My Reported Issues", icon: ClipboardList }],
-  community_reporter: [{ to: "/my-issues", label: "My Reported Issues", icon: ClipboardList }],
+  citizen: [
+    { to: "/my-issues", label: "My Reported Issues", icon: ClipboardList },
+    { to: "/report", label: "Report New Issue", icon: PlusCircle },
+  ],
+  community_reporter: [
+    { to: "/my-issues", label: "My Reported Issues", icon: ClipboardList },
+    { to: "/report", label: "Report New Issue", icon: PlusCircle },
+  ],
   [ROLES.UNIVERSITY]: [
     { to: "/university/dashboard", label: "University Dashboard", icon: LayoutDashboard },
     { to: "/university/queue", label: "Nearest Issue Queue", icon: MapPin },
@@ -40,9 +46,9 @@ export default function Sidebar() {
   const items = NAV[user?.role] || NAV.citizen || [];
   const cta =
     user?.role === "citizen" || user?.role === "community_reporter" || user?.role === ROLES.REPORTER
-      ? { to: "/report" }
+      ? { to: "/report", label: "+ Report Civic Issue" }
       : user?.role === ROLES.UNIVERSITY
-        ? { to: "/university/queue" }
+        ? { to: "/university/queue", label: "Explore Issue Queue" }
         : null;
 
   return (
@@ -89,11 +95,9 @@ export default function Sidebar() {
       {cta && (
         <NavLink
           to={cta.to}
-          aria-label="Report Issue"
-          title="Report Issue"
-          className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#10B981] text-white shadow-lg shadow-[#10B981]/30 transition hover:scale-105 hover:bg-[#059669]"
+          className="mx-3 mb-3 rounded-xl bg-[#0E4B4C] px-3 py-2.5 text-center text-sm font-semibold text-white shadow-sm shadow-[#0E4B4C]/25 transition hover:bg-[#0b3b3c]"
         >
-          <Plus size={26} strokeWidth={2.5} />
+          {cta.label}
         </NavLink>
       )}
 
