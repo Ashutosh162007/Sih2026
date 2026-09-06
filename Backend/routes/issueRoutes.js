@@ -8,6 +8,7 @@ const {
   getIssues,
   getIssueById,
   updateIssueStatus,
+  submitFeedback,
 } = require('../controllers/issueController');
 
 router.post('/ai-preview', previewAI);

@@ -3,8 +3,10 @@ import { ShieldCheck, CheckCircle2, XCircle } from "lucide-react";
 import StatusBadge from "../../components/StatusBadge";
 import { ROLE_LABELS } from "../../lib/constants";
 import axiosClient from "../../api/axiosClient";
+import { useLanguageStore } from "../../store/languageStore";
 
 export default function VerifyAccounts() {
+  const { t } = useLanguageStore();
   const [rows, setRows] = useState([]);
   const [message, setMessage] = useState("");
 
@@ -26,9 +28,9 @@ export default function VerifyAccounts() {
 
   return (
     <div className="pb-16">
-      <h1 className="font-display text-3xl font-bold text-slate-900">Institutional & Industry Verification</h1>
+      <h1 className="font-display text-3xl font-bold text-slate-900">{t("verifyAccountsTitle")}</h1>
       <p className="mt-1 text-sm text-slate-500">
-        Review and verify Higher Education Institutions and Industry partners before granting portal action permissions.
+        {t("verifyAccountsSubtitle")}
       </p>
 
       {message && (
@@ -41,11 +43,11 @@ export default function VerifyAccounts() {
         <table className="w-full text-left text-xs">
           <thead className="bg-[#F7F8FA] text-slate-500 border-b border-slate-100">
             <tr>
-              <th className="px-4 py-3.5 font-bold uppercase tracking-wider">Representative</th>
-              <th className="px-4 py-3.5 font-bold uppercase tracking-wider">Institution / Company</th>
-              <th className="px-4 py-3.5 font-bold uppercase tracking-wider">Role Type</th>
-              <th className="px-4 py-3.5 font-bold uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-right">Verification Action</th>
+              <th className="px-4 py-3.5 font-bold uppercase tracking-wider">{t("fullName")}</th>
+              <th className="px-4 py-3.5 font-bold uppercase tracking-wider">{t("organization")}</th>
+              <th className="px-4 py-3.5 font-bold uppercase tracking-wider">{t("role")}</th>
+              <th className="px-4 py-3.5 font-bold uppercase tracking-wider">{t("stageUpcoming")}</th>
+              <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-right">{t("verifyAccountsTitle")}</th>
             </tr>
           </thead>
           <tbody>
@@ -65,14 +67,14 @@ export default function VerifyAccounts() {
                     <button
                       type="button"
                       onClick={() => decide(u.id || u._id, "approve")}
-                      className="rounded-lg bg-[#0E4B4C] px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-[#0b3b3c]"
+                      className="rounded-lg bg-[#0E4B4C] px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-[#0b3b3c] cursor-pointer"
                     >
                       Approve
                     </button>
                     <button
                       type="button"
                       onClick={() => decide(u.id || u._id, "reject")}
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer"
                     >
                       Reject
                     </button>
@@ -83,7 +85,7 @@ export default function VerifyAccounts() {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
-                  No pending institutional accounts awaiting verification.
+                  {t("noNotifications")}
                 </td>
               </tr>
             )}

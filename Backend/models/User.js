@@ -44,28 +44,6 @@ const UserSchema = new mongoose.Schema(
         return ['university', 'industry'].includes(this.role) ? 'pending' : 'active';
       },
     },
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
-    },
-    otp: {
-      type: {
-        code: String,
-        expiresAt: Date,
-        attempts: { type: Number, default: 0 },
-        lastSentAt: Date,
-      },
-      select: false,
-    },
-    failedLoginAttempts: {
-      type: Number,
-      default: 0,
-      select: false,
-    },
-    lockUntil: {
-      type: Date,
-      select: false,
-    },
     org: {
       type: String,
       default: '',

@@ -28,9 +28,6 @@ export const useAuthStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { data } = await axiosClient.post("/api/auth/login", { email, password });
-      if (data.requireOtp) {
-        return data;
-      }
       get().setSession(data.token, data.user);
       return data.user;
     } catch (err) {
@@ -68,41 +65,10 @@ export const useAuthStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { data } = await axiosClient.post("/api/auth/register", payload);
-      // Registration now requires OTP verification before setting user session
-      return data;
+      get().setSession(data.token, data.user);
+      return data.user;
     } catch (err) {
       const message = err.response?.data?.message || "Registration failed";
-      set({ error: message });
-      throw err;
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  verifyOtp: async (email, otp) => {
-    set({ loading: true, error: null });
-    try {
-      const { data } = await axiosClient.post("/api/auth/verify-otp", { email, otp });
-      if (data.token && data.user) {
-        get().setSession(data.token, data.user);
-      }
-      return data;
-    } catch (err) {
-      const message = err.response?.data?.message || "OTP verification failed";
-      set({ error: message });
-      throw err;
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  resendOtp: async (email) => {
-    set({ loading: true, error: null });
-    try {
-      const { data } = await axiosClient.post("/api/auth/resend-otp", { email });
-      return data;
-    } catch (err) {
-      const message = err.response?.data?.message || "Failed to resend OTP";
       set({ error: message });
       throw err;
     } finally {

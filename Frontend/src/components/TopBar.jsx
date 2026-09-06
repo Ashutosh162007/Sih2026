@@ -14,15 +14,18 @@ import {
   X,
   Briefcase,
   BookOpen,
+  Languages,
 } from "lucide-react";
 import { ROLE_LABELS, ROLES } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
+import { useLanguageStore } from "../store/languageStore";
 import axiosClient from "../api/axiosClient";
 import { formatDate } from "../lib/format";
 
 export default function TopBar() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const { language, setLanguage, t } = useLanguageStore();
   const navigate = useNavigate();
   const [openNotifs, setOpenNotifs] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
@@ -77,12 +80,50 @@ export default function TopBar() {
       <div className="relative min-w-0 flex-1 max-w-lg">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
         <input
-          placeholder="Search issues, research projects, universities, CSR partners..."
+          placeholder={t("searchPlaceholder")}
           className="w-full rounded-xl border border-slate-200 bg-[#F7F8FA] py-2 pl-9.5 pr-4 text-sm outline-none transition focus:border-[#0E4B4C] focus:bg-white"
         />
       </div>
 
       <div className="flex-1" />
+
+      {/* Language Switcher 3-Way Selector */}
+      <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-xs">
+        <Languages size={14} className="ml-1.5 mr-0.5 text-[#0E4B4C] hidden sm:block" />
+        <button
+          type="button"
+          onClick={() => setLanguage("en")}
+          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+            language === "en"
+              ? "bg-[#0E4B4C] text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          EN
+        </button>
+        <button
+          type="button"
+          onClick={() => setLanguage("hi")}
+          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+            language === "hi"
+              ? "bg-[#0E4B4C] text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          हिंदी
+        </button>
+        <button
+          type="button"
+          onClick={() => setLanguage("kht")}
+          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+            language === "kht"
+              ? "bg-[#0E4B4C] text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          खोरठा
+        </button>
+      </div>
 
       {/* Notifications Drawer */}
       <div className="relative" ref={notifRef}>
@@ -93,7 +134,7 @@ export default function TopBar() {
             setOpenProfile(false);
             if (!openNotifs && unreadCount > 0) markAllRead();
           }}
-          className="relative rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50 transition"
+          className="relative rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50 transition cursor-pointer"
           aria-label="Notifications"
         >
           <Bell size={18} />
@@ -105,34 +146,57 @@ export default function TopBar() {
         </button>
 
         {openNotifs && (
-          <div className="absolute right-0 z-30 mt-2 w-84 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <Bell size={15} className="text-[#0E4B4C]" /> Live Notifications
+          <div className="absolute right-0 z-30 mt-2 w-92 rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 px-1">
+              <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Bell size={16} className="text-[#0E4B4C]" /> {t("liveNotifications")}
               </p>
               <button
                 type="button"
                 onClick={markAllRead}
-                className="text-xs text-teal-700 hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-teal-700 hover:text-[#0E4B4C] hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <CheckCheck size={13} /> Mark all read
+                <CheckCheck size={14} /> {t("markAllRead")}
               </button>
             </div>
-            <div className="mt-3 max-h-80 space-y-3 overflow-y-auto pr-1">
+
+            <div className="mt-3 max-h-88 space-y-2.5 overflow-y-auto pr-1">
               {notifications.map((n) => (
                 <div
                   key={n.id || n._id}
-                  className={`rounded-xl border p-2.5 text-xs transition ${
-                    n.read ? "border-slate-100 bg-white text-slate-600" : "border-teal-100 bg-[#D7F5DE]/20 text-slate-900 font-medium"
+                  onClick={() => {
+                    setOpenNotifs(false);
+                    if (n.issueId) {
+                      navigate(`/issues/${n.issueId}`);
+                    } else if (n.type === "account_verified" || n.type === "admin_alert") {
+                      navigate("/admin/verify-accounts");
+                    }
+                  }}
+                  className={`rounded-2xl border p-3 text-xs transition cursor-pointer hover:scale-[1.01] ${
+                    n.read
+                      ? "border-slate-100 bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-50"
+                      : "border-teal-200 bg-[#D7F5DE]/30 text-slate-900 font-medium hover:border-teal-300"
                   }`}
                 >
-                  <p className="font-semibold text-slate-900">{n.title}</p>
+                  <div className="flex items-start justify-between gap-1.5">
+                    <p className="font-bold text-slate-900 leading-snug">{n.title}</p>
+                    {!n.read && (
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-teal-600 animate-ping mt-1" />
+                    )}
+                  </div>
                   <p className="mt-1 text-slate-600 leading-relaxed">{n.message}</p>
-                  <p className="mt-1.5 text-[10px] text-slate-400">{formatDate(n.createdAt || new Date())}</p>
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
+                    <span>{formatDate(n.createdAt || new Date())}</span>
+                    {n.issueId && (
+                      <span className="font-bold text-[#0E4B4C] hover:underline">
+                        {t("viewProgressTracker")}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
               {notifications.length === 0 && (
-                <p className="py-4 text-center text-xs text-slate-400">No new notifications.</p>
+                <p className="py-6 text-center text-xs text-slate-400">{t("noNotifications")}</p>
               )}
             </div>
           </div>
@@ -187,7 +251,7 @@ export default function TopBar() {
               <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
                 <Mail size={16} className="text-[#0E4B4C] shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-slate-400 font-medium">Email Address</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{t("emailAddress")}</p>
                   <p className="font-semibold text-slate-800 truncate">{user?.email || "—"}</p>
                 </div>
               </div>
@@ -196,7 +260,7 @@ export default function TopBar() {
                 <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
                   <Building2 size={16} className="text-blue-600 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] text-slate-400 font-medium">Organization / Institution</p>
+                    <p className="text-[10px] text-slate-400 font-medium">{t("organization")}</p>
                     <p className="font-semibold text-slate-800 truncate">{user.org}</p>
                   </div>
                 </div>
@@ -205,7 +269,7 @@ export default function TopBar() {
               <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
                 <MapPin size={16} className="text-amber-600 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-slate-400 font-medium">Location</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{t("district")}</p>
                   <p className="font-semibold text-slate-800">
                     {user?.location?.district || user?.district || "Ranchi"}, {user?.location?.block || user?.block || "Kanke"} (Jharkhand)
                   </p>
@@ -215,9 +279,9 @@ export default function TopBar() {
               <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
                 <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-slate-400 font-medium">Account Status</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{t("role")}</p>
                   <p className="font-semibold capitalize text-emerald-700">
-                    {user?.status || "Active"} · Verified
+                    {user?.status || "Active"} · {t("networkActive")}
                   </p>
                 </div>
               </div>
@@ -225,7 +289,7 @@ export default function TopBar() {
               {user?.disciplines && user.disciplines.length > 0 && (
                 <div className="rounded-xl bg-slate-50 p-2.5">
                   <p className="text-[10px] text-slate-400 font-medium mb-1 flex items-center gap-1">
-                    <BookOpen size={12} /> Faculty Disciplines
+                    <BookOpen size={12} /> {t("department")}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {user.disciplines.map((d) => (
@@ -247,9 +311,9 @@ export default function TopBar() {
                   logout();
                   navigate("/login");
                 }}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition cursor-pointer"
               >
-                <LogOut size={14} /> Sign out
+                <LogOut size={14} /> {t("signOut")}
               </button>
             </div>
           </div>

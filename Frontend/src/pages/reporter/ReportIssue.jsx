@@ -8,18 +8,26 @@ import AssessmentSlider from "../../components/AssessmentSlider";
 import { ISSUE_CATEGORIES, JHARKHAND_DISTRICTS, JHARKHAND_DISTRICT_COORDS, DEFAULT_JHARKHAND_COORDS } from "../../lib/constants";
 import { useWizardStore } from "../../store/wizardStore";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguageStore } from "../../store/languageStore";
 import axiosClient from "../../api/axiosClient";
-
-const STEPS = ["Basic Info", "Short Description", "Photo Evidence", "Location", "AI Formulation & Review"];
 
 export default function ReportIssue() {
   const { step, data, setStep, next, back, update, reset } = useWizardStore();
   const user = useAuthStore((s) => s.user);
+  const { t } = useLanguageStore();
   const [submitting, setSubmitting] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiPreviewData, setAiPreviewData] = useState(null);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  const STEPS = [
+    t("stepBasic"),
+    t("stepDesc"),
+    t("stepPhoto"),
+    t("stepLocation"),
+    t("stepReview"),
+  ];
 
   useEffect(() => {
     if (!data.district) {
@@ -36,7 +44,6 @@ export default function ReportIssue() {
     return true;
   }
 
-  // AI Generator Function
   async function generateAIProblemStatement() {
     setAiGenerating(true);
     setError("");
@@ -51,31 +58,25 @@ export default function ReportIssue() {
       });
 
       setAiPreviewData(res);
-      if (res.category && !data.category) {
-        update({ category: res.category });
-      }
-      if (res.aiProblemStatement) {
-        update({ aiProblemStatement: res.aiProblemStatement });
-      }
-    } catch {
-      // Fallback
-      setAiPreviewData({
-        category: data.category || "Infrastructure",
-        aiProblemStatement: `**Structured Problem Formulation:**\n\n**Context:** Reported issue in ${data.block || "locality"}, ${data.district || "Ranchi"}.\n\n**Core Challenge:** ${data.description || data.title}.\n\n**Severity:** High Priority (Score 84/100). Urgency: 85%, Public Risk: 82%.\n\n**Innovation Objective:** Formulate multidisciplinary student & faculty engineering solutions.`,
-        severity: { flooding: 65, publicRisk: 82, urgency: 85, score: 84 },
-        priority: "High",
+      update({
+        aiProblemStatement: res.aiProblemStatement,
+        severity: res.severity,
       });
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to generate AI problem statement. Please check your inputs.");
     } finally {
       setAiGenerating(false);
     }
   }
 
-  async function handleStepChange(nextStep) {
-    if (nextStep === 4 && !aiPreviewData) {
+  const handleStepChange = async (nextStep) => {
+    if (nextStep === 4 && (!data.aiProblemStatement || !aiPreviewData)) {
+      setStep(nextStep);
       await generateAIProblemStatement();
+    } else {
+      setStep(nextStep);
     }
-    setStep(nextStep);
-  }
+  };
 
   async function submit() {
     setSubmitting(true);
@@ -83,22 +84,24 @@ export default function ReportIssue() {
     try {
       const payload = {
         title: data.title,
-        category: data.category,
         description: data.description,
-        aiProblemStatement: aiPreviewData?.aiProblemStatement || data.aiProblemStatement,
-        evidence: (data.evidence || []).map((f) => ({ filename: f.filename, size: f.size, url: f.url || f.preview })),
-        district: data.district || "Ranchi",
-        block: data.block || "Kanke",
-        landmark: data.landmark || "",
-        lat: data.lat || 23.3441,
-        lng: data.lng || 85.3096,
+        category: data.category,
+        location: {
+          district: data.district || "Ranchi",
+          block: data.block,
+          landmark: data.landmark,
+          lat: data.lat || DEFAULT_JHARKHAND_COORDS.lat,
+          lng: data.lng || DEFAULT_JHARKHAND_COORDS.lng,
+        },
+        aiProblemStatement: data.aiProblemStatement || aiPreviewData?.aiProblemStatement,
+        severity: data.severity || aiPreviewData?.severity || { score: 80, publicRisk: 75, urgency: 85 },
       };
 
-      const { data: issue } = await axiosClient.post("/api/issues", payload);
+      const { data: res } = await axiosClient.post("/api/issues", payload);
       reset();
-      navigate(`/issues/${issue.id || issue._id}`);
+      navigate(`/issues/${res.id || res._id}`);
     } catch (err) {
-      setError(err.response?.data?.message || "Could not submit issue to the network");
+      setError(err?.response?.data?.message || "Failed to submit issue");
     } finally {
       setSubmitting(false);
     }
@@ -108,9 +111,9 @@ export default function ReportIssue() {
     <div className="mx-auto max-w-3xl pb-16">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold text-slate-900">Report a Civic Challenge</h1>
+          <h1 className="font-display text-3xl font-bold text-slate-900">{t("reportTitle")}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Tell us the problem briefly with a photo. Our AI Engine formulates the research problem statement & severity for nearest universities.
+            {t("reportSubtitle")}
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 border border-emerald-200">
@@ -127,23 +130,23 @@ export default function ReportIssue() {
         {step === 0 && (
           <div className="space-y-4">
             <label className="block text-sm font-medium text-slate-700">
-              Short Issue Title
+              {t("issueTitleLabel")}
               <input
                 value={data.title || ""}
                 onChange={(e) => update({ title: e.target.value })}
-                placeholder="e.g. Broken storm drain flooding Albert Ekka Chowk"
+                placeholder={t("issueTitlePlaceholder")}
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
               />
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
-              Initial Category
+              {t("categoryLabel")}
               <select
                 value={data.category || ""}
                 onChange={(e) => update({ category: e.target.value })}
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
               >
-                <option value="">Select Domain Category</option>
+                <option value="">{t("selectCategory")}</option>
                 {ISSUE_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -165,12 +168,12 @@ export default function ReportIssue() {
             </div>
 
             <label className="block text-sm font-medium text-slate-700">
-              Brief Problem Description
+              {t("descLabel")}
               <textarea
                 rows={6}
                 value={data.description || ""}
                 onChange={(e) => update({ description: e.target.value })}
-                placeholder="e.g. During every monsoon downpour, the drain overflows onto the main commercial stretch for over 300 meters. Stagnant contaminated water enters ground-floor shops and blocks school children from passing."
+                placeholder={t("descPlaceholder")}
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10 leading-relaxed"
               />
             </label>
@@ -180,9 +183,9 @@ export default function ReportIssue() {
         {/* Step 2: Evidence */}
         {step === 2 && (
           <div>
-            <p className="text-sm font-medium text-slate-700 mb-2">Upload Photo / Evidence</p>
+            <p className="text-sm font-medium text-slate-700 mb-2">{t("photoLabel")}</p>
             <p className="text-xs text-slate-500 mb-4">
-              Visual evidence feeds the AI severity analysis to compute flooding risk, structural hazard, and urgency score.
+              {t("photoSubtitle")}
             </p>
             <FileDropzone files={data.evidence || []} onChange={(evidence) => update({ evidence })} />
           </div>
@@ -193,7 +196,7 @@ export default function ReportIssue() {
           <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="block text-sm font-medium text-slate-700">
-                District (Jharkhand)
+                {t("districtLabel")}
                 <select
                   value={data.district || "Ranchi"}
                   onChange={(e) => {
@@ -212,29 +215,29 @@ export default function ReportIssue() {
               </label>
 
               <label className="block text-sm font-medium text-slate-700">
-                Block / Municipality
+                {t("blockLabel")}
                 <input
                   value={data.block || ""}
                   onChange={(e) => update({ block: e.target.value })}
-                  placeholder="e.g. Kanke / Tamar / Jamshedpur Urban"
+                  placeholder={t("blockPlaceholder")}
                   className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-[#0E4B4C]"
                 />
               </label>
             </div>
 
             <label className="block text-sm font-medium text-slate-700">
-              Landmark / Street Address
+              {t("landmarkLabel")}
               <input
                 value={data.landmark || ""}
                 onChange={(e) => update({ landmark: e.target.value })}
-                placeholder="e.g. Albert Ekka Chowk, near State Bank"
+                placeholder={t("landmarkPlaceholder")}
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-[#0E4B4C]"
               />
             </label>
 
             <div className="pt-2">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                Pin Location on Map (For Nearest University Distance Calculation)
+                {t("pinLocationMap")}
               </p>
               <MapLocationPicker value={data} onChange={(patch) => update(patch)} />
             </div>
@@ -252,7 +255,7 @@ export default function ReportIssue() {
                     <Sparkles size={16} />
                   </div>
                   <h3 className="font-display font-bold text-slate-900">
-                    AI-Formulated Problem Statement & Severity
+                    {t("aiFormulatedTitle")}
                   </h3>
                 </div>
                 <button
@@ -261,7 +264,7 @@ export default function ReportIssue() {
                   disabled={aiGenerating}
                   className="flex items-center gap-1.5 rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-[#0E4B4C] shadow-sm hover:bg-slate-50 transition"
                 >
-                  <Wand2 size={13} /> {aiGenerating ? "Synthesizing..." : "Regenerate AI"}
+                  <Wand2 size={13} /> {aiGenerating ? "Synthesizing..." : t("regenerateAi")}
                 </button>
               </div>
 
@@ -273,19 +276,19 @@ export default function ReportIssue() {
 
                   <div className="grid sm:grid-cols-3 gap-3">
                     <div className="rounded-xl bg-white border border-slate-200 p-3">
-                      <p className="text-[11px] font-medium text-slate-500">Public Risk</p>
+                      <p className="text-[11px] font-medium text-slate-500">{t("publicRisk")}</p>
                       <p className="text-xl font-bold text-slate-900 mt-0.5">
                         {aiPreviewData.severity?.publicRisk || 78}%
                       </p>
                     </div>
                     <div className="rounded-xl bg-white border border-slate-200 p-3">
-                      <p className="text-[11px] font-medium text-slate-500">Urgency Level</p>
+                      <p className="text-[11px] font-medium text-slate-500">{t("urgencyLevel")}</p>
                       <p className="text-xl font-bold text-slate-900 mt-0.5">
                         {aiPreviewData.severity?.urgency || 84}%
                       </p>
                     </div>
                     <div className="rounded-xl bg-white border border-slate-200 p-3">
-                      <p className="text-[11px] font-medium text-slate-500">Composite Score</p>
+                      <p className="text-[11px] font-medium text-slate-500">{t("compositeScore")}</p>
                       <p className="text-xl font-bold text-teal-800 mt-0.5">
                         {aiPreviewData.severity?.score || 82}/100
                       </p>
@@ -295,7 +298,7 @@ export default function ReportIssue() {
               ) : (
                 <div className="py-6 text-center text-sm text-slate-500">
                   <Sparkles size={24} className="mx-auto mb-2 text-[#0E4B4C] animate-pulse" />
-                  Generating AI Structured Research Statement...
+                  {t("aiSynthesizing")}
                 </div>
               )}
             </div>
@@ -334,7 +337,7 @@ export default function ReportIssue() {
             disabled={step === 0}
             className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 disabled:opacity-40 hover:bg-slate-50 transition"
           >
-            Back
+            {t("backBtn")}
           </button>
 
           {step < 4 ? (
@@ -344,7 +347,7 @@ export default function ReportIssue() {
               disabled={!canNext()}
               className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#0E4B4C]/20 hover:bg-[#0b3b3c] transition disabled:opacity-40"
             >
-              Continue <ArrowRight size={16} />
+              {t("continueBtn")} <ArrowRight size={16} />
             </button>
           ) : (
             <button
@@ -353,7 +356,7 @@ export default function ReportIssue() {
               disabled={submitting}
               className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c] transition"
             >
-              {submitting ? "Publishing to Sahayog Network..." : "Submit to Nearest Universities"}
+              {submitting ? t("submittingBtn") : t("submitBtn")}
             </button>
           )}
         </div>
