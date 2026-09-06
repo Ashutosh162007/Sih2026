@@ -90,4 +90,8 @@ const ProjectSchema = new mongoose.Schema(
   }
 );
 
+ProjectSchema.index({ issueId: 1 }, { unique: true });
+ProjectSchema.index({ status: 1, createdAt: -1 });
+ProjectSchema.index({ universityId: 1 });
+
 module.exports = mongoose.model('Project', ProjectSchema);

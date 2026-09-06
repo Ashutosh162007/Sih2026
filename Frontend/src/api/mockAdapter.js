@@ -27,6 +27,12 @@ let users = load("sahayog_users", mockUsers).map((u) => {
   }
   return u;
 });
+mockUsers.forEach((fresh) => {
+  if (fresh.role === "university" && fresh.status === "active" && !users.some((u) => u.email === fresh.email)) {
+    users.push(structuredClone(fresh));
+  }
+});
+save("sahayog_users", users);
 let issues = load("sahayog_issues", seedIssues).map((iss) => {
   if (Array.isArray(iss.images)) {
     iss.images = iss.images.filter((img) => {

@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
+
 load_dotenv()
-from langchain_groq import ChatGroq
+import json
+import re
 from langchain_mistralai import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -18,6 +20,17 @@ llm = ChatMistralAI(model="mistral-small-2506")
 
 
 def restructure_complaint(data):
+    """Structure and classify an unstructured citizen complaint.
+
+    Args:
+        data (dict | object): Contains user_id, user_name, complaint_query and
+            optional context fields. Both dicts and attribute-style objects
+            (e.g. Pydantic models) are accepted.
+
+    Returns:
+        dict: Parsed structured classification (JSON) from the LLM.
+    """
+    get = data.get if isinstance(data, dict) else getattr
 
     system_prompt = """    SOCIETAL CHALLENGE CLASSIFICATION AND STRUCTURING
         You are an AI-powered Societal Challenge Analysis and Routing Assistant for a civic and societal issue reporting platform.
@@ -405,7 +418,7 @@ def restructure_complaint(data):
 
         Use exactly this structure:
 
-        {{
+        {
         "primary_category": "ONE_ALLOWED_CATEGORY",
         "secondary_category": "ONE_ALLOWED_CATEGORY_OR_NULL",
 
@@ -415,7 +428,7 @@ def restructure_complaint(data):
 
         "original_complaint": "Original citizen complaint",
 
-        "location": {{
+        "location": {
             "exact_location": null,
             "landmark": null,
             "village": null,
@@ -426,22 +439,22 @@ def restructure_complaint(data):
             "pincode": null,
             "latitude": null,
             "longitude": null
-        }},
+        },
 
-        "routing": {{
+        "routing": {
             "recipient_type": "UNIVERSITY | INDUSTRY | STARTUP | MSME | RESEARCH_INSTITUTION | GOVERNMENT_DEPARTMENT | LOCAL_BODY | NGO | MULTIPLE | UNKNOWN",
             "recommended_department": "Relevant department or expertise area"
-        }},
+        },
 
         "affected_group": null,
 
         "duration": null,
 
-        "evidence_available": {{
+        "evidence_available": {
             "photo": false,
             "video": false,
             "document": false
-        }},
+        },
 
         "missing_information": [],
 
@@ -450,7 +463,7 @@ def restructure_complaint(data):
         "duplicate_status": "NEW | POSSIBLE_DUPLICATE | DUPLICATE | UNKNOWN",
 
         "classification_confidence": 0.0
-        }}
+        }
 
         ==================================================
         13. STRICT RULES
@@ -474,9 +487,9 @@ def restructure_complaint(data):
 
 
     human_message = f"""
-    User ID: {data.user_id}
-    User Name: {data.user_name}
-    Complaint: {data.complaint_query}
+    User ID: {get('user_id', '')}
+    User Name: {get('user_name', '')}
+    Complaint: {get('complaint_query', '')}
     """
 
     messages = [
@@ -486,12 +499,52 @@ def restructure_complaint(data):
 
     response = llm.invoke(messages)
 
+    return _parse_llm_json(response.content) 
 
-    result =  response.content
-    return result
-    # print(result)
-    
-    # basic display of how our chatbot will store history so that in further prompts it knows the context 
+    # message.append({complaint["user_name"], complaint["user_query"]})
 
-    # message.append({complaint["user_name"], complaint["complaint_query"]})
+
+def _parse_llm_json(raw: str) -> dict:
+    """Robustly parse the JSON returned by the LLM.
+
+    Handles markdown-code-fence wrapping, leading text, trailing text, and
+    stray non-JSON tokens. Raises ValueError if no JSON object is found.
+    """
+    if not raw:
+        raise ValueError("Empty response from LLM")
+
+    text = str(raw).strip()
+
+    # Strip markdown code fences if present
+    fenced = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
+    if fenced:
+        text = fenced.group(1).strip()
+
+    # Try a direct parse first
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Fallback: extract the outermost JSON object
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end > start:
+        try:
+            return json.loads(text[start : end + 1])
+        except json.JSONDecodeError:
+            pass
+
+    raise ValueError(f"Could not parse LLM output as JSON: {raw[:500]}")
+
+
+if __name__ == "__main__":
+    result = restructure_complaint(
+        {
+            "user_id": "demo",
+            "user_name": "Ashutosh Pandey",
+            "complaint_query": "there are cracks on main bridge here near the highway, flooding every monsoon",
+        }
+    )
+    print(json.dumps(result, indent=2))
 

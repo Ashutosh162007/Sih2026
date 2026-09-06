@@ -3,9 +3,10 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
+import { KeyRound, ShieldCheck, AlertCircle, CheckCircle2, RefreshCw, ArrowRight, Building2 } from "lucide-react";
 import AuthLayout from "../layouts/AuthLayout";
 import { useAuthStore } from "../store/authStore";
-import { useLanguageStore } from "../store/languageStore";
+import { UNIVERSITY_CAMPUSES } from "../lib/collegeRegistry";
 
 const schema = z.object({
   email: z.string().email(),
@@ -84,13 +85,23 @@ export default function Login() {
           >
             👤 {t("citizen")}
           </button>
-          <button
-            type="button"
-            onClick={() => quickLogin("university@sahayog.in")}
-            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700 cursor-pointer"
-          >
-            🎓 {t("university")}
-          </button>
+          <div className="relative">
+            <select
+              value=""
+              onChange={(e) => e.target.value && quickLogin(e.target.value)}
+              className="w-full appearance-none rounded-lg border border-slate-200 bg-white px-2 py-1.5 pr-6 text-left text-xs font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700 cursor-pointer outline-none"
+            >
+              <option value="" disabled>
+                🎓 University / HEI (choose campus)
+              </option>
+              {UNIVERSITY_CAMPUSES.map((c) => (
+                <option key={c.email} value={c.email} className="normal-case">
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <Building2 className="pointer-events-none absolute right-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          </div>
           <button
             type="button"
             onClick={() => quickLogin("industry@sahayog.in")}
