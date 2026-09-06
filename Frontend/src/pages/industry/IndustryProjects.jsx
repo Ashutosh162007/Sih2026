@@ -13,8 +13,12 @@ export default function IndustryProjects() {
   const [showCertModal, setShowCertModal] = useState(false);
 
   async function load() {
-    const { data } = await axiosClient.get("/api/university/projects");
-    setProjects(data.filter((p) => p.funded));
+    try {
+      const { data } = await axiosClient.get("/api/university/projects");
+      setProjects(data.filter((p) => p.funded));
+    } catch (err) {
+      setToast(err?.response?.data?.message || "Failed to load projects.");
+    }
   }
 
   useEffect(() => {
@@ -25,16 +29,21 @@ export default function IndustryProjects() {
     const milestones = project.milestones.map((m, i) =>
       i === index ? { ...m, done: !m.done, completedAt: !m.done ? new Date().toISOString() : null } : m
     );
-    await axiosClient.patch(`/api/projects/${project.id || project._id}/milestones`, { milestones });
-    
-    const allDone = milestones.every((m) => m.done);
-    if (allDone) {
-      setToast(`All milestones for "${project.title}" completed! The issue is marked Resolved and the Citizen has been notified.`);
-    } else {
-      setToast("Milestone updated.");
+    try {
+      await axiosClient.patch(`/api/projects/${project.id || project._id}/milestones`, { milestones });
+
+      const allDone = milestones.every((m) => m.done);
+      if (allDone) {
+        setToast(`All milestones for "${project.title}" completed! The issue is marked Resolved and the Citizen has been notified.`);
+      } else {
+        setToast("Milestone updated.");
+      }
+    } catch (err) {
+      setToast(err?.response?.data?.message || "Failed to update milestone.");
+    } finally {
+      setTimeout(() => setToast(""), 6000);
+      load();
     }
-    setTimeout(() => setToast(""), 6000);
-    load();
   }
 
   const totalFunding = projects.reduce((acc, p) => acc + (p.fundingAmount || 350000), 0);

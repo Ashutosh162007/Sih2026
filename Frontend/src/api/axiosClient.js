@@ -23,9 +23,14 @@ axiosClient.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem("sahayog_token");
       localStorage.removeItem("cp_token");
+      localStorage.removeItem("sahayog_user");
+      localStorage.removeItem("cp_user");
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.assign("/login");
+      }
     }
-    // If backend is unreachable (e.g. ERR_CONNECTION_REFUSED or timeout), fallback seamlessly to mock adapter
-    if (!err.response && err.config && !err.config._mockFallback) {
+    // Only fall back to the mock adapter when mock mode is explicitly enabled
+    if (err.config && import.meta.env.VITE_USE_MOCK === "true" && !err.response && !err.config._mockFallback) {
       err.config._mockFallback = true;
       try {
         return await handleMockRequest(err.config);

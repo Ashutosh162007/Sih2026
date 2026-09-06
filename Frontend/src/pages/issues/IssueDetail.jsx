@@ -23,19 +23,40 @@ export default function IssueDetail() {
   const [team, setTeam] = useState([]);
   const [claiming, setClaiming] = useState(false);
   const [showCertModal, setShowCertModal] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
-    axiosClient.get(`/api/issues/${id}`).then((res) => {
-      setIssue(res.data);
-      axiosClient
-        .get(`/api/university/projects`)
-        .then((pRes) => {
-          const match = (pRes.data || []).find((p) => p.issueId === id || p.issueId === res.data.id || p.issueId === res.data._id);
-          if (match) setProject(match);
-        })
-        .catch(() => {});
-    });
-  }, [id]);
+    setLoadError(false);
+    axiosClient
+      .get(`/api/issues/${id}`)
+      .then((res) => {
+        setIssue(res.data);
+        axiosClient
+          .get(`/api/university/projects`)
+          .then((pRes) => {
+            const match = (pRes.data || []).find((p) => p.issueId === id || p.issueId === res.data.id || p.issueId === res.data._id);
+            if (match) setProject(match);
+          })
+          .catch(() => {});
+      })
+      .catch(() => setLoadError(true));
+  }, [id, reload]);
+
+  if (loadError) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-3">
+        <p className="text-sm text-slate-500">{t("issueLoadFailed")}</p>
+        <button
+          type="button"
+          onClick={() => setReload((r) => r + 1)}
+          className="rounded-xl bg-[#0E4B4C] px-5 py-2 text-xs font-bold text-white shadow-md shadow-[#0E4B4C]/20 hover:bg-[#0b3b3c] cursor-pointer"
+        >
+          {t("retryBtn")}
+        </button>
+      </div>
+    );
+  }
 
   if (!issue) {
     return (
@@ -199,7 +220,7 @@ export default function IssueDetail() {
             <Sparkles size={16} className="text-[#0E4B4C]" /> {t("compositeScore")}
           </h2>
           <div className="mt-4 space-y-4">
-            <AssessmentSlider label={t("publicRisk")} value={issue.severity?.flooding || 65} />
+            <AssessmentSlider label={t("floodRisk")} value={issue.severity?.flooding || 65} />
             <AssessmentSlider label={t("publicRisk")} value={issue.severity?.publicRisk || 80} />
             <AssessmentSlider label={t("urgencyLevel")} value={issue.severity?.urgency || 85} />
             <div className="rounded-xl bg-slate-50 p-3 text-center border border-slate-100">

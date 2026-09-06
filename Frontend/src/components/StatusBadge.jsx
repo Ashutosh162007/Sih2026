@@ -17,6 +17,10 @@ const palettes = {
   "Public Safety": "bg-sky-100 text-sky-800",
   Environment: "bg-sky-100 text-sky-800",
   Mobility: "bg-sky-100 text-sky-800",
+  Agriculture: "bg-lime-100 text-lime-800",
+  Healthcare: "bg-rose-100 text-rose-800",
+  Education: "bg-violet-100 text-violet-800",
+  "Rural Livelihoods": "bg-orange-100 text-orange-800",
 };
 
 const HINDI_STATUS_MAP = {
@@ -36,12 +40,19 @@ const HINDI_STATUS_MAP = {
   "Public Safety": "सार्वजनिक सुरक्षा",
   Environment: "पर्यावरण",
   Mobility: "यातायात",
+  Agriculture: "कृषि",
+  Healthcare: "स्वास्थ्य सेवा",
+  Education: "शिक्षा",
+  "Rural Livelihoods": "ग्रामीण आजीविका",
 };
 
 export default function StatusBadge({ label, variant = "status" }) {
   const language = useLanguageStore((s) => s.language);
   const cls = palettes[label] || "bg-slate-100 text-slate-700";
-  const displayLabel = language === "hi" && HINDI_STATUS_MAP[label] ? HINDI_STATUS_MAP[label] : label;
+  const displayLabel =
+    language === "hi" || language === "kht"
+      ? HINDI_STATUS_MAP[label] || label
+      : label;
 
   return (
     <span

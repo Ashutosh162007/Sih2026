@@ -16,6 +16,7 @@ export default function CitizenFeedbackCard({ issue, onFeedbackSubmitted }) {
   const [verified, setVerified] = useState(existingFeedback?.verifiedByCitizen ?? true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(!!existingFeedback);
+  const [error, setError] = useState("");
 
   // Check if current user is Citizen role
   const isCitizenRole =
@@ -28,6 +29,7 @@ export default function CitizenFeedbackCard({ issue, onFeedbackSubmitted }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setSubmitting(true);
+    setError("");
     try {
       const payload = {
         rating,
@@ -45,7 +47,7 @@ export default function CitizenFeedbackCard({ issue, onFeedbackSubmitted }) {
         onFeedbackSubmitted(data);
       }
     } catch (err) {
-      console.error("Feedback error:", err);
+      setError(err?.response?.data?.message || "Failed to submit feedback. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -192,6 +194,12 @@ export default function CitizenFeedbackCard({ issue, onFeedbackSubmitted }) {
           />
           <span>{t("verifyGroundCheck")}</span>
         </label>
+
+        {error && (
+          <p className="rounded-lg bg-rose-50 border border-rose-200 p-2.5 text-xs font-semibold text-rose-700">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"

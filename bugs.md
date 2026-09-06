@@ -5,6 +5,10 @@ Each entry gives the exact file, what is wrong, and a quick fix. This list only
 covers common bugs (data loss, wrong permissions, broken UI flows, secrets in
 the repo). It does NOT cover advanced/architectural issues.
 
+> **Fix status:** Bugs #1–#13, #15, #16 have been fixed. Bug #14 (demo accounts
+> sharing `password`) is intentional demo data and was left untouched so the
+> documented demo logins still work.
+
 ---
 
 ## 1. Anyone can log into any account with password `password`

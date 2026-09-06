@@ -19,6 +19,8 @@ router.route('/')
 router.route('/:id')
   .get(getIssueById);
 
+router.post('/:id/feedback', protect, submitFeedback);
+
 router.patch('/:id/status', protect, authorize('admin', 'university', 'industry'), updateIssueStatus);
 
 module.exports = router;

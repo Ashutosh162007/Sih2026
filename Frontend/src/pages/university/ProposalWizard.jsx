@@ -20,27 +20,40 @@ export default function ProposalWizard() {
     { name: "Prototype fabrication & hydraulic testing in campus lab", due: "2026-10-15", done: false },
     { name: "Ground deployment & community operational handover", due: "2026-11-15", done: false },
   ]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    axiosClient.get(`/api/issues/${id}`).then((r) => {
-      setTitle((t) => t || `Solution for ${r.data.title}`);
-      if (!proposal && r.data.aiProblemStatement) {
-        setProposal(
-          `## Executive Solution Plan\n\nIn response to the civic challenge identified in ${r.data.district}, our multidisciplinary university research team proposes the following engineering & community intervention:\n\n1. Technical Design & Methodology:\n- Deploy an integrated physical mitigation unit...\n- Configure continuous IoT telemetry...\n\n2. Community Integration:\n- Train local youth and self-help groups on maintenance.\n- Real-time performance dashboards on Sahayog.`
-        );
-      }
-    });
+    axiosClient
+      .get(`/api/issues/${id}`)
+      .then((r) => {
+        setTitle((t) => t || `Solution for ${r.data.title}`);
+        if (!proposal && r.data.aiProblemStatement) {
+          setProposal(
+            `## Executive Solution Plan\n\nIn response to the civic challenge identified in ${r.data.district}, our multidisciplinary university research team proposes the following engineering & community intervention:\n\n1. Technical Design & Methodology:\n- Deploy an integrated physical mitigation unit...\n- Configure continuous IoT telemetry...\n\n2. Community Integration:\n- Train local youth and self-help groups on maintenance.\n- Real-time performance dashboards on Sahayog.`
+          );
+        }
+      })
+      .catch(() => setError("Failed to load issue details. The proposal can still be drafted manually."));
   }, [id]);
 
   async function submit() {
-    await axiosClient.post(`/api/projects/${id}/proposals`, {
-      title,
-      proposal,
-      expectedImpact,
-      team,
-      milestones,
-    });
-    navigate("/university/projects");
+    setSubmitting(true);
+    setError("");
+    try {
+      await axiosClient.post(`/api/projects/${id}/proposals`, {
+        title,
+        proposal,
+        expectedImpact,
+        team,
+        milestones,
+      });
+      navigate("/university/projects");
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to submit proposal. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -53,6 +66,12 @@ export default function ProposalWizard() {
       <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <Stepper steps={STEPS} currentStep={step} />
       </div>
+
+      {error && (
+        <div className="mt-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs font-semibold text-rose-700">
+          {error}
+        </div>
+      )}
 
       <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         {step === 0 && (
@@ -158,9 +177,10 @@ export default function ProposalWizard() {
             <button
               type="button"
               onClick={submit}
-              className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-7 py-2.5 text-sm font-bold text-white shadow-md shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c]"
+              disabled={submitting}
+              className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-7 py-2.5 text-sm font-bold text-white shadow-md shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c] disabled:opacity-60"
             >
-              Submit to Industry Partners <Sparkles size={16} />
+              {submitting ? "Submitting..." : "Submit to Industry Partners"} <Sparkles size={16} />
             </button>
           )}
         </div>

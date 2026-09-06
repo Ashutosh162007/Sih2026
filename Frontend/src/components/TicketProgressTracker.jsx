@@ -147,7 +147,7 @@ export default function TicketProgressTracker({ issue, project }) {
         <div className="flex items-center gap-4">
           <div className="text-right">
             <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">{t("overallResolution")}</p>
-            <p className={`text-lg font-extrabold ${isResolved ? "text-emerald-700" : "text-[#0E4B4C]"}`}>100%</p>
+            <p className={`text-lg font-extrabold ${isResolved ? "text-emerald-700" : "text-[#0E4B4C]"}`}>{isResolved ? 100 : progressPercent}%</p>
           </div>
         </div>
       </div>

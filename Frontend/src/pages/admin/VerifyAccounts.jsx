@@ -11,8 +11,12 @@ export default function VerifyAccounts() {
   const [message, setMessage] = useState("");
 
   async function load() {
-    const { data } = await axiosClient.get("/api/admin/verifications");
-    setRows(data);
+    try {
+      const { data } = await axiosClient.get("/api/admin/verifications");
+      setRows(data);
+    } catch (err) {
+      setMessage(err?.response?.data?.message || "Failed to load pending accounts.");
+    }
   }
 
   useEffect(() => {
@@ -20,10 +24,15 @@ export default function VerifyAccounts() {
   }, []);
 
   async function decide(userId, decision) {
-    await axiosClient.patch(`/api/admin/verifications/${userId}`, { decision });
-    setMessage(`Account successfully ${decision === "approve" ? "Approved" : "Rejected"}.`);
-    setTimeout(() => setMessage(""), 4000);
-    load();
+    try {
+      await axiosClient.patch(`/api/admin/verifications/${userId}`, { decision });
+      setMessage(`Account successfully ${decision === "approve" ? "Approved" : "Rejected"}.`);
+    } catch (err) {
+      setMessage(err?.response?.data?.message || `Failed to ${decision} account.`);
+    } finally {
+      setTimeout(() => setMessage(""), 4000);
+      load();
+    }
   }
 
   return (

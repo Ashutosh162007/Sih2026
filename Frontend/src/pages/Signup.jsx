@@ -18,7 +18,6 @@ const schema = z.object({
 
 export default function Signup() {
   const registerUser = useAuthStore((s) => s.register);
-  const login = useAuthStore((s) => s.login);
   const googleLogin = useAuthStore((s) => s.googleLogin);
   const homeForRole = useAuthStore((s) => s.homeForRole);
   const error = useAuthStore((s) => s.error);
@@ -35,12 +34,7 @@ export default function Signup() {
 
   async function onSubmit(values) {
     const user = await registerUser(values);
-    if (user.status === "pending") {
-      navigate("/signup/pending");
-      return;
-    }
-    const session = await login(values.email, values.password);
-    navigate(homeForRole(session));
+    navigate(homeForRole(user));
   }
 
   async function handleGoogleSuccess(credentialResponse) {

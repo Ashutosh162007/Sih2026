@@ -7,7 +7,7 @@ const {
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
 
-router.get('/analytics', getAnalytics);
+router.get('/analytics', protect, authorize('admin'), getAnalytics);
 router.get('/verifications', protect, authorize('admin'), getPendingVerifications);
 router.patch('/verifications/:userId', protect, authorize('admin'), decideVerification);
 

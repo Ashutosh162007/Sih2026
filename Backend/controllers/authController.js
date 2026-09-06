@@ -6,7 +6,7 @@ const Notification = require('../models/Notification');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (id, role) => {
-  const secret = process.env.JWT_SECRET || 'sahayog_sih2026_jwt_secret_dev_key_2026';
+  const secret = process.env.JWT_SECRET;
   return jwt.sign({ id, role }, secret, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
@@ -94,10 +94,11 @@ const login = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
-
-    // Check password
+// Check password
     const isMatch = await user.matchPassword(password);
-    if (!isMatch && password !== 'password') { // support easy demo password in dev
+
+    const demoPasswordAllowed = process.env.NODE_ENV !== 'production';
+    if (!isMatch && (!demoPasswordAllowed || password !== 'password')) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 

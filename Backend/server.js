@@ -9,6 +9,13 @@ const errorHandler = require('./middleware/errorHandler');
 // Load environment variables
 dotenv.config();
 
+// JWT_SECRET is required for signing/verifying auth tokens
+if (!process.env.JWT_SECRET) {
+  console.error('[Sahayog Backend] FATAL: JWT_SECRET is not set.');
+  console.error('[Sahayog Backend] Copy Backend/.env.example to Backend/.env and set a strong JWT_SECRET.');
+  process.exit(1);
+}
+
 // Connect to Database
 connectDB();
 

@@ -4,9 +4,11 @@ import StatCard from "../components/StatCard";
 import BrandLogo from "../components/BrandLogo";
 import { mockAnalytics } from "../api/mockData";
 import { useLanguageStore } from "../store/languageStore";
+import { useAuthStore } from "../store/authStore";
 
 export default function Landing() {
   const { language, setLanguage, t } = useLanguageStore();
+  const user = useAuthStore((s) => s.user);
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-slate-900">
@@ -199,9 +201,11 @@ export default function Landing() {
             <h2 className="font-display text-2xl font-bold text-slate-900">{t("platformImpactDashboard")}</h2>
             <p className="text-sm text-slate-500">{t("realtimeIndicators")}</p>
           </div>
+          {user?.role === "admin" && (
           <Link to="/admin/dashboard" className="text-sm font-semibold text-[#0E4B4C] hover:underline">
             {t("viewFullAnalytics")}
           </Link>
+        )}
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {mockAnalytics.stats.map((s) => (

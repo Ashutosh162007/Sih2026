@@ -13,7 +13,7 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    const secret = process.env.JWT_SECRET || 'sahayog_sih2026_jwt_secret_dev_key_2026';
+    const secret = process.env.JWT_SECRET;
     
     // Verify standard JWT token with secret
     const decoded = jwt.verify(token, secret);
