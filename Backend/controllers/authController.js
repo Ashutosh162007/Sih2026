@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const { sendRegistrationOTP, verifyRegistrationOTP } = require('../utils/otpService');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -12,17 +13,54 @@ const generateToken = (id, role) => {
   });
 };
 
-// @desc    Register a new user
+// @desc    Send OTP to email for registration
+// @route   POST /api/auth/send-otp
+// @access  Public
+const sendOTP = async (req, res, next) => {
+  try {
+    const { email, name } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Please provide an email address' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if account already exists
+    const userExists = await User.findOne({ email: normalizedEmail });
+    if (userExists) {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists' });
+    }
+
+    const result = await sendRegistrationOTP({ email: normalizedEmail, name: name || 'Citizen' });
+
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Register a new user (with OTP verification)
 // @route   POST /api/auth/register
 // @access  Public
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, role, org, district, block, lat, lng, disciplines } = req.body;
+    const { name, email, password, role, org, district, block, lat, lng, disciplines, otp } = req.body;
+
+    const normalizedEmail = email.toLowerCase().trim();
 
     // Check if user exists
-    const userExists = await User.findOne({ email: email.toLowerCase() });
+    const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
       return res.status(409).json({ success: false, message: 'An account with this email already exists' });
+    }
+
+    // Verify OTP if provided
+    if (otp) {
+      const otpVerify = await verifyRegistrationOTP({ email: normalizedEmail, otp });
+      if (!otpVerify.success) {
+        return res.status(400).json({ success: false, message: otpVerify.message || 'Invalid or expired OTP' });
+      }
     }
 
     const isPendingRole = ['university', 'industry'].includes(role);
@@ -30,7 +68,7 @@ const register = async (req, res, next) => {
 
     const user = await User.create({
       name,
-      email: email.toLowerCase(),
+      email: normalizedEmail,
       password,
       role: (role === 'community_reporter' ? 'citizen' : role) || 'citizen',
       status,
@@ -133,7 +171,6 @@ const googleAuth = async (req, res, next) => {
     let email, name, picture, googleId;
 
     if (credential) {
-      // ID token from Google Identity Services
       const clientId = process.env.GOOGLE_CLIENT_ID;
       try {
         const ticket = await googleClient.verifyIdToken({
@@ -146,7 +183,6 @@ const googleAuth = async (req, res, next) => {
         picture = payload.picture;
         googleId = payload.sub;
       } catch (tokenErr) {
-        // Fallback: decode JWT payload if verification fails due to audience mismatch in dev
         const base64Url = credential.split('.')[1];
         if (base64Url) {
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -167,7 +203,6 @@ const googleAuth = async (req, res, next) => {
         }
       }
     } else if (accessToken) {
-      // Access token
       const client = new OAuth2Client();
       client.setCredentials({ access_token: accessToken });
       const userinfo = await client.request({
@@ -220,7 +255,6 @@ const googleAuth = async (req, res, next) => {
         });
       }
     } else {
-      // If user exists but googleId was not set, update it
       let needsSave = false;
       if (!user.googleId && googleId) {
         user.googleId = googleId;
@@ -300,6 +334,7 @@ const getMe = async (req, res, next) => {
 };
 
 module.exports = {
+  sendOTP,
   register,
   login,
   googleAuth,

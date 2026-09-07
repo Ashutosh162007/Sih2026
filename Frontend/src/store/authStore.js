@@ -24,6 +24,16 @@ export const useAuthStore = create((set, get) => ({
     set({ token: null, user: null });
   },
 
+  sendOtp: async (email, name) => {
+    try {
+      const { data } = await axiosClient.post("/api/auth/send-otp", { email, name });
+      return data;
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to send verification code";
+      throw new Error(message);
+    }
+  },
+
   login: async (email, password) => {
     set({ loading: true, error: null });
     try {
