@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -15,6 +15,11 @@ import {
   Briefcase,
   BookOpen,
   Languages,
+  Moon,
+  Sun,
+  ArrowRight,
+  FolderKanban,
+  HelpCircle,
 } from "lucide-react";
 import { ROLE_LABELS, ROLES } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
@@ -27,10 +32,33 @@ export default function TopBar() {
   const logout = useAuthStore((s) => s.logout);
   const { language, setLanguage, t } = useLanguageStore();
   const navigate = useNavigate();
+
   const [openNotifs, setOpenNotifs] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
+  const [openSearch, setOpenSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Dark mode state
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("sahayog_theme") === "dark" ||
+      document.documentElement.classList.contains("dark");
+  });
+
+  const toggleDarkMode = () => {
+    if (darkMode) {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("sahayog_theme", "light");
+      setDarkMode(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("sahayog_theme", "dark");
+      setDarkMode(true);
+    }
+  };
 
   const fetchNotifs = async () => {
     try {
@@ -50,6 +78,26 @@ export default function TopBar() {
     return () => clearInterval(interval);
   }, []);
 
+  // Live search handler
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const { data } = await axiosClient.get("/api/search", { params: { q: searchQuery } });
+        setSearchResults(data);
+      } catch {
+        // ignore
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const markAllRead = async () => {
     try {
       await axiosClient.patch("/api/notifications/read-all");
@@ -61,18 +109,125 @@ export default function TopBar() {
   };
 
   return (
-    <header className="flex items-center gap-4 border-b border-slate-200 bg-white px-6 py-3">
+    <header className="flex items-center gap-4 border-b border-slate-200 bg-white px-6 py-3 sticky top-0 z-30">
+      {/* Global Search Bar Trigger */}
       <div className="relative min-w-0 flex-1 max-w-lg">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
         <input
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setOpenSearch(true);
+          }}
+          onFocus={() => setOpenSearch(true)}
           placeholder={t("searchPlaceholder")}
           className="w-full rounded-xl border border-slate-200 bg-[#F7F8FA] py-2 pl-9.5 pr-4 text-sm outline-none transition focus:border-[#0E4B4C] focus:bg-white"
         />
+
+        {/* Global Search Modal / Autocomplete Dropdown */}
+        {openSearch && searchQuery.trim() && (
+          <div className="absolute left-0 right-0 z-50 mt-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl animate-in fade-in duration-100 max-h-96 overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
+              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Search size={14} className="text-[#0E4B4C]" /> Search Results for "{searchQuery}"
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenSearch(false);
+                  setSearchQuery("");
+                }}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {searchLoading ? (
+              <p className="py-4 text-center text-xs text-slate-400 animate-pulse">Searching Sahayog database...</p>
+            ) : searchResults ? (
+              <div className="space-y-4 text-xs">
+                {/* Issues */}
+                {searchResults.issues?.length > 0 && (
+                  <div>
+                    <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400 mb-1.5">
+                      Civic Challenges ({searchResults.issues.length})
+                    </p>
+                    <div className="space-y-1.5">
+                      {searchResults.issues.map((i) => (
+                        <div
+                          key={i.id || i._id}
+                          onClick={() => {
+                            setOpenSearch(false);
+                            navigate(`/issues/${i.id || i._id}`);
+                          }}
+                          className="flex items-center justify-between rounded-xl p-2 hover:bg-slate-50 transition cursor-pointer"
+                        >
+                          <div>
+                            <p className="font-semibold text-slate-900">{i.title}</p>
+                            <p className="text-[11px] text-slate-500">📍 {i.district}, {i.block} · {i.category}</p>
+                          </div>
+                          <span className="text-[10px] font-bold text-[#0E4B4C] bg-[#D7F5DE] px-2 py-0.5 rounded">
+                            {i.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Projects */}
+                {searchResults.projects?.length > 0 && (
+                  <div>
+                    <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400 mb-1.5">
+                      Research & Innovation Projects ({searchResults.projects.length})
+                    </p>
+                    <div className="space-y-1.5">
+                      {searchResults.projects.map((p) => (
+                        <div
+                          key={p.id || p._id}
+                          onClick={() => {
+                            setOpenSearch(false);
+                            navigate(`/issues/${p.issueId}`);
+                          }}
+                          className="flex items-center justify-between rounded-xl p-2 hover:bg-slate-50 transition cursor-pointer"
+                        >
+                          <div>
+                            <p className="font-semibold text-slate-900">{p.title}</p>
+                            <p className="text-[11px] text-slate-500">🏛️ {p.university} {p.industry ? `· 🏢 ${p.industry}` : ""}</p>
+                          </div>
+                          <span className="text-[10px] font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded">
+                            {p.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {searchResults.issues?.length === 0 && searchResults.projects?.length === 0 && (
+                  <p className="py-4 text-center text-xs text-slate-400">No matching issues or projects found.</p>
+                )}
+              </div>
+            ) : null}
+          </div>
+        )}
       </div>
 
       <div className="flex-1" />
 
-      {/* Language Switcher 3-Way Selector */}
+      {/* Dark Mode Theme Toggle */}
+      <button
+        type="button"
+        onClick={toggleDarkMode}
+        className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+        aria-label="Toggle Theme"
+        title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      >
+        {darkMode ? <Sun size={17} className="text-amber-500" /> : <Moon size={17} className="text-slate-600" />}
+      </button>
+
+      {/* Language Switcher */}
       <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-xs">
         <Languages size={14} className="ml-1.5 mr-0.5 text-[#0E4B4C] hidden sm:block" />
         <button
@@ -207,7 +362,7 @@ export default function TopBar() {
           </div>
         </button>
 
-        {/* Profile Details Modal / Dropdown */}
+        {/* Profile Details Modal */}
         {openProfile && (
           <div className="absolute right-0 z-40 mt-2 w-88 rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
@@ -260,35 +415,21 @@ export default function TopBar() {
                   </p>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-2.5">
-                <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-slate-400 font-medium">{t("role")}</p>
-                  <p className="font-semibold capitalize text-emerald-700">
-                    {user?.status || "Active"} · {t("networkActive")}
-                  </p>
-                </div>
-              </div>
-
-              {user?.disciplines && user.disciplines.length > 0 && (
-                <div className="rounded-xl bg-slate-50 p-2.5">
-                  <p className="text-[10px] text-slate-400 font-medium mb-1 flex items-center gap-1">
-                    <BookOpen size={12} /> {t("department")}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {user.disciplines.map((d) => (
-                      <span key={d} className="rounded bg-white border border-slate-200 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
-                        {d}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Actions */}
-            <div className="mt-5 pt-3 border-t border-slate-100 flex gap-2">
+            <div className="mt-5 pt-3 border-t border-slate-100 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenProfile(false);
+                  navigate("/profile");
+                }}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-teal-300 bg-teal-50/60 py-2 text-xs font-bold text-[#0E4B4C] hover:bg-teal-100 transition cursor-pointer"
+              >
+                <User size={14} /> View & Edit Full Profile
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -296,7 +437,7 @@ export default function TopBar() {
                   logout();
                   navigate("/login");
                 }}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition cursor-pointer"
               >
                 <LogOut size={14} /> {t("signOut")}
               </button>

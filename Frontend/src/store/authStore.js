@@ -107,11 +107,14 @@ export const useAuthStore = create((set, get) => ({
       case ROLES.UNIVERSITY:
         return "/university/dashboard";
       case ROLES.INDUSTRY:
-        return "/industry/queue";
+        return "/industry/dashboard";
       case ROLES.ADMIN:
         return "/admin/dashboard";
+      case "citizen":
+      case "community_reporter":
+      case ROLES.REPORTER:
       default:
-        return "/my-issues";
+        return "/citizen/dashboard";
     }
   },
 }));

@@ -9,7 +9,9 @@ import {
   MapPin,
   PlusCircle,
   ShieldCheck,
-  Users,
+  Award,
+  User,
+  Compass,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
@@ -17,25 +19,43 @@ import BrandLogo from "./BrandLogo";
 
 const NAV = {
   citizen: [
+    { to: "/citizen/dashboard", label: "Citizen Dashboard", icon: LayoutDashboard },
     { to: "/my-issues", label: "My Reported Issues", icon: ClipboardList },
     { to: "/report", label: "Report New Issue", icon: PlusCircle },
+    { to: "/map", label: "Statewide GIS Map", icon: MapPin },
+    { to: "/showcase", label: "Innovation Showcase", icon: Award },
+    { to: "/help", label: "Help Center & FAQ", icon: HelpCircle },
   ],
   community_reporter: [
+    { to: "/citizen/dashboard", label: "Citizen Dashboard", icon: LayoutDashboard },
     { to: "/my-issues", label: "My Reported Issues", icon: ClipboardList },
     { to: "/report", label: "Report New Issue", icon: PlusCircle },
+    { to: "/map", label: "Statewide GIS Map", icon: MapPin },
+    { to: "/showcase", label: "Innovation Showcase", icon: Award },
+    { to: "/help", label: "Help Center & FAQ", icon: HelpCircle },
   ],
   [ROLES.UNIVERSITY]: [
     { to: "/university/dashboard", label: "University Dashboard", icon: LayoutDashboard },
     { to: "/university/queue", label: "Nearest Issue Queue", icon: MapPin },
     { to: "/university/projects", label: "Innovation Projects", icon: FolderKanban },
+    { to: "/map", label: "Statewide GIS Map", icon: Compass },
+    { to: "/showcase", label: "Innovation Showcase", icon: Award },
+    { to: "/help", label: "Help Center & FAQ", icon: HelpCircle },
   ],
   [ROLES.INDUSTRY]: [
+    { to: "/industry/dashboard", label: "CSR ESG Dashboard", icon: LayoutDashboard },
     { to: "/industry/queue", label: "Incoming Proposals", icon: ClipboardList },
     { to: "/industry/projects", label: "Funded Projects", icon: FolderKanban },
+    { to: "/map", label: "Statewide GIS Map", icon: Compass },
+    { to: "/showcase", label: "Innovation Showcase", icon: Award },
+    { to: "/help", label: "Help Center & FAQ", icon: HelpCircle },
   ],
   [ROLES.ADMIN]: [
     { to: "/admin/dashboard", label: "State Analytics", icon: LayoutDashboard },
     { to: "/admin/verify-accounts", label: "Verify Accounts", icon: ShieldCheck },
+    { to: "/map", label: "Statewide GIS Map", icon: MapPin },
+    { to: "/showcase", label: "Innovation Showcase", icon: Award },
+    { to: "/help", label: "Help Center & FAQ", icon: HelpCircle },
   ],
 };
 
@@ -54,7 +74,10 @@ export default function Sidebar() {
   return (
     <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
       {/* Brand Header */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-100">
+      <div
+        onClick={() => navigate("/")}
+        className="flex items-center gap-3 px-5 py-5 border-b border-slate-100 cursor-pointer hover:bg-slate-50/50 transition"
+      >
         <BrandLogo className="h-9 w-9 shadow-sm shadow-[#0E4B4C]/25" />
         <div>
           <p className="font-display text-lg font-bold text-[#0E4B4C] leading-none">Sahayog</p>
@@ -64,7 +87,10 @@ export default function Sidebar() {
 
       {/* User Org Tag */}
       {user && (
-        <div className="mx-3 mt-3 rounded-xl bg-[#F7F8FA] border border-slate-200/70 p-2.5">
+        <div
+          onClick={() => navigate("/profile")}
+          className="mx-3 mt-3 rounded-xl bg-[#F7F8FA] border border-slate-200/70 p-2.5 hover:border-teal-300 transition cursor-pointer"
+        >
           <p className="text-xs font-semibold text-slate-800 truncate">{user.name}</p>
           <p className="text-[11px] text-teal-700 font-medium truncate">
             {user.org || ROLE_LABELS[user.role]}
@@ -73,20 +99,20 @@ export default function Sidebar() {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
         {items.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+              `flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition ${
                 isActive
                   ? "bg-[#D7F5DE] text-[#0E4B4C] shadow-sm"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               }`
             }
           >
-            <Icon size={18} />
+            <Icon size={16} />
             {label}
           </NavLink>
         ))}
@@ -95,7 +121,7 @@ export default function Sidebar() {
       {cta && (
         <NavLink
           to={cta.to}
-          className="mx-3 mb-3 rounded-xl bg-[#0E4B4C] px-3 py-2.5 text-center text-sm font-semibold text-white shadow-sm shadow-[#0E4B4C]/25 transition hover:bg-[#0b3b3c]"
+          className="mx-3 mb-3 rounded-xl bg-[#0E4B4C] px-3 py-2.5 text-center text-xs font-bold text-white shadow-sm shadow-[#0E4B4C]/25 transition hover:bg-[#0b3b3c]"
         >
           {cta.label}
         </NavLink>
@@ -109,9 +135,9 @@ export default function Sidebar() {
             logout();
             navigate("/login");
           }}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
         >
-          <LogOut size={18} /> Sign out
+          <LogOut size={16} /> Sign out
         </button>
         <div className="mt-2 flex items-center justify-between px-3 text-[11px] text-slate-400">
           <span>Sahayog Network</span>
