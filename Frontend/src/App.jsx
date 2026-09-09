@@ -34,12 +34,12 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/signup/pending" element={<SignupPending />} />
 
-        {/* Public / Semi-Public Views */}
-        <Route path="/showcase" element={<InnovationShowcase />} />
-        <Route path="/help" element={<HelpFaq />} />
+        <Route element={<AppShell />}>
+          {/* Public / Semi-Public Views (inside shell for sidebar) */}
+          <Route path="/showcase" element={<InnovationShowcase />} />
+          <Route path="/help" element={<HelpFaq />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppShell />}>
+          <Route element={<ProtectedRoute />}>
             {/* Common Authenticated Routes */}
             <Route path="/issues/:id" element={<IssueDetail />} />
             <Route path="/map" element={<StateMapExplorer />} />
