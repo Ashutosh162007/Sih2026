@@ -1,7 +1,7 @@
 import { mockAnalytics, mockUsers, seedIssues, seedProjects } from "./mockData.js";
 import { ROLES } from "../lib/constants.js";
 
-const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
+const delay = (ms = 200) => new Promise((r) => setTimeout(r, ms));
 
 function load(key, fallback) {
   try {
@@ -27,16 +27,9 @@ let users = load("sahayog_users", mockUsers).map((u) => {
   }
   return u;
 });
-let issues = load("sahayog_issues", seedIssues).map((iss) => {
-  if (Array.isArray(iss.images)) {
-    iss.images = iss.images.filter((img) => {
-      const src = typeof img === "string" ? img : img?.url;
-      return src && !src.includes("photo-1486325212027-8081e485255e");
-    });
-  }
-  return iss;
-});
+let issues = load("sahayog_issues", seedIssues);
 let projects = load("sahayog_projects", seedProjects);
+let supportTickets = load("sahayog_support_tickets", []);
 let notifications = load("sahayog_notifications", [
   {
     id: "notif-1",
@@ -49,7 +42,7 @@ let notifications = load("sahayog_notifications", [
   {
     id: "notif-2",
     title: "New High Priority Issue Routed to Campus",
-    message: "A new storm drainage failure in Ranchi has been routed to BIT Mesra (12.4 km away).",
+    message: "A new storm drainage failure in Ranchi has been routed to BIT Mesra (8.5 km away).",
     type: "issue_reported",
     read: false,
     createdAt: new Date(Date.now() - 3600000).toISOString(),
@@ -61,6 +54,7 @@ function persist() {
   save("sahayog_issues", issues);
   save("sahayog_projects", projects);
   save("sahayog_notifications", notifications);
+  save("sahayog_support_tickets", supportTickets);
 }
 
 function tokenFor(user) {
@@ -120,14 +114,14 @@ function computeAIAnalysis({ title, description, category, district, block }) {
   let publicRisk = 45;
   let flooding = 35;
 
-  if (text.includes("accident") || text.includes("fatal") || text.includes("urgent") || text.includes("toxic")) {
+  if (text.includes("accident") || text.includes("fatal") || text.includes("urgent") || text.includes("toxic") || text.includes("death")) {
     urgency += 25;
     publicRisk += 30;
   }
-  if (text.includes("flood") || text.includes("water") || text.includes("drain") || text.includes("leakage")) {
+  if (text.includes("flood") || text.includes("water") || text.includes("drain") || text.includes("leakage") || text.includes("contamination")) {
     flooding += 45;
   }
-  if (text.includes("dark") || text.includes("light") || text.includes("women") || text.includes("school")) {
+  if (text.includes("dark") || text.includes("light") || text.includes("women") || text.includes("school") || text.includes("children")) {
     publicRisk += 35;
     urgency += 20;
   }
@@ -141,8 +135,8 @@ function computeAIAnalysis({ title, description, category, district, block }) {
 
   const aiProblemStatement = `**Structured Problem Formulation:**\n\n` +
     `**Context & Location:** Reported in ${block || "Block"}, ${district || "District"} regarding **${category || "Civic Challenge"}**.\n\n` +
-    `**Core Challenge:** ${description || title}. The issue directly impairs community welfare and public utility services.\n\n` +
-    `**AI Severity Assessment (${priority} Priority - Score ${score}/100):** Public Risk: ${publicRisk}%, Urgency: ${urgency}%, Physical/Environmental Risk: ${flooding}%.\n\n` +
+    `**Core Challenge:** ${description || title}. The issue directly impairs community welfare, public infrastructure resilience, and daily mobility.\n\n` +
+    `**AI Severity Assessment (${priority} Priority - Score ${score}/100):** Public Risk: ${publicRisk}%, Urgency: ${urgency}%, Environmental/Physical Hazard: ${flooding}%.\n\n` +
     `**Recommended Innovation Objective:** Formulate multidisciplinary student & faculty technical interventions for durable grassroots deployment.`;
 
   return {
@@ -166,6 +160,36 @@ export async function handleMockRequest(config) {
     return json(config, { success: true, ...analysis });
   }
 
+  // Global Search across issues, projects, universities
+  if ((m = match(config, "get", "/api/search"))) {
+    const q = (m.query.q || "").toLowerCase().trim();
+    if (!q) return json(config, { issues: [], projects: [], universities: [] });
+
+    const matchedIssues = issues.filter(
+      (i) =>
+        i.title?.toLowerCase().includes(q) ||
+        i.description?.toLowerCase().includes(q) ||
+        i.district?.toLowerCase().includes(q) ||
+        i.category?.toLowerCase().includes(q)
+    ).slice(0, 5);
+
+    const matchedProjects = projects.filter(
+      (p) =>
+        p.title?.toLowerCase().includes(q) ||
+        p.proposal?.toLowerCase().includes(q) ||
+        p.university?.toLowerCase().includes(q) ||
+        p.industry?.toLowerCase().includes(q)
+    ).slice(0, 5);
+
+    const matchedUniversities = users
+      .filter((u) => u.role === ROLES.UNIVERSITY && u.org?.toLowerCase().includes(q))
+      .map(publicUser)
+      .slice(0, 5);
+
+    return json(config, { issues: matchedIssues, projects: matchedProjects, universities: matchedUniversities });
+  }
+
+  // Auth: Login
   if ((m = match(config, "post", "/api/auth/login"))) {
     const user = users.find(
       (u) =>
@@ -178,6 +202,7 @@ export async function handleMockRequest(config) {
     return json(config, { token: tokenFor(user), user: publicUser(user) });
   }
 
+  // Auth: Google Login
   if ((m = match(config, "post", "/api/auth/google"))) {
     let email = "google.user@sahayog.in";
     let name = body.name || "Google Verified Citizen";
@@ -215,17 +240,11 @@ export async function handleMockRequest(config) {
       };
       users.push(user);
       persist();
-    } else {
-      if (body.district) {
-        user.district = body.district;
-        user.location = user.location || {};
-        user.location.district = body.district;
-        persist();
-      }
     }
     return json(config, { token: tokenFor(user), user: publicUser(user) });
   }
 
+  // Auth: Register
   if ((m = match(config, "post", "/api/auth/register"))) {
     if (users.some((u) => u.email === body.email)) error("Email already registered", 409);
     const pendingRoles = [ROLES.UNIVERSITY, ROLES.INDUSTRY];
@@ -253,11 +272,66 @@ export async function handleMockRequest(config) {
     return json(config, { user: publicUser(user) }, 201);
   }
 
+  // Auth: Send OTP mock
+  if ((m = match(config, "post", "/api/auth/send-otp"))) {
+    return json(config, { success: true, message: "Verification code sent successfully to " + body.email });
+  }
+
+  // Profile: Get current user
   if ((m = match(config, "get", "/api/users/profile"))) {
     if (!auth) error("Unauthorized", 401);
     return json(config, publicUser(auth));
   }
 
+  // Profile: Update current user
+  if ((m = match(config, "put", "/api/users/profile"))) {
+    if (!auth) error("Unauthorized", 401);
+    const user = users.find((u) => u.id === auth.id);
+    if (!user) error("User not found", 404);
+
+    if (body.name) user.name = body.name;
+    if (body.phone) user.phone = body.phone;
+    if (body.district) user.district = body.district;
+    if (body.block) user.block = body.block;
+    if (body.org) user.org = body.org;
+    if (body.bio) user.bio = body.bio;
+    if (body.disciplines) user.disciplines = body.disciplines;
+    persist();
+    return json(config, { success: true, user: publicUser(user) });
+  }
+
+  // Profile: Change Password
+  if ((m = match(config, "post", "/api/users/change-password"))) {
+    if (!auth) error("Unauthorized", 401);
+    const user = users.find((u) => u.id === auth.id);
+    if (!user) error("User not found", 404);
+    if (user.password !== body.currentPassword) {
+      error("Current password does not match", 400);
+    }
+    user.password = body.newPassword;
+    persist();
+    return json(config, { success: true, message: "Password updated successfully" });
+  }
+
+  // Support Tickets
+  if ((m = match(config, "post", "/api/support/tickets"))) {
+    const ticket = {
+      id: `tic-${Date.now()}`,
+      userId: auth?.id || "guest",
+      userName: auth?.name || body.name || "Guest User",
+      email: auth?.email || body.email || "guest@sahayog.in",
+      subject: body.subject || "Support Inquiry",
+      category: body.category || "General",
+      message: body.message,
+      status: "Open",
+      createdAt: new Date().toISOString(),
+    };
+    supportTickets.unshift(ticket);
+    persist();
+    return json(config, { success: true, ticket });
+  }
+
+  // Issues: Create
   if ((m = match(config, "post", "/api/issues"))) {
     if (!auth) error("Unauthorized", 401);
     const aiAnalysis = computeAIAnalysis(body);
@@ -269,13 +343,15 @@ export async function handleMockRequest(config) {
       category: body.category || aiAnalysis.category,
       status: "New",
       priority: body.priority || aiAnalysis.priority,
+      upvotes: 1,
+      upvoters: [auth.id],
       reporterId: auth.id,
       reporterName: auth.name,
-      district: body.district || "Ranchi",
-      block: body.block || "Kanke",
-      landmark: body.landmark || "",
-      lat: body.lat || 23.3441,
-      lng: body.lng || 85.3096,
+      district: body.location?.district || body.district || "Ranchi",
+      block: body.location?.block || body.block || "Kanke",
+      landmark: body.location?.landmark || body.landmark || "",
+      lat: body.location?.lat || body.lat || 23.3441,
+      lng: body.location?.lng || body.lng || 85.3096,
       images: Array.isArray(body.evidence) && body.evidence.length > 0
         ? body.evidence.map((e) => ({
             url: e.url || e.preview,
@@ -290,6 +366,7 @@ export async function handleMockRequest(config) {
         { name: "NIT Jamshedpur", distanceKm: 86.0, matchScore: 85 },
       ],
       assignee: null,
+      comments: [],
       timeline: [
         { at: new Date().toISOString(), label: "Reported by Citizen" },
         { at: new Date().toISOString(), label: `AI synthesized formal problem statement (${aiAnalysis.priority} Priority, ${aiAnalysis.severity.score}% severity)` },
@@ -312,9 +389,10 @@ export async function handleMockRequest(config) {
     return json(config, issue, 201);
   }
 
+  // Issues: Get list (supports filter by reporterId, status, district, category, proximity)
   if ((m = match(config, "get", "/api/issues"))) {
     let list = [...issues];
-    const { reporterId, status, lat, lng } = m.query;
+    const { reporterId, status, district, category, lat, lng } = m.query;
     if (reporterId) {
       list = list.filter(
         (i) =>
@@ -325,24 +403,119 @@ export async function handleMockRequest(config) {
           (auth && (i.reporterId === auth.id || i.reporter === auth.id))
       );
     }
-    if (status) list = list.filter((i) => i.status === status);
+    if (status && status !== "all") list = list.filter((i) => i.status === status);
+    if (district && district !== "all") list = list.filter((i) => i.district === district);
+    if (category && category !== "all") list = list.filter((i) => i.category === category);
     if (lat && lng) {
       const la = Number(lat);
       const ln = Number(lng);
       list.sort(
-        (a, b) =>
-          Math.hypot(a.lat - la, a.lng - ln) - Math.hypot(b.lat - la, b.lng - ln),
+        (a, b) => Math.hypot(a.lat - la, a.lng - ln) - Math.hypot(b.lat - la, b.lng - ln),
       );
     }
     return json(config, list);
   }
 
+  // Issues: Get detail
   if ((m = match(config, "get", "/api/issues/:id"))) {
     const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
     if (!issue) error("Issue not found", 404);
     return json(config, issue);
   }
 
+  // Issues: Upvote (+1 Me Too)
+  if ((m = match(config, "post", "/api/issues/:id/upvote"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    const userId = auth?.id || "anonymous-guest";
+    issue.upvoters = issue.upvoters || [];
+    const hasUpvoted = issue.upvoters.includes(userId);
+
+    if (hasUpvoted) {
+      issue.upvoters = issue.upvoters.filter((id) => id !== userId);
+      issue.upvotes = Math.max(0, (issue.upvotes || 1) - 1);
+    } else {
+      issue.upvoters.push(userId);
+      issue.upvotes = (issue.upvotes || 0) + 1;
+    }
+    persist();
+    return json(config, { success: true, upvotes: issue.upvotes, hasUpvoted: !hasUpvoted, issue });
+  }
+
+  // Issues: Comments (Post & Get)
+  if ((m = match(config, "post", "/api/issues/:id/comments"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    issue.comments = issue.comments || [];
+    const comment = {
+      id: `c-${Date.now()}`,
+      authorId: auth?.id || "guest",
+      authorName: auth?.name || "Community Member",
+      authorRole: auth?.role || "citizen",
+      authorOrg: auth?.org || "",
+      text: body.text,
+      createdAt: new Date().toISOString(),
+    };
+    issue.comments.push(comment);
+    persist();
+    return json(config, { success: true, comment, comments: issue.comments });
+  }
+
+  // Issues: Edit / Update details
+  if ((m = match(config, "post", "/api/issues/:id/edit"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    if (body.title) issue.title = body.title;
+    if (body.description) issue.description = body.description;
+    if (body.landmark) issue.landmark = body.landmark;
+    issue.timeline.push({
+      at: new Date().toISOString(),
+      label: "Issue details updated by citizen reporter",
+      actor: auth?.name || "Citizen",
+    });
+    persist();
+    return json(config, { success: true, issue });
+  }
+
+  // Issues: Withdraw / Cancel
+  if ((m = match(config, "post", "/api/issues/:id/withdraw"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    issue.status = "Withdrawn";
+    issue.timeline.push({
+      at: new Date().toISOString(),
+      label: `Issue report withdrawn by citizen: "${body.reason || "Resolved independently"}"`,
+      actor: auth?.name || "Citizen",
+    });
+    persist();
+    return json(config, { success: true, issue });
+  }
+
+  // Issues: Dispute / Reopen Resolution
+  if ((m = match(config, "post", "/api/issues/:id/dispute"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    issue.status = "In progress";
+    issue.timeline.push({
+      at: new Date().toISOString(),
+      label: `Citizen flagged resolution dispute: "${body.reason || "Ground issue remains unresolved"}"`,
+      actor: auth?.name || "Citizen",
+      role: "citizen",
+    });
+    notifications.unshift({
+      id: `notif-${Date.now()}`,
+      title: `Resolution Disputed on Ground ⚠️`,
+      message: `Citizen reported that "${issue.title}" still requires on-site attention. Ticket reopened for university team.`,
+      type: "issue_disputed",
+      issueId: issue.id,
+      read: false,
+      createdAt: new Date().toISOString(),
+    });
+    persist();
+    return json(config, { success: true, issue });
+  }
+
+  // Issues: Update Status
   if ((m = match(config, "patch", "/api/issues/:id/status"))) {
     const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
     if (!issue) error("Issue not found", 404);
@@ -363,6 +536,7 @@ export async function handleMockRequest(config) {
     return json(config, issue);
   }
 
+  // Issues: Feedback
   if ((m = match(config, "post", "/api/issues/:id/feedback"))) {
     const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
     if (!issue) error("Issue not found", 404);
@@ -395,11 +569,13 @@ export async function handleMockRequest(config) {
     return json(config, { success: true, feedback: issue.feedback, issue });
   }
 
+  // University: Queue
   if ((m = match(config, "get", "/api/university/queue"))) {
     const list = issues.filter((i) => ["New", "Under review", "Assigned"].includes(i.status));
     return json(config, list);
   }
 
+  // University: Claim
   if ((m = match(config, "post", "/api/university/issues/:id/claim"))) {
     const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
     if (!issue) error("Issue not found", 404);
@@ -427,6 +603,7 @@ export async function handleMockRequest(config) {
     return json(config, { success: true, issue });
   }
 
+  // Projects: Team Formation
   if ((m = match(config, "post", "/api/projects/:issueId/teams"))) {
     let project = projects.find((p) => p.issueId === m.params.issueId);
     const uniName = auth?.org || "Birla Institute of Technology (BIT) Mesra";
@@ -441,6 +618,7 @@ export async function handleMockRequest(config) {
         status: "Team forming",
         funded: false,
         fundingAmount: 0,
+        disbursedAmount: 0,
         deadline: null,
         team: body.team || [],
         proposal: "",
@@ -460,21 +638,12 @@ export async function handleMockRequest(config) {
         actor: uniName,
         role: "university",
       });
-
-      notifications.unshift({
-        id: `notif-${Date.now()}`,
-        title: `University Team Assembled! 🎓`,
-        message: `${uniName} formed a student-faculty team for "${issue.title}" and is drafting the solution proposal.`,
-        type: "team_formed",
-        issueId: issue.id,
-        read: false,
-        createdAt: new Date().toISOString(),
-      });
     }
     persist();
     return json(config, project);
   }
 
+  // Projects: Proposal Submission
   if ((m = match(config, "post", "/api/projects/:issueId/proposals"))) {
     let project = projects.find((p) => p.issueId === m.params.issueId);
     const uniName = auth?.org || "Birla Institute of Technology (BIT) Mesra";
@@ -488,6 +657,7 @@ export async function handleMockRequest(config) {
         status: "Awaiting funding",
         funded: false,
         fundingAmount: 0,
+        disbursedAmount: 0,
         deadline: null,
         team: body.team || [],
         proposal: body.proposal,
@@ -526,30 +696,40 @@ export async function handleMockRequest(config) {
     return json(config, project, 201);
   }
 
+  // University: Projects
   if ((m = match(config, "get", "/api/university/projects"))) {
     return json(config, projects);
   }
 
+  // Industry: Proposals Queue
   if ((m = match(config, "get", "/api/industry/proposals"))) {
     return json(config, projects.filter((p) => !p.funded));
   }
 
+  // Industry: Fund Proposal
   if ((m = match(config, "post", "/api/projects/:projectId/fund"))) {
     const project = projects.find((p) => p.id === m.params.projectId);
     if (!project) error("Project not found", 404);
     const industryName = auth?.org || "Tata Steel CSR & Sustainability";
+    const amount = Number(body.fundingAmount) || 350000;
     project.funded = true;
     project.status = "Funded";
     project.industry = industryName;
-    project.fundingAmount = Number(body.fundingAmount) || 350000;
+    project.fundingAmount = amount;
     project.deadline = body.deadline || "2026-11-30";
+    project.disbursedAmount = Math.round(amount * 0.4); // Tranche 1 40% released on approval
+    project.tranches = [
+      { tranche: 1, percent: 40, amount: Math.round(amount * 0.4), released: true, releasedAt: new Date().toISOString() },
+      { tranche: 2, percent: 40, amount: Math.round(amount * 0.4), released: false, releasedAt: null },
+      { tranche: 3, percent: 20, amount: Math.round(amount * 0.2), released: false, releasedAt: null },
+    ];
     
     const issue = issues.find((i) => i.id === project.issueId);
     if (issue) {
       issue.status = "In progress";
       issue.timeline.push({
         at: new Date().toISOString(),
-        label: `Funding (₹${project.fundingAmount.toLocaleString("en-IN")}) approved by ${industryName}. Target completion: ${project.deadline}`,
+        label: `Funding (₹${project.fundingAmount.toLocaleString("en-IN")}) committed by ${industryName}. Advance Tranche 1 released.`,
         actor: industryName,
         role: "industry",
       });
@@ -569,6 +749,29 @@ export async function handleMockRequest(config) {
     return json(config, project);
   }
 
+  // Industry: Tranche Release
+  if ((m = match(config, "post", "/api/projects/:projectId/tranche-release"))) {
+    const project = projects.find((p) => p.id === m.params.projectId);
+    if (!project) error("Project not found", 404);
+    const trancheIndex = Number(body.trancheIndex);
+    if (project.tranches && project.tranches[trancheIndex]) {
+      project.tranches[trancheIndex].released = true;
+      project.tranches[trancheIndex].releasedAt = new Date().toISOString();
+      project.disbursedAmount = (project.disbursedAmount || 0) + project.tranches[trancheIndex].amount;
+    }
+    const issue = issues.find((i) => i.id === project.issueId);
+    if (issue) {
+      issue.timeline.push({
+        at: new Date().toISOString(),
+        label: `CSR Tranche ${trancheIndex + 1} (₹${project.tranches[trancheIndex]?.amount.toLocaleString("en-IN")}) released to university team`,
+        actor: project.industry || "CSR Partner",
+      });
+    }
+    persist();
+    return json(config, { success: true, project });
+  }
+
+  // Projects: Milestones Update & Deliverables
   if ((m = match(config, "patch", "/api/projects/:projectId/milestones"))) {
     const project = projects.find((p) => p.id === m.params.projectId);
     if (!project) error("Project not found", 404);
@@ -576,12 +779,11 @@ export async function handleMockRequest(config) {
     project.milestones = body.milestones || project.milestones;
     const issue = issues.find((i) => i.id === project.issueId);
     
-    // Check if any milestone was newly completed
     const newlyCompleted = project.milestones.find((m, i) => m.done && !prevMilestones[i]?.done);
     if (newlyCompleted && issue) {
       issue.timeline.push({
         at: new Date().toISOString(),
-        label: `Milestone completed: ${newlyCompleted.name}`,
+        label: `Milestone completed: "${newlyCompleted.name}"`,
         actor: project.university || "University Team",
         role: "university",
       });
@@ -597,7 +799,6 @@ export async function handleMockRequest(config) {
       });
     }
 
-    // If all milestones completed, resolve issue and notify reporter
     if (project.milestones.length > 0 && project.milestones.every((m) => m.done)) {
       project.status = "Completed";
       if (issue) {
@@ -624,6 +825,7 @@ export async function handleMockRequest(config) {
     return json(config, project);
   }
 
+  // Notifications
   if ((m = match(config, "get", "/api/notifications"))) {
     return json(config, notifications);
   }
@@ -634,6 +836,7 @@ export async function handleMockRequest(config) {
     return json(config, { success: true });
   }
 
+  // Admin
   if ((m = match(config, "get", "/api/admin/verifications"))) {
     return json(config, users.filter((u) => u.status === "pending").map(publicUser));
   }
@@ -650,6 +853,7 @@ export async function handleMockRequest(config) {
     return json(config, {
       ...mockAnalytics,
       openIssues: issues.filter((i) => i.status !== "Resolved").length,
+      resolvedIssues: issues.filter((i) => i.status === "Resolved").length,
       pendingAccounts: users.filter((u) => u.status === "pending").length,
     });
   }
