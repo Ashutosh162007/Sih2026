@@ -36,6 +36,9 @@ export default function TopBar() {
   const [openNotifs, setOpenNotifs] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
+
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -77,6 +80,17 @@ export default function TopBar() {
     const interval = setInterval(fetchNotifs, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setOpenNotifs(false);
+      if (profileRef.current && !profileRef.current.contains(e.target)) setOpenProfile(false);
+    };
+    if (openNotifs || openProfile) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [openNotifs, openProfile]);
 
   // Live search handler
   useEffect(() => {
@@ -266,7 +280,7 @@ export default function TopBar() {
       </div>
 
       {/* Notifications Drawer */}
-      <div className="relative">
+      <div ref={notifRef} className="relative">
         <button
           type="button"
           onClick={() => {
@@ -344,7 +358,7 @@ export default function TopBar() {
       </div>
 
       {/* User Avatar & Profile Trigger */}
-      <div className="relative pl-2 border-l border-slate-200">
+      <div ref={profileRef} className="relative pl-2 border-l border-slate-200">
         <button
           type="button"
           onClick={() => {
