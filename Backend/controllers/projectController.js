@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Project = require('../models/Project');
 const Issue = require('../models/Issue');
 const Notification = require('../models/Notification');
@@ -161,6 +162,21 @@ const submitProposal = async (req, res, next) => {
   }
 };
 
+// Helper to safely find a project by ObjectId or string issueId
+const findProjectSafely = async (idOrIssueId) => {
+  if (!idOrIssueId) return null;
+  if (mongoose.isValidObjectId(idOrIssueId)) {
+    const proj = await Project.findById(idOrIssueId);
+    if (proj) return proj;
+  }
+  return await Project.findOne({
+    $or: [
+      { issueId: idOrIssueId },
+      ...(mongoose.isValidObjectId(idOrIssueId) ? [{ _id: idOrIssueId }] : []),
+    ],
+  });
+};
+
 // @desc    Industry funds a proposal and sets deadline
 // @route   POST /api/projects/:projectId/fund
 // @access  Private (Industry)
@@ -170,17 +186,24 @@ const fundProject = async (req, res, next) => {
     const { fundingAmount, deadline, mentorshipNotes } = req.body;
     const industryName = req.user?.org || req.user?.name || 'Tata Steel CSR & Sustainability';
 
-    const project = await Project.findById(projectId);
+    const project = await findProjectSafely(projectId);
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
+    const amount = Number(fundingAmount) || 250000;
     project.funded = true;
     project.status = 'Funded';
     project.industry = industryName;
     project.industryId = req.user?._id;
-    project.fundingAmount = Number(fundingAmount) || 250000;
+    project.fundingAmount = amount;
     project.fundingDate = new Date();
+    project.disbursedAmount = Math.round(amount * 0.4); // Advance 40%
+    project.tranches = [
+      { tranche: 1, percent: 40, amount: Math.round(amount * 0.4), released: true, releasedAt: new Date() },
+      { tranche: 2, percent: 40, amount: Math.round(amount * 0.4), released: false, releasedAt: null },
+      { tranche: 3, percent: 20, amount: Math.round(amount * 0.2), released: false, releasedAt: null },
+    ];
     if (deadline) project.deadline = new Date(deadline);
     if (mentorshipNotes) project.mentorshipNotes = mentorshipNotes;
 
@@ -229,8 +252,11 @@ const fundProject = async (req, res, next) => {
       status: project.status,
       industry: project.industry,
       fundingAmount: project.fundingAmount,
+      disbursedAmount: project.disbursedAmount,
+      tranches: project.tranches,
       deadline: project.deadline,
       milestones: project.milestones,
+      certificateStatus: project.certificateStatus,
     });
   } catch (err) {
     next(err);
@@ -245,7 +271,7 @@ const updateMilestones = async (req, res, next) => {
     const { projectId } = req.params;
     const { milestones } = req.body;
 
-    const project = await Project.findById(projectId);
+    const project = await findProjectSafely(projectId);
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
@@ -283,6 +309,9 @@ const updateMilestones = async (req, res, next) => {
     const allDone = milestones.length > 0 && milestones.every((m) => m.done);
     if (allDone) {
       project.status = 'Completed';
+      if (!project.certificateStatus || project.certificateStatus === 'none') {
+        project.certificateStatus = 'pending_approval';
+      }
 
       // Update linked issue to Resolved
       if (issue) {
@@ -308,6 +337,13 @@ const updateMilestones = async (req, res, next) => {
           });
         }
       }
+    } else {
+      if (project.status === 'Completed') {
+        project.status = 'Funded';
+        if (project.certificateStatus === 'pending_approval') {
+          project.certificateStatus = 'none';
+        }
+      }
     }
 
     await project.save();
@@ -317,7 +353,61 @@ const updateMilestones = async (req, res, next) => {
       _id: project._id,
       milestones: project.milestones,
       status: project.status,
+      certificateStatus: project.certificateStatus,
+      certificateApprovedAt: project.certificateApprovedAt,
+      certificateApprovedBy: project.certificateApprovedBy,
+      disbursedAmount: project.disbursedAmount,
+      tranches: project.tranches,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Release tranche disbursement for a project
+// @route   POST /api/projects/:projectId/tranche-release
+// @access  Private (Industry)
+const releaseTranche = async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+    const { trancheIndex } = req.body;
+
+    const project = await findProjectSafely(projectId);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    const idx = Number(trancheIndex);
+    if (!project.tranches || project.tranches.length === 0) {
+      const amt = project.fundingAmount || 350000;
+      project.tranches = [
+        { tranche: 1, percent: 40, amount: Math.round(amt * 0.4), released: true, releasedAt: new Date() },
+        { tranche: 2, percent: 40, amount: Math.round(amt * 0.4), released: false, releasedAt: null },
+        { tranche: 3, percent: 20, amount: Math.round(amt * 0.2), released: false, releasedAt: null },
+      ];
+    }
+
+    if (project.tranches[idx]) {
+      project.tranches[idx].released = true;
+      project.tranches[idx].releasedAt = new Date();
+      project.disbursedAmount = (project.disbursedAmount || 0) + (project.tranches[idx].amount || 0);
+    }
+
+    await project.save();
+
+    // Timeline on linked issue
+    const issue = await Issue.findById(project.issueId).catch(() => null);
+    if (issue) {
+      issue.timeline.push({
+        at: new Date(),
+        label: `CSR Tranche ${idx + 1} (₹${(project.tranches[idx]?.amount || 0).toLocaleString('en-IN')}) released to university team`,
+        actor: project.industry || 'CSR Partner',
+        role: 'industry',
+      });
+      await issue.save();
+    }
+
+    res.json({ success: true, project });
   } catch (err) {
     next(err);
   }
@@ -328,7 +418,7 @@ const updateMilestones = async (req, res, next) => {
 // @access  Public / Private
 const getProjectById = async (req, res, next) => {
   try {
-    const project = await Project.findById(req.params.id);
+    const project = await findProjectSafely(req.params.id);
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
@@ -343,5 +433,6 @@ module.exports = {
   submitProposal,
   fundProject,
   updateMilestones,
+  releaseTranche,
   getProjectById,
 };

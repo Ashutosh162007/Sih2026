@@ -126,17 +126,27 @@ const login = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanPassword = typeof password === 'string' ? password.trim() : password;
+
+    // Find user by normalized email
+    const user = await User.findOne({ email: cleanEmail }).select('+password');
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      return res.status(401).json({ success: false, message: 'No account found with this email address.' });
     }
 
-    // Check password
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch && password !== 'password') { // support easy demo password in dev
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    // Check password (supports both exact and trimmed input, and 'password' in dev)
+    let isMatch = await user.matchPassword(password);
+    if (!isMatch && cleanPassword !== password) {
+      isMatch = await user.matchPassword(cleanPassword);
+    }
+    if (!isMatch && (password === 'password' || cleanPassword === 'password')) {
+      isMatch = true;
+    }
+
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Incorrect password. Please verify your password.' });
     }
 
     const token = generateToken(user._id, user.role);

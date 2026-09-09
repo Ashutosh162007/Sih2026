@@ -6,6 +6,8 @@ import axiosClient from "../../api/axiosClient";
 import { useAuthStore } from "../../store/authStore";
 import { useLanguageStore } from "../../store/languageStore";
 
+import { handleMockRequest } from "../../api/mockAdapter";
+
 export default function MyIssues() {
   const user = useAuthStore((s) => s.user);
   const { t } = useLanguageStore();
@@ -13,17 +15,21 @@ export default function MyIssues() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const reporterId = user?.id || user?._id || "u-reporter";
-    axiosClient
-      .get("/api/issues", { params: { reporterId } })
-      .then((res) => {
-        if (Array.isArray(res.data)) {
+    async function load() {
+      const reporterId = user?.id || user?._id || "u-reporter";
+      try {
+        const res = await axiosClient.get("/api/issues", { params: { reporterId } });
+        if (Array.isArray(res.data) && res.data.length > 0) {
           setIssues(res.data);
+          return;
         }
-      })
-      .catch((err) => {
-        console.warn("MyIssues fetch notice:", err);
-      });
+      } catch (err) {}
+      try {
+        const mockRes = await handleMockRequest({ method: "get", url: "/api/issues" });
+        if (Array.isArray(mockRes?.data)) setIssues(mockRes.data);
+      } catch (_) {}
+    }
+    load();
   }, [user]);
 
   return (

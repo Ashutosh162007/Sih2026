@@ -5,15 +5,24 @@ const delay = (ms = 200) => new Promise((r) => setTimeout(r, ms));
 
 function load(key, fallback) {
   try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : structuredClone(fallback);
+    if (typeof localStorage !== "undefined" && localStorage.getItem) {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : structuredClone(fallback);
+    }
+    return structuredClone(fallback);
   } catch {
     return structuredClone(fallback);
   }
 }
 
 function save(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+  try {
+    if (typeof localStorage !== "undefined" && localStorage.setItem) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+  } catch {
+    // Ignore storage quota or disabled storage in restricted environments
+  }
 }
 
 let users = load("sahayog_users", mockUsers).map((u) => {
@@ -28,7 +37,24 @@ let users = load("sahayog_users", mockUsers).map((u) => {
   return u;
 });
 let issues = load("sahayog_issues", seedIssues);
-let projects = load("sahayog_projects", seedProjects);
+let projects = load("sahayog_projects", seedProjects).map((p) => {
+  const seed = seedProjects.find((sp) => sp.id === p.id);
+  if (seed && !p.certificateStatus) {
+    return {
+      ...p,
+      certificateStatus: seed.certificateStatus || "none",
+      certificateApprovedAt: seed.certificateApprovedAt || null,
+      certificateApprovedBy: seed.certificateApprovedBy || null,
+      certificateNotes: seed.certificateNotes || "",
+    };
+  }
+  return p;
+});
+seedProjects.forEach((sp) => {
+  if (!projects.some((p) => p.id === sp.id)) {
+    projects.push(sp);
+  }
+});
 let supportTickets = load("sahayog_support_tickets", []);
 let notifications = load("sahayog_notifications", [
   {
@@ -708,7 +734,12 @@ export async function handleMockRequest(config) {
 
   // Industry: Fund Proposal
   if ((m = match(config, "post", "/api/projects/:projectId/fund"))) {
-    const project = projects.find((p) => p.id === m.params.projectId);
+    const project = projects.find(
+      (p) =>
+        String(p.id) === String(m.params.projectId) ||
+        String(p._id) === String(m.params.projectId) ||
+        String(p.issueId) === String(m.params.projectId)
+    );
     if (!project) error("Project not found", 404);
     const industryName = auth?.org || "Tata Steel CSR & Sustainability";
     const amount = Number(body.fundingAmount) || 350000;
@@ -751,7 +782,12 @@ export async function handleMockRequest(config) {
 
   // Industry: Tranche Release
   if ((m = match(config, "post", "/api/projects/:projectId/tranche-release"))) {
-    const project = projects.find((p) => p.id === m.params.projectId);
+    const project = projects.find(
+      (p) =>
+        String(p.id) === String(m.params.projectId) ||
+        String(p._id) === String(m.params.projectId) ||
+        String(p.issueId) === String(m.params.projectId)
+    );
     if (!project) error("Project not found", 404);
     const trancheIndex = Number(body.trancheIndex);
     if (project.tranches && project.tranches[trancheIndex]) {
@@ -773,7 +809,12 @@ export async function handleMockRequest(config) {
 
   // Projects: Milestones Update & Deliverables
   if ((m = match(config, "patch", "/api/projects/:projectId/milestones"))) {
-    const project = projects.find((p) => p.id === m.params.projectId);
+    const project = projects.find(
+      (p) =>
+        String(p.id) === String(m.params.projectId) ||
+        String(p._id) === String(m.params.projectId) ||
+        String(p.issueId) === String(m.params.projectId)
+    );
     if (!project) error("Project not found", 404);
     const prevMilestones = project.milestones || [];
     project.milestones = body.milestones || project.milestones;
@@ -801,6 +842,9 @@ export async function handleMockRequest(config) {
 
     if (project.milestones.length > 0 && project.milestones.every((m) => m.done)) {
       project.status = "Completed";
+      if (!project.certificateStatus || project.certificateStatus === "none") {
+        project.certificateStatus = "pending_approval";
+      }
       if (issue) {
         issue.status = "Resolved";
         issue.timeline.push({
@@ -819,6 +863,13 @@ export async function handleMockRequest(config) {
           read: false,
           createdAt: new Date().toISOString(),
         });
+      }
+    } else {
+      if (project.status === "Completed") {
+        project.status = "Funded";
+        if (project.certificateStatus === "pending_approval") {
+          project.certificateStatus = "none";
+        }
       }
     }
     persist();
@@ -847,6 +898,35 @@ export async function handleMockRequest(config) {
     user.status = body.decision === "reject" ? "rejected" : "active";
     persist();
     return json(config, publicUser(user));
+  }
+
+  if ((m = match(config, "get", "/api/admin/certificates"))) {
+    return json(
+      config,
+      projects.filter(
+        (p) =>
+          p.status === "Completed" ||
+          ["pending_approval", "approved", "rejected"].includes(p.certificateStatus)
+      )
+    );
+  }
+
+  if ((m = match(config, "patch", "/api/admin/certificates/:projectId"))) {
+    const project = projects.find((p) => p.id === m.params.projectId || p._id === m.params.projectId);
+    if (!project) error("Project not found", 404);
+    if (body.decision === "approve") {
+      project.certificateStatus = "approved";
+      project.certificateApprovedAt = new Date().toISOString();
+      project.certificateApprovedBy = "Jharkhand State Innovation Council Admin";
+    } else {
+      project.certificateStatus = "rejected";
+      project.certificateApprovedAt = null;
+    }
+    if (body.notes !== undefined) {
+      project.certificateNotes = body.notes;
+    }
+    persist();
+    return json(config, project);
   }
 
   if ((m = match(config, "get", "/api/admin/analytics"))) {

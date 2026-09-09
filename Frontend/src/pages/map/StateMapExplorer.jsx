@@ -46,6 +46,8 @@ function MapCenterController({ center, zoom }) {
   return null;
 }
 
+import { handleMockRequest } from "../../api/mockAdapter";
+
 export default function StateMapExplorer() {
   const { t } = useLanguageStore();
   const navigate = useNavigate();
@@ -61,10 +63,15 @@ export default function StateMapExplorer() {
     async function loadIssues() {
       try {
         const { data } = await axiosClient.get("/api/issues");
-        setIssues(data || []);
-      } catch (err) {
-        console.warn("Failed to load map issues:", err);
-      }
+        if (Array.isArray(data) && data.length > 0) {
+          setIssues(data);
+          return;
+        }
+      } catch (err) {}
+      try {
+        const mockRes = await handleMockRequest({ method: "get", url: "/api/issues" });
+        if (Array.isArray(mockRes?.data)) setIssues(mockRes.data);
+      } catch (_) {}
     }
     loadIssues();
   }, []);
@@ -100,23 +107,23 @@ export default function StateMapExplorer() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold text-slate-900 flex items-center gap-2">
-            <MapPin className="text-[#0E4B4C]" size={28} /> Statewide GIS Innovation Map
+            <MapPin className="text-[#0E4B4C]" size={28} /> {t("gisMapTitle")}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Real-time geospatial visualization of civic challenges, HEI proximity radii, and CSR-funded deployments across Jharkhand.
+            {t("gisMapSubtitle")}
           </p>
         </div>
 
         {/* Legend */}
         <div className="flex items-center gap-3 text-xs bg-white border border-slate-200 px-3.5 py-2 rounded-xl shadow-xs">
           <span className="flex items-center gap-1.5 font-medium text-slate-700">
-            <span className="h-2.5 w-2.5 rounded-full bg-rose-600" /> High/Urgent
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-600" /> {t("legendUrgent")}
           </span>
           <span className="flex items-center gap-1.5 font-medium text-slate-700">
-            <span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Campus Assigned
+            <span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> {t("legendAssigned")}
           </span>
           <span className="flex items-center gap-1.5 font-medium text-slate-700">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Resolved
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> {t("legendResolved")}
           </span>
         </div>
       </div>
@@ -125,14 +132,14 @@ export default function StateMapExplorer() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-            District
+            {t("districtLabel")}
           </label>
           <select
             value={district}
             onChange={(e) => handleDistrictChange(e.target.value)}
             className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-[#0E4B4C]"
           >
-            <option value="all">All 24 Districts ({issues.length} total)</option>
+            <option value="all">{t("allDistrictsCount")} ({issues.length} total)</option>
             {JHARKHAND_DISTRICTS.map((d) => (
               <option key={d} value={d}>
                 {d}
@@ -143,14 +150,14 @@ export default function StateMapExplorer() {
 
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-            Domain Category
+            {t("categoryLabel")}
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-[#0E4B4C]"
           >
-            <option value="all">All Domains</option>
+            <option value="all">{t("categoryLabel")} (All)</option>
             {ISSUE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -161,7 +168,7 @@ export default function StateMapExplorer() {
 
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-            Lifecycle Status
+            {t("role")} / Status
           </label>
           <select
             value={status}
@@ -169,10 +176,10 @@ export default function StateMapExplorer() {
             className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-[#0E4B4C]"
           >
             <option value="all">All Statuses</option>
-            <option value="New">New / Triage</option>
-            <option value="Assigned">University Assigned</option>
-            <option value="In progress">In Progress / Funded</option>
-            <option value="Resolved">Resolved & Verified</option>
+            <option value="New">{t("statusNew")}</option>
+            <option value="Assigned">{t("statusAssigned")}</option>
+            <option value="In progress">{t("statusInProgress")}</option>
+            <option value="Resolved">{t("statusResolved")}</option>
           </select>
         </div>
       </div>

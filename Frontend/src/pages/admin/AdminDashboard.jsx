@@ -26,6 +26,8 @@ import axiosClient from "../../api/axiosClient";
 import { JHARKHAND_DISTRICTS } from "../../lib/constants";
 import { useLanguageStore } from "../../store/languageStore";
 
+import { handleMockRequest } from "../../api/mockAdapter";
+
 const COLORS = ["#0E4B4C", "#3B82F6", "#F59E0B", "#10B981", "#8B5CF6", "#EC4899"];
 
 export default function AdminDashboard() {
@@ -34,7 +36,20 @@ export default function AdminDashboard() {
   const [selectedDistrict, setSelectedDistrict] = useState("all");
 
   useEffect(() => {
-    axiosClient.get("/api/admin/analytics").then((r) => setData(r.data));
+    async function load() {
+      try {
+        const r = await axiosClient.get("/api/admin/analytics");
+        if (r.data) {
+          setData(r.data);
+          return;
+        }
+      } catch (e) {}
+      try {
+        const mockRes = await handleMockRequest({ method: "get", url: "/api/admin/analytics" });
+        if (mockRes?.data) setData(mockRes.data);
+      } catch (_) {}
+    }
+    load();
   }, []);
 
   function exportCSV() {
@@ -80,14 +95,14 @@ export default function AdminDashboard() {
             onClick={exportCSV}
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs transition cursor-pointer"
           >
-            <FileSpreadsheet size={15} className="text-emerald-700" /> Export CSV Audit
+            <FileSpreadsheet size={15} className="text-emerald-700" /> {t("exportCsvAudit")}
           </button>
           <button
             type="button"
             onClick={printReport}
             className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c] transition cursor-pointer"
           >
-            <Printer size={15} /> Print Summary Report
+            <Printer size={15} /> {t("printSummaryReport")}
           </button>
         </div>
       </div>
@@ -95,13 +110,13 @@ export default function AdminDashboard() {
       {/* District Drill-down Filter */}
       <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
         <Filter size={16} className="text-slate-400 ml-1" />
-        <span className="text-xs font-bold text-slate-700">Filter Overview by District:</span>
+        <span className="text-xs font-bold text-slate-700">{t("filterByDistrict")}</span>
         <select
           value={selectedDistrict}
           onChange={(e) => setSelectedDistrict(e.target.value)}
           className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-[#0E4B4C]"
         >
-          <option value="all">All 24 Jharkhand Districts (Consolidated)</option>
+          <option value="all">{t("allDistrictsConsolidated")}</option>
           {JHARKHAND_DISTRICTS.map((d) => (
             <option key={d} value={d}>
               {d}
@@ -121,7 +136,7 @@ export default function AdminDashboard() {
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="font-display font-bold text-slate-900 text-base">{t("platformImpactDashboard")}</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Reported vs. Resolved Challenges Velocity</p>
+          <p className="text-xs text-slate-500 mt-0.5">{t("reportedVsResolvedVelocity")}</p>
           <div className="mt-4 h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.monthly}>

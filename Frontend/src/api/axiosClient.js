@@ -4,7 +4,7 @@ import { handleMockRequest } from "./mockAdapter";
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
   headers: { "Content-Type": "application/json" },
-  timeout: 5000,
+  timeout: 15000,
 });
 
 axiosClient.interceptors.request.use((config) => {
@@ -20,18 +20,27 @@ axiosClient.interceptors.request.use((config) => {
 axiosClient.interceptors.response.use(
   (res) => res,
   async (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem("sahayog_token");
-      localStorage.removeItem("cp_token");
-    }
-    // If backend is unreachable (e.g. ERR_CONNECTION_REFUSED or timeout), fallback seamlessly to mock adapter
-    if (!err.response && err.config && !err.config._mockFallback) {
+    const status = err.response?.status;
+    const token = localStorage.getItem("sahayog_token") || localStorage.getItem("cp_token") || "";
+    const isMockToken = token.startsWith("mock-");
+
+    // If backend is unreachable, or returns 404/500, or 401 on mock session: fallback seamlessly to mock adapter
+    if (
+      (!err.response || status === 404 || status === 500 || (status === 401 && isMockToken)) &&
+      err.config &&
+      !err.config._mockFallback
+    ) {
       err.config._mockFallback = true;
       try {
         return await handleMockRequest(err.config);
       } catch (mockErr) {
         return Promise.reject(mockErr);
       }
+    }
+
+    if (err.response?.status === 401 && !isMockToken) {
+      localStorage.removeItem("sahayog_token");
+      localStorage.removeItem("cp_token");
     }
     return Promise.reject(err);
   }

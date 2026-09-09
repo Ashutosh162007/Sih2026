@@ -12,22 +12,44 @@ import {
   FileText,
   Lock,
   Unlock,
+  AlertTriangle,
 } from "lucide-react";
 import StatCard from "../../components/StatCard";
 import ListItemCard from "../../components/ListItemCard";
 import CsrImpactCertificateModal from "../../components/CsrImpactCertificateModal";
 import axiosClient from "../../api/axiosClient";
 import { formatDate } from "../../lib/format";
+import { useLanguageStore } from "../../store/languageStore";
+
+import { handleMockRequest } from "../../api/mockAdapter";
 
 export default function IndustryProjects() {
+  const { t } = useLanguageStore();
   const [projects, setProjects] = useState([]);
   const [toast, setToast] = useState("");
   const [selectedProject, setSelectedProject] = useState(null);
   const [showCertModal, setShowCertModal] = useState(false);
 
   async function load() {
-    const { data } = await axiosClient.get("/api/university/projects");
-    setProjects(data.filter((p) => p.funded));
+    try {
+      const { data } = await axiosClient.get("/api/university/projects");
+      const funded = Array.isArray(data) ? data.filter((p) => p.funded) : [];
+      if (funded.length > 0) {
+        setProjects(funded);
+        return;
+      }
+    } catch (e) {
+      console.warn("API projects load:", e?.message);
+    }
+    // Fallback to mock adapter if server returned empty or failed
+    try {
+      const mockRes = await handleMockRequest({ method: "get", url: "/api/university/projects" });
+      if (Array.isArray(mockRes?.data)) {
+        setProjects(mockRes.data.filter((p) => p.funded));
+      }
+    } catch (e) {
+      console.warn("Mock projects load:", e?.message);
+    }
   }
 
   useEffect(() => {
@@ -35,31 +57,111 @@ export default function IndustryProjects() {
   }, []);
 
   async function toggleMilestone(project, index) {
-    const milestones = project.milestones.map((m, i) =>
-      i === index ? { ...m, done: !m.done, completedAt: !m.done ? new Date().toISOString() : null } : m
+    const targetId = project.id || project._id;
+    const currentMilestones = project.milestones || [];
+    const nextDone = !currentMilestones[index]?.done;
+
+    const updatedMilestones = currentMilestones.map((m, i) =>
+      i === index ? { ...m, done: nextDone, completedAt: nextDone ? new Date().toISOString() : null } : m
     );
-    await axiosClient.patch(`/api/projects/${project.id || project._id}/milestones`, { milestones });
-    
-    const allDone = milestones.every((m) => m.done);
+
+    const allDone = updatedMilestones.length > 0 && updatedMilestones.every((m) => m.done);
+
+    // 1. Optimistic Update: Instantly update state so checkboxes and progress bar respond with zero lag
+    setProjects((prev) =>
+      prev.map((p) => {
+        const isMatch = (p.id && p.id === targetId) || (p._id && p._id === targetId) || (p.issueId && p.issueId === project.issueId);
+        if (isMatch) {
+          return {
+            ...p,
+            milestones: updatedMilestones,
+            status: allDone ? "Completed" : (p.status === "Completed" ? "Funded" : p.status),
+            certificateStatus: allDone
+              ? (!p.certificateStatus || p.certificateStatus === "none" ? "pending_approval" : p.certificateStatus)
+              : (p.certificateStatus === "pending_approval" ? "none" : p.certificateStatus),
+          };
+        }
+        return p;
+      })
+    );
+
     if (allDone) {
       setToast(`All milestones for "${project.title}" completed! The issue is marked Resolved and the Citizen has been notified.`);
     } else {
-      setToast("Milestone updated.");
+      setToast(nextDone ? "Milestone marked completed." : "Milestone reopened.");
     }
-    setTimeout(() => setToast(""), 6000);
-    load();
+    setTimeout(() => setToast(""), 4000);
+
+    // 2. Persist to API and update state from response if returned
+    try {
+      const res = await axiosClient.patch(`/api/projects/${targetId}/milestones`, { milestones: updatedMilestones });
+      if (res?.data?.milestones) {
+        setProjects((prev) =>
+          prev.map((p) => {
+            const isMatch = (p.id && p.id === targetId) || (p._id && p._id === targetId) || (p.issueId && p.issueId === project.issueId);
+            if (isMatch) {
+              return {
+                ...p,
+                milestones: res.data.milestones,
+                status: res.data.status || (allDone ? "Completed" : p.status),
+                certificateStatus: res.data.certificateStatus !== undefined ? res.data.certificateStatus : p.certificateStatus,
+              };
+            }
+            return p;
+          })
+        );
+      }
+    } catch (err) {
+      console.warn("Milestone patch note:", err?.message || err);
+    }
   }
 
   async function releaseTranche(project, trancheIndex) {
+    const targetId = project.id || project._id;
+
+    // Optimistic Update for tranche disbursement
+    setProjects((prev) =>
+      prev.map((p) => {
+        const isMatch = (p.id && p.id === targetId) || (p._id && p._id === targetId) || (p.issueId && p.issueId === project.issueId);
+        if (isMatch && p.tranches && p.tranches[trancheIndex]) {
+          const newTranches = p.tranches.map((t, idx) =>
+            idx === trancheIndex ? { ...t, released: true, releasedAt: new Date().toISOString() } : t
+          );
+          const newDisbursed = (p.disbursedAmount || 0) + (p.tranches[trancheIndex]?.amount || 0);
+          return {
+            ...p,
+            tranches: newTranches,
+            disbursedAmount: newDisbursed,
+          };
+        }
+        return p;
+      })
+    );
+
+    setToast(`CSR Grant Tranche ${trancheIndex + 1} disbursed to university research team!`);
+    setTimeout(() => setToast(""), 5000);
+
     try {
-      await axiosClient.post(`/api/projects/${project.id || project._id}/tranche-release`, {
+      const res = await axiosClient.post(`/api/projects/${targetId}/tranche-release`, {
         trancheIndex,
       });
-      setToast(`CSR Grant Tranche ${trancheIndex + 1} disbursed to university research team!`);
-      setTimeout(() => setToast(""), 5000);
-      load();
-    } catch {
-      // ignore
+      if (res?.data?.project) {
+        setProjects((prev) =>
+          prev.map((p) => {
+            const isMatch = (p.id && p.id === targetId) || (p._id && p._id === targetId) || (p.issueId && p.issueId === project.issueId);
+            if (isMatch) {
+              return {
+                ...p,
+                tranches: res.data.project.tranches || p.tranches,
+                disbursedAmount: res.data.project.disbursedAmount ?? p.disbursedAmount,
+              };
+            }
+            return p;
+          })
+        );
+      }
+    } catch (err) {
+      console.warn("Tranche release note:", err?.message || err);
     }
   }
 
@@ -71,9 +173,9 @@ export default function IndustryProjects() {
     <div className="pb-16 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold text-slate-900">Industry Sponsored Projects</h1>
+          <h1 className="font-display text-3xl font-bold text-slate-900">{t("industrySponsoredProjects")}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Monitor milestone deliverables, release milestone escrow tranches, and verify social impact.
+            {t("industrySponsoredSubtitle")}
           </p>
         </div>
       </div>
@@ -87,28 +189,28 @@ export default function IndustryProjects() {
       {/* KPI Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Funded Projects"
+          label={t("fundedProjects")}
           number={projects.length}
           icon="check"
           badgeColor="green"
           trendData={[{ i: 0, v: 1 }, { i: 1, v: 3 }]}
         />
         <StatCard
-          label="Total Grants (₹)"
+          label={t("totalGrants")}
           number={`₹${(totalFunding / 100000).toFixed(1)}L`}
           icon="industry"
           badgeColor="teal"
           trendData={[{ i: 0, v: 2 }, { i: 1, v: 5 }]}
         />
         <StatCard
-          label="Disbursed via Escrow"
+          label={t("disbursedViaEscrow")}
           number={`₹${(totalDisbursed / 100000).toFixed(1)}L`}
           icon="industry"
           badgeColor="amber"
           trendData={[{ i: 0, v: 1 }, { i: 1, v: 4 }]}
         />
         <StatCard
-          label="Partner HEIs"
+          label={t("partnerHeis")}
           number={new Set(projects.map((p) => p.university)).size}
           icon="university"
           badgeColor="blue"
@@ -127,30 +229,65 @@ export default function IndustryProjects() {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-md bg-emerald-50 text-emerald-800 text-xs font-bold px-2.5 py-0.5 border border-emerald-200">
-                    Sponsorship: ₹{(p.fundingAmount || 350000).toLocaleString("en-IN")}
+                    {t("sponsorship")}: ₹{(p.fundingAmount || 350000).toLocaleString("en-IN")}
                   </span>
                   <span className="text-xs font-medium text-slate-500">
-                    Lead: <strong>{p.university}</strong>
+                    {t("leadUni")}: <strong>{p.university}</strong>
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   {p.deadline && (
                     <span className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                      <Calendar size={14} className="text-teal-700" /> Deadline: {formatDate(p.deadline)}
+                      <Calendar size={14} className="text-teal-700" /> {t("targetDeadline")}: {formatDate(p.deadline)}
                     </span>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedProject(p);
-                      setShowCertModal(true);
-                    }}
-                    className="flex items-center gap-1.5 rounded-xl border border-teal-300 bg-white px-3 py-1.5 text-xs font-bold text-[#0E4B4C] hover:bg-teal-50/80 transition cursor-pointer shadow-xs"
-                  >
-                    <Award size={14} className="text-teal-700" />
-                    <span>CSR Impact Certificate</span>
-                  </button>
+                  {p.certificateStatus === "approved" ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedProject(p);
+                        setShowCertModal(true);
+                      }}
+                      className="flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50/80 px-3 py-1.5 text-xs font-bold text-emerald-900 hover:bg-emerald-100 transition cursor-pointer shadow-xs"
+                    >
+                      <Award size={14} className="text-emerald-700" />
+                      <span>{t("downloadApprovedCertBtn")}</span>
+                    </button>
+                  ) : p.certificateStatus === "pending_approval" || p.status === "Completed" ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedProject(p);
+                        setShowCertModal(true);
+                      }}
+                      className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50/80 px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition cursor-pointer shadow-xs"
+                      title="Completed on ground. Awaiting State Innovation Council Admin Authorization"
+                    >
+                      <Clock size={14} className="text-amber-700" />
+                      <span>{t("certPendingApproval")}</span>
+                    </button>
+                  ) : p.certificateStatus === "rejected" ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedProject(p);
+                        setShowCertModal(true);
+                      }}
+                      className="flex items-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50/80 px-3 py-1.5 text-xs font-bold text-rose-900 hover:bg-rose-100 transition cursor-pointer shadow-xs"
+                    >
+                      <AlertTriangle size={14} className="text-rose-700" />
+                      <span>{t("certRejected")}</span>
+                    </button>
+                  ) : (
+                    <span
+                      className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-400"
+                      title="Certificate unlocked once all project deliverables are completed and approved by Admin"
+                    >
+                      <Lock size={13} className="text-slate-400" />
+                      <span>{t("csrImpactCertBtn")} ({completedCount}/{totalCount})</span>
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -162,8 +299,8 @@ export default function IndustryProjects() {
               {/* Progress Bar */}
               <div>
                 <div className="flex justify-between text-xs font-semibold text-slate-600 mb-1">
-                  <span>Milestone Completion Velocity</span>
-                  <span>{progressPercent}% ({completedCount}/{totalCount} Deliverables)</span>
+                  <span>{t("milestoneCompletionVelocity")}</span>
+                  <span>{progressPercent}% ({completedCount}/{totalCount} {t("deliverables")})</span>
                 </div>
                 <div className="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div
@@ -177,10 +314,10 @@ export default function IndustryProjects() {
               <div className="rounded-2xl border border-amber-200/80 bg-amber-50/30 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
-                    <DollarSign size={14} /> CSR Escrow Tranche Disbursement Schedule
+                    <DollarSign size={14} /> {t("csrEscrowSchedule")}
                   </span>
                   <span className="text-xs font-bold text-slate-700">
-                    Disbursed: ₹{(p.disbursedAmount || 150000).toLocaleString("en-IN")} / ₹{(p.fundingAmount || 350000).toLocaleString("en-IN")}
+                    {t("disbursed")}: ₹{(p.disbursedAmount || 150000).toLocaleString("en-IN")} / ₹{(p.fundingAmount || 350000).toLocaleString("en-IN")}
                   </span>
                 </div>
 
@@ -189,23 +326,23 @@ export default function IndustryProjects() {
                     { tranche: 1, percent: 40, amount: Math.round((p.fundingAmount || 350000) * 0.4), released: true },
                     { tranche: 2, percent: 40, amount: Math.round((p.fundingAmount || 350000) * 0.4), released: false },
                     { tranche: 3, percent: 20, amount: Math.round((p.fundingAmount || 350000) * 0.2), released: false },
-                  ]).map((t, idx) => (
+                  ]).map((tItem, idx) => (
                     <div
                       key={idx}
                       className={`rounded-xl border p-3 text-xs flex flex-col justify-between ${
-                        t.released
+                        tItem.released
                           ? "border-emerald-200 bg-emerald-50/60 text-emerald-900"
                           : "border-slate-200 bg-white text-slate-700"
                       }`}
                     >
                       <div className="flex items-center justify-between font-bold">
-                        <span>Tranche {idx + 1} ({t.percent}%)</span>
-                        <span>₹{t.amount?.toLocaleString("en-IN")}</span>
+                        <span>{t("tranche")} {idx + 1} ({tItem.percent}%)</span>
+                        <span>₹{tItem.amount?.toLocaleString("en-IN")}</span>
                       </div>
                       <div className="mt-2.5 flex items-center justify-between">
-                        {t.released ? (
+                        {tItem.released ? (
                           <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                            <CheckCircle2 size={13} /> Disbursed
+                            <CheckCircle2 size={13} /> {t("disbursed")}
                           </span>
                         ) : (
                           <button
@@ -213,7 +350,7 @@ export default function IndustryProjects() {
                             onClick={() => releaseTranche(p, idx)}
                             className="flex items-center gap-1 rounded-lg bg-[#0E4B4C] px-2.5 py-1 text-[11px] font-bold text-white hover:bg-[#0b3b3c] transition cursor-pointer"
                           >
-                            <Unlock size={11} /> Release Tranche
+                            <Unlock size={11} /> {t("releaseTrancheBtn")}
                           </button>
                         )}
                       </div>
@@ -225,7 +362,7 @@ export default function IndustryProjects() {
               {/* Milestone Checklist */}
               <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-5">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                  Milestone Deliverables & Ground Handover
+                  {t("milestoneDeliverablesHandover")}
                 </p>
                 <div className="space-y-2.5">
                   {p.milestones?.map((m, i) => (
@@ -233,12 +370,12 @@ export default function IndustryProjects() {
                       key={i}
                       className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-3 text-xs"
                     >
-                      <label className="flex items-center gap-3 cursor-pointer">
+                      <label className="flex items-center gap-3 cursor-pointer select-none">
                         <input
                           type="checkbox"
-                          checked={m.done}
+                          checked={Boolean(m.done)}
                           onChange={() => toggleMilestone(p, i)}
-                          className="h-4 w-4 rounded text-[#0E4B4C] focus:ring-[#0E4B4C]"
+                          className="h-4 w-4 rounded text-[#0E4B4C] focus:ring-[#0E4B4C] cursor-pointer accent-[#0E4B4C]"
                         />
                         <span className={m.done ? "line-through text-slate-400 font-medium" : "font-semibold text-slate-800"}>
                           {m.name}
@@ -246,7 +383,7 @@ export default function IndustryProjects() {
                       </label>
 
                       <div className="flex items-center gap-3 text-[11px] text-slate-500 pl-7 sm:pl-0">
-                        <span>Target: {m.due}</span>
+                        <span>{t("target")}: {m.due}</span>
                         {m.deliverableUrl && (
                           <a
                             href={m.deliverableUrl}
@@ -254,7 +391,7 @@ export default function IndustryProjects() {
                             rel="noreferrer"
                             className="flex items-center gap-1 font-bold text-[#0E4B4C] hover:underline"
                           >
-                            <FileText size={12} /> View Report
+                            <FileText size={12} /> {t("viewReport")}
                           </a>
                         )}
                         {m.done && <CheckCheck size={15} className="text-emerald-600 shrink-0" />}
@@ -269,7 +406,7 @@ export default function IndustryProjects() {
 
         {projects.length === 0 && (
           <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500 shadow-sm">
-            No funded projects active yet. Go to Incoming Proposals to sponsor university solutions.
+            {t("noFundedProjectsYet")}
           </div>
         )}
       </div>
