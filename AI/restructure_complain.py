@@ -4,18 +4,19 @@ from langchain_groq import ChatGroq
 from langchain_mistralai import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage
+import sys
+import json
+import os
+
+load_dotenv()
+
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_core.messages import SystemMessage, HumanMessage
 
 
-# message = []
+# ── LLM Setup ──────────────────────────────────────────────────────────────
 
-# complaint = {"user_name" : "Ashutosh Pandey",
-#              "complaint_query" : "there are cracks on main bridge  here in mumbai, highway number 24, near taplipada"
-#              }
-
-
-llm = ChatMistralAI(model="mistral-small-2506")
-
-
+llm = ChatNVIDIA(model="nvidia/nemotron-3-ultra-550b-a55b")
 
 def restructure_complaint(data):
 
