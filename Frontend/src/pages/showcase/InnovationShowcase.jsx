@@ -16,9 +16,13 @@ import CsrImpactCertificateModal from "../../components/CsrImpactCertificateModa
 import axiosClient from "../../api/axiosClient";
 import { formatDate } from "../../lib/format";
 import { ISSUE_CATEGORIES } from "../../lib/constants";
+import { useLanguageStore } from "../../store/languageStore";
+
+import { handleMockRequest } from "../../api/mockAdapter";
 
 export default function InnovationShowcase() {
   const navigate = useNavigate();
+  const { t } = useLanguageStore();
   const [issues, setIssues] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -31,10 +35,27 @@ export default function InnovationShowcase() {
           axiosClient.get("/api/issues"),
           axiosClient.get("/api/university/projects"),
         ]);
-        setIssues(issRes.data || []);
-        setProjects(projRes.data || []);
+        let iss = issRes.data || [];
+        let projs = projRes.data || [];
+        if (iss.length === 0 || projs.length === 0) {
+          const [mockI, mockP] = await Promise.all([
+            handleMockRequest({ method: "get", url: "/api/issues" }),
+            handleMockRequest({ method: "get", url: "/api/university/projects" }),
+          ]);
+          if (iss.length === 0) iss = mockI?.data || [];
+          if (projs.length === 0) projs = mockP?.data || [];
+        }
+        setIssues(iss);
+        setProjects(projs);
       } catch (err) {
-        console.warn("Showcase fetch err:", err);
+        try {
+          const [mockI, mockP] = await Promise.all([
+            handleMockRequest({ method: "get", url: "/api/issues" }),
+            handleMockRequest({ method: "get", url: "/api/university/projects" }),
+          ]);
+          setIssues(mockI?.data || []);
+          setProjects(mockP?.data || []);
+        } catch (_) {}
       }
     }
     load();
@@ -51,13 +72,13 @@ export default function InnovationShowcase() {
       <div className="rounded-3xl border border-teal-200 bg-gradient-to-br from-[#0E4B4C] to-[#082E2F] p-8 sm:p-10 text-white shadow-xl">
         <div className="max-w-3xl">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#D7F5DE]/20 border border-[#D7F5DE]/30 px-3.5 py-1 text-xs font-semibold text-[#D7F5DE] backdrop-blur-sm">
-            <Sparkles size={14} /> Societal Innovation Impact Showcase
+            <Sparkles size={14} /> {t("showcaseHeroBadge")}
           </div>
           <h1 className="font-display mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Grassroots Problems Solved by Campus Research & CSR
+            {t("showcaseHeroTitle")}
           </h1>
           <p className="mt-3 text-sm text-teal-100/80 leading-relaxed max-w-2xl">
-            Explore verifiable engineering solutions, low-cost prototypes, and community deployments developed by student-faculty teams and funded by corporate CSR partners across Jharkhand.
+            {t("showcaseHeroSubtitle")}
           </p>
         </div>
       </div>
@@ -73,7 +94,7 @@ export default function InnovationShowcase() {
               : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
           }`}
         >
-          All Showcases ({resolvedIssues.length})
+          {t("allShowcases")} ({resolvedIssues.length})
         </button>
         {ISSUE_CATEGORIES.map((cat) => (
           <button

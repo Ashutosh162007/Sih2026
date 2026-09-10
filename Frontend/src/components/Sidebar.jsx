@@ -15,60 +15,63 @@ import {
 } from "lucide-react";
 import { ROLES, ROLE_LABELS } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
+import { useLanguageStore } from "../store/languageStore";
 import BrandLogo from "./BrandLogo";
-
-const NAV = {
-  citizen: [
-    { to: "/citizen/dashboard", label: "Citizen Dashboard", icon: LayoutDashboard },
-    { to: "/my-issues", label: "My Reported Issues", icon: ClipboardList },
-    { to: "/report", label: "Report New Issue", icon: PlusCircle },
-    { to: "/map", label: "Statewide GIS Map", icon: MapPin },
-    { to: "/showcase", label: "Innovation Showcase", icon: Award },
-    { to: "/help", label: "Help Center & FAQ", icon: HelpCircle },
-  ],
-  community_reporter: [
-    { to: "/citizen/dashboard", label: "Citizen Dashboard", icon: LayoutDashboard },
-    { to: "/my-issues", label: "My Reported Issues", icon: ClipboardList },
-    { to: "/report", label: "Report New Issue", icon: PlusCircle },
-    { to: "/map", label: "Statewide GIS Map", icon: MapPin },
-    { to: "/showcase", label: "Innovation Showcase", icon: Award },
-    { to: "/help", label: "Help Center & FAQ", icon: HelpCircle },
-  ],
-  [ROLES.UNIVERSITY]: [
-    { to: "/university/dashboard", label: "University Dashboard", icon: LayoutDashboard },
-    { to: "/university/queue", label: "Nearest Issue Queue", icon: MapPin },
-    { to: "/university/projects", label: "Innovation Projects", icon: FolderKanban },
-    { to: "/map", label: "Statewide GIS Map", icon: Compass },
-    { to: "/showcase", label: "Innovation Showcase", icon: Award },
-    { to: "/help", label: "Help Center & FAQ", icon: HelpCircle },
-  ],
-  [ROLES.INDUSTRY]: [
-    { to: "/industry/dashboard", label: "CSR ESG Dashboard", icon: LayoutDashboard },
-    { to: "/industry/queue", label: "Incoming Proposals", icon: ClipboardList },
-    { to: "/industry/projects", label: "Funded Projects", icon: FolderKanban },
-    { to: "/map", label: "Statewide GIS Map", icon: Compass },
-    { to: "/showcase", label: "Innovation Showcase", icon: Award },
-    { to: "/help", label: "Help Center & FAQ", icon: HelpCircle },
-  ],
-  [ROLES.ADMIN]: [
-    { to: "/admin/dashboard", label: "State Analytics", icon: LayoutDashboard },
-    { to: "/admin/verify-accounts", label: "Verify Accounts", icon: ShieldCheck },
-    { to: "/map", label: "Statewide GIS Map", icon: MapPin },
-    { to: "/showcase", label: "Innovation Showcase", icon: Award },
-    { to: "/help", label: "Help Center & FAQ", icon: HelpCircle },
-  ],
-};
 
 export default function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const { t } = useLanguageStore();
   const navigate = useNavigate();
+
+  const NAV = {
+    citizen: [
+      { to: "/citizen/dashboard", label: t("navCitizenDashboard"), icon: LayoutDashboard },
+      { to: "/my-issues", label: t("navMyIssues"), icon: ClipboardList },
+      { to: "/report", label: t("navReportIssue"), icon: PlusCircle },
+      { to: "/map", label: t("navGisMap"), icon: MapPin },
+      { to: "/showcase", label: t("navShowcase"), icon: Award },
+      { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
+    ],
+    community_reporter: [
+      { to: "/citizen/dashboard", label: t("navCitizenDashboard"), icon: LayoutDashboard },
+      { to: "/my-issues", label: t("navMyIssues"), icon: ClipboardList },
+      { to: "/report", label: t("navReportIssue"), icon: PlusCircle },
+      { to: "/map", label: t("navGisMap"), icon: MapPin },
+      { to: "/showcase", label: t("navShowcase"), icon: Award },
+      { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
+    ],
+    [ROLES.UNIVERSITY]: [
+      { to: "/university/dashboard", label: t("navUniDashboard"), icon: LayoutDashboard },
+      { to: "/university/queue", label: t("navCampusQueue"), icon: MapPin },
+      { to: "/university/projects", label: t("navProjects"), icon: FolderKanban },
+      { to: "/map", label: t("navGisMap"), icon: Compass },
+      { to: "/showcase", label: t("navShowcase"), icon: Award },
+      { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
+    ],
+    [ROLES.INDUSTRY]: [
+      { to: "/industry/dashboard", label: t("navCsrDashboard"), icon: LayoutDashboard },
+      { to: "/industry/queue", label: t("navCsrQueue"), icon: ClipboardList },
+      { to: "/industry/projects", label: t("navFundedProjects"), icon: FolderKanban },
+      { to: "/map", label: t("navGisMap"), icon: Compass },
+      { to: "/showcase", label: t("navShowcase"), icon: Award },
+      { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
+    ],
+    [ROLES.ADMIN]: [
+      { to: "/admin/dashboard", label: t("navAdminAnalytics"), icon: LayoutDashboard },
+      { to: "/admin/verify-accounts", label: t("navVerifyAccounts"), icon: ShieldCheck },
+      { to: "/map", label: t("navGisMap"), icon: MapPin },
+      { to: "/showcase", label: t("navShowcase"), icon: Award },
+      { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
+    ],
+  };
+
   const items = NAV[user?.role] || NAV.citizen || [];
   const cta =
     user?.role === "citizen" || user?.role === "community_reporter" || user?.role === ROLES.REPORTER
-      ? { to: "/report", label: "+ Report Civic Issue" }
+      ? { to: "/report", label: t("ctaReportCivic") }
       : user?.role === ROLES.UNIVERSITY
-        ? { to: "/university/queue", label: "Explore Issue Queue" }
+        ? { to: "/university/queue", label: t("ctaExploreQueue") }
         : null;
 
   return (
@@ -80,8 +83,8 @@ export default function Sidebar() {
       >
         <BrandLogo className="h-9 w-9 shadow-sm shadow-[#0E4B4C]/25" />
         <div>
-          <p className="font-display text-lg font-bold text-[#0E4B4C] leading-none">Sahayog</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Societal Innovation Portal</p>
+          <p className="font-display text-lg font-bold text-[#0E4B4C] leading-none">{t("portalBrand")}</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">{t("portalSubtitle")}</p>
         </div>
       </div>
 
@@ -93,7 +96,7 @@ export default function Sidebar() {
         >
           <p className="text-xs font-semibold text-slate-800 truncate">{user.name}</p>
           <p className="text-[11px] text-teal-700 font-medium truncate">
-            {user.org || ROLE_LABELS[user.role]}
+            {user.org || t(user.role) || ROLE_LABELS[user.role]}
           </p>
         </div>
       )}
@@ -137,11 +140,11 @@ export default function Sidebar() {
           }}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
         >
-          <LogOut size={16} /> Sign out
+          <LogOut size={16} /> {t("signOut")}
         </button>
         <div className="mt-2 flex items-center justify-between px-3 text-[11px] text-slate-400">
-          <span>Sahayog Network</span>
-          <span className="rounded bg-teal-50 text-teal-800 px-1.5 py-0.5 font-medium">Active</span>
+          <span>{t("networkOverview")}</span>
+          <span className="rounded bg-teal-50 text-teal-800 px-1.5 py-0.5 font-medium">{t("networkActive")}</span>
         </div>
       </div>
     </aside>

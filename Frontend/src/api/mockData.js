@@ -341,6 +341,10 @@ export const seedProjects = [
     fundingAmount: 420000,
     deadline: "2026-08-15",
     disbursedAmount: 420000,
+    certificateStatus: "approved",
+    certificateApprovedAt: "2026-08-19T10:00:00.000Z",
+    certificateApprovedBy: "Jharkhand State Innovation Council Admin",
+    certificateNotes: "Field implementation inspected and verified on ground with Ranchi Municipal Corporation.",
     tranches: [
       { tranche: 1, percent: 35, amount: 147000, released: true, releasedAt: "2026-06-26T09:30:00.000Z" },
       { tranche: 2, percent: 40, amount: 168000, released: true, releasedAt: "2026-07-20T11:00:00.000Z" },
@@ -368,6 +372,7 @@ export const seedProjects = [
     fundingAmount: 350000,
     deadline: "2026-11-30",
     disbursedAmount: 150000,
+    certificateStatus: "none",
     tranches: [
       { tranche: 1, percent: 40, amount: 140000, released: true, releasedAt: "2026-08-22T14:10:00.000Z" },
       { tranche: 2, percent: 40, amount: 140000, released: false, releasedAt: null },
@@ -383,6 +388,34 @@ export const seedProjects = [
       { name: "Site survey, chemical sampling & baseline spectrometry", due: "2026-09-15", done: true, deliverableUrl: "https://example.com/tamar_water_baseline.pdf" },
       { name: "Prototype filtration column fabrication & lab calibration", due: "2026-10-15", done: false, deliverableUrl: "" },
       { name: "Ground deployment, solar pump hookup & community telemetry handover", due: "2026-11-15", done: false, deliverableUrl: "" },
+    ],
+  },
+  {
+    id: "prj-103",
+    issueId: "iss-103",
+    title: "Decentralized Evaporative Passive Cold Storage Unit",
+    university: "Birla Institute of Technology (BIT) Mesra",
+    industry: "Tata Steel CSR & Sustainability",
+    status: "Completed",
+    funded: true,
+    fundingAmount: 320000,
+    deadline: "2026-08-30",
+    disbursedAmount: 320000,
+    certificateStatus: "pending_approval",
+    tranches: [
+      { tranche: 1, percent: 40, amount: 128000, released: true, releasedAt: "2026-07-05T10:00:00.000Z" },
+      { tranche: 2, percent: 40, amount: 128000, released: true, releasedAt: "2026-07-28T14:00:00.000Z" },
+      { tranche: 3, percent: 20, amount: 64000, released: true, releasedAt: "2026-08-30T16:00:00.000Z" },
+    ],
+    team: [
+      { discipline: "Agriculture & Rural Development", members: ["Dr. S. Roy", "Anita Kumari"] },
+      { discipline: "Mechanical Engineering", members: ["Kunal Sen"] },
+    ],
+    proposal: "Develop a decentralized solar-assisted zero-energy evaporative cooling chamber using local bamboo composite frames to protect perishable tomato and vegetable harvests.",
+    milestones: [
+      { name: "Thermal dynamics simulation & pilot chamber design", due: "2026-07-10", done: true, deliverableUrl: "https://example.com/cooling_design.pdf" },
+      { name: "Installation at Mandar Farmer Producer Organization", due: "2026-08-05", done: true, deliverableUrl: "https://example.com/field_deployment.pdf" },
+      { name: "Post-harvest shelf-life testing & FPO farmer training", due: "2026-08-30", done: true, deliverableUrl: "https://example.com/impact_assessment.pdf" },
     ],
   },
 ];

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import axiosClient from "../../api/axiosClient";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const FAQS = [
   {
@@ -63,6 +64,7 @@ const FAQS = [
 
 export default function HelpFaq() {
   const user = useAuthStore((s) => s.user);
+  const { t } = useLanguageStore();
   const [openIndex, setOpenIndex] = useState("0-0");
   const [subject, setSubject] = useState("");
   const [ticketCategory, setTicketCategory] = useState("General");
@@ -97,13 +99,13 @@ export default function HelpFaq() {
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#D7F5DE] border border-emerald-300 px-3.5 py-1 text-xs font-semibold text-[#0E4B4C]">
-          <HelpCircle size={14} /> Help Center & Knowledgebase
+          <HelpCircle size={14} /> {t("helpCenterBadge")}
         </div>
         <h1 className="font-display mt-3 text-3xl sm:text-4xl font-extrabold text-slate-900">
-          How can we help you today?
+          {t("helpCenterTitle")}
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          Find answers regarding problem reporting, university team formation, CSR grant escrow, and ground verification.
+          {t("helpCenterSubtitle")}
         </p>
       </div>
 
@@ -201,8 +203,8 @@ export default function HelpFaq() {
             <MessageSquare size={20} />
           </div>
           <div>
-            <h2 className="font-display text-lg font-bold text-slate-900">Still have questions? Contact Support</h2>
-            <p className="text-xs text-slate-500">Submit an inquiry to the Sahayog Help Desk & Innovation Council.</p>
+            <h2 className="font-display text-lg font-bold text-slate-900">{t("submitInquiryTitle")}</h2>
+            <p className="text-xs text-slate-500">{t("helpCenterSubtitle")}</p>
           </div>
         </div>
 
@@ -215,7 +217,7 @@ export default function HelpFaq() {
         <form onSubmit={handleTicketSubmit} className="mt-6 space-y-4 text-xs">
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="block font-bold uppercase tracking-wider text-slate-600">
-              Inquiry Subject
+              {t("subjectLabel")}
               <input
                 type="text"
                 value={subject}
@@ -227,23 +229,23 @@ export default function HelpFaq() {
             </label>
 
             <label className="block font-bold uppercase tracking-wider text-slate-600">
-              Topic Category
+              {t("categoryLabel")}
               <select
                 value={ticketCategory}
                 onChange={(e) => setTicketCategory(e.target.value)}
                 className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs normal-case text-slate-900 outline-none focus:border-[#0E4B4C] bg-white"
               >
-                <option value="General">General Platform Inquiry</option>
-                <option value="Reporting">Issue Reporting & AI Synthesis</option>
-                <option value="University">University Proposals & Team Formation</option>
-                <option value="CSR">CSR Funding & Escrow Tranches</option>
-                <option value="Verification">Institution Account Verification</option>
+                <option value="General">{t("categoryGeneral")}</option>
+                <option value="Reporting">{t("navReportIssue")}</option>
+                <option value="University">{t("navProjects")}</option>
+                <option value="CSR">{t("categoryFunding")}</option>
+                <option value="Verification">{t("navVerifyAccounts")}</option>
               </select>
             </label>
           </div>
 
           <label className="block font-bold uppercase tracking-wider text-slate-600">
-            Message / Description
+            {t("inquiryMessageLabel")}
             <textarea
               rows={4}
               value={message}
@@ -260,7 +262,7 @@ export default function HelpFaq() {
               disabled={submitting}
               className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c] transition cursor-pointer"
             >
-              <Send size={14} /> {submitting ? "Submitting..." : "Send Message"}
+              <Send size={14} /> {submitting ? t("submittingInquiry") : t("submitInquiryBtn")}
             </button>
           </div>
         </form>

@@ -18,6 +18,8 @@ import axiosClient from "../../api/axiosClient";
 import { useAuthStore } from "../../store/authStore";
 import { useLanguageStore } from "../../store/languageStore";
 
+import { handleMockRequest } from "../../api/mockAdapter";
+
 export default function CitizenDashboard() {
   const user = useAuthStore((s) => s.user);
   const { t } = useLanguageStore();
@@ -34,10 +36,23 @@ export default function CitizenDashboard() {
           axiosClient.get("/api/issues", { params: { reporterId } }),
           axiosClient.get("/api/issues"),
         ]);
-        setMyIssues(myRes.data || []);
-        setNearbyIssues((allRes.data || []).slice(0, 4));
+        let my = myRes.data || [];
+        let all = allRes.data || [];
+        if (my.length === 0 && all.length === 0) {
+          const mockAll = await handleMockRequest({ method: "get", url: "/api/issues" });
+          all = mockAll?.data || [];
+          my = all.filter((i) => i.reporterId === reporterId);
+          if (my.length === 0) my = all.slice(0, 2);
+        }
+        setMyIssues(my);
+        setNearbyIssues(all.slice(0, 4));
       } catch (err) {
-        console.warn("CitizenDashboard fetch err:", err);
+        try {
+          const mockAll = await handleMockRequest({ method: "get", url: "/api/issues" });
+          const all = mockAll?.data || [];
+          setNearbyIssues(all.slice(0, 4));
+          setMyIssues(all.slice(0, 2));
+        } catch (_) {}
       } finally {
         setLoading(false);
       }
@@ -58,14 +73,14 @@ export default function CitizenDashboard() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-display text-3xl font-bold text-slate-900">
-              Citizen Impact Dashboard
+              {t("citizenDashboardTitle")}
             </h1>
             <span className="rounded-full bg-[#D7F5DE] border border-emerald-300 px-2.5 py-0.5 text-xs font-bold text-[#0E4B4C]">
-              Active Reporter
+              {t("activeReporterBadge")}
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Welcome back, <strong>{user?.name || "Citizen"}</strong>. Track your civic problem submissions, local community upvotes, and university solutions.
+            {t("citizenWelcomePre")} <strong>{user?.name || t("citizen")}</strong>. {t("citizenWelcomeSub")}
           </p>
         </div>
 
@@ -75,7 +90,7 @@ export default function CitizenDashboard() {
             onClick={() => navigate("/map")}
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-xs cursor-pointer"
           >
-            <MapPin size={15} className="text-[#0E4B4C]" /> Explore Map
+            <MapPin size={15} className="text-[#0E4B4C]" /> {t("exploreMapBtn")}
           </button>
           <button
             type="button"
@@ -91,28 +106,28 @@ export default function CitizenDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon="alert"
-          label="Total Reported"
+          label={t("totalReportedCount")}
           number={totalReported}
           trendData={[{ i: 0, v: 2 }, { i: 1, v: 4 }]}
         />
         <StatCard
           icon="industry"
           badgeColor="amber"
-          label="Under Campus Triage"
+          label={t("statusUnderReview")}
           number={inProgressCount}
           trendData={[{ i: 0, v: 1 }, { i: 1, v: 3 }]}
         />
         <StatCard
           icon="check"
           badgeColor="green"
-          label="Resolved & Verified"
+          label={t("statusResolved")}
           number={resolvedCount}
           trendData={[{ i: 0, v: 1 }, { i: 1, v: 2 }]}
         />
         <StatCard
           icon="university"
           badgeColor="teal"
-          label="Citizen Impact Rating"
+          label={t("citizenRatingLabel")}
           number={`${impactScore}/100`}
           trendData={[{ i: 0, v: 40 }, { i: 1, v: 85 }]}
         />
@@ -124,7 +139,7 @@ export default function CitizenDashboard() {
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h2 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
-              <ClipboardList size={18} className="text-[#0E4B4C]" /> My Active Challenges
+              <ClipboardList size={18} className="text-[#0E4B4C]" /> {t("myReportedChallenges")}
             </h2>
             <button
               type="button"
@@ -161,7 +176,7 @@ export default function CitizenDashboard() {
 
             {myIssues.length === 0 && (
               <div className="py-8 text-center text-xs text-slate-400">
-                No issues reported yet. Click "+ Report New Issue" to start.
+                {t("noReportedIssues")}
               </div>
             )}
           </div>
@@ -171,14 +186,14 @@ export default function CitizenDashboard() {
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h2 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
-              <MapPin size={18} className="text-blue-600" /> Community Watch & Support
+              <MapPin size={18} className="text-blue-600" /> {t("nearbyChallengesTitle")}
             </h2>
             <button
               type="button"
               onClick={() => navigate("/map")}
               className="text-xs font-bold text-blue-700 hover:underline cursor-pointer"
             >
-              Open State GIS Map →
+              {t("exploreMapBtn")} →
             </button>
           </div>
 

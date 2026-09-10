@@ -53,6 +53,12 @@ const getFundedProjects = async (req, res, next) => {
       proposal: p.proposal,
       team: p.team,
       milestones: p.milestones,
+      disbursedAmount: p.disbursedAmount || 0,
+      tranches: p.tranches || [],
+      certificateStatus: p.certificateStatus || 'none',
+      certificateApprovedAt: p.certificateApprovedAt || null,
+      certificateApprovedBy: p.certificateApprovedBy || null,
+      certificateNotes: p.certificateNotes || '',
       createdAt: p.createdAt,
     }));
 

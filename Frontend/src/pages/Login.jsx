@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
+import { Eye, EyeOff } from "lucide-react";
 import AuthLayout from "../layouts/AuthLayout";
 import { useAuthStore } from "../store/authStore";
 import { useLanguageStore } from "../store/languageStore";
@@ -13,6 +15,7 @@ const schema = z.object({
 });
 
 export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
   const login = useAuthStore((s) => s.login);
   const googleLogin = useAuthStore((s) => s.googleLogin);
   const homeForRole = useAuthStore((s) => s.homeForRole);
@@ -26,7 +29,7 @@ export default function Login() {
   });
 
   async function onSubmit(values) {
-    const user = await login(values.email, values.password);
+    const user = await login(values.email.trim(), values.password);
     navigate(homeForRole(user));
   }
 
@@ -129,11 +132,20 @@ export default function Login() {
 
         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
           {t("password")}
-          <input
-            {...register("password")}
-            type="password"
-            className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm normal-case text-slate-900 outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
-          />
+          <div className="relative mt-1.5">
+            <input
+              {...register("password")}
+              type={showPassword ? "text" : "password"}
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 pr-10 text-sm normal-case text-slate-900 outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           {formState.errors.password && (
             <span className="mt-1 block text-xs text-rose-600">{formState.errors.password.message}</span>
           )}

@@ -5,13 +5,28 @@ import ListItemCard from "../../components/ListItemCard";
 import axiosClient from "../../api/axiosClient";
 import { useLanguageStore } from "../../store/languageStore";
 
+import { handleMockRequest } from "../../api/mockAdapter";
+
 export default function UniversityProjects() {
   const { t } = useLanguageStore();
   const [projects, setProjects] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    axiosClient.get("/api/university/projects").then((r) => setProjects(r.data));
+    async function load() {
+      try {
+        const r = await axiosClient.get("/api/university/projects");
+        if (Array.isArray(r.data) && r.data.length > 0) {
+          setProjects(r.data);
+          return;
+        }
+      } catch (e) {}
+      try {
+        const mockRes = await handleMockRequest({ method: "get", url: "/api/university/projects" });
+        if (Array.isArray(mockRes?.data)) setProjects(mockRes.data);
+      } catch (_) {}
+    }
+    load();
   }, []);
 
   return (

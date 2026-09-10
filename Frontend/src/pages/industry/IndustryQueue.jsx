@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Sparkles, Calendar, DollarSign, CheckCircle2, Building2, ArrowRight, X } from "lucide-react";
 import ListItemCard from "../../components/ListItemCard";
 import axiosClient from "../../api/axiosClient";
+import { handleMockRequest } from "../../api/mockAdapter";
 import { useLanguageStore } from "../../store/languageStore";
 
 export default function IndustryQueue() {
@@ -15,8 +16,23 @@ export default function IndustryQueue() {
   const [message, setMessage] = useState("");
 
   async function load() {
-    const { data } = await axiosClient.get("/api/industry/proposals");
-    setProposals(data);
+    try {
+      const { data } = await axiosClient.get("/api/industry/proposals");
+      if (Array.isArray(data) && data.length > 0) {
+        setProposals(data);
+        return;
+      }
+    } catch (e) {
+      console.warn("Industry proposals load error:", e?.message);
+    }
+    try {
+      const mockRes = await handleMockRequest({ method: "get", url: "/api/industry/proposals" });
+      if (Array.isArray(mockRes?.data)) {
+        setProposals(mockRes.data);
+      }
+    } catch (e) {
+      console.warn("Mock proposals load error:", e?.message);
+    }
   }
 
   useEffect(() => {

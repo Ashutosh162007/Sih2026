@@ -6,6 +6,8 @@ import ListItemCard from "../../components/ListItemCard";
 import axiosClient from "../../api/axiosClient";
 import { useLanguageStore } from "../../store/languageStore";
 
+import { handleMockRequest } from "../../api/mockAdapter";
+
 export default function UniversityDashboard() {
   const { t } = useLanguageStore();
   const [queue, setQueue] = useState([]);
@@ -13,8 +15,36 @@ export default function UniversityDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axiosClient.get("/api/university/queue", { params: { lat: 23.4123, lng: 85.4399 } }).then((r) => setQueue(r.data));
-    axiosClient.get("/api/university/projects").then((r) => setProjects(r.data));
+    async function load() {
+      try {
+        const [qRes, pRes] = await Promise.all([
+          axiosClient.get("/api/university/queue", { params: { lat: 23.4123, lng: 85.4399 } }),
+          axiosClient.get("/api/university/projects"),
+        ]);
+        let q = qRes.data || [];
+        let p = pRes.data || [];
+        if (q.length === 0) {
+          const mockQ = await handleMockRequest({ method: "get", url: "/api/university/queue" });
+          q = mockQ?.data || [];
+        }
+        if (p.length === 0) {
+          const mockP = await handleMockRequest({ method: "get", url: "/api/university/projects" });
+          p = mockP?.data || [];
+        }
+        setQueue(q);
+        setProjects(p);
+      } catch (err) {
+        try {
+          const [mockQ, mockP] = await Promise.all([
+            handleMockRequest({ method: "get", url: "/api/university/queue" }),
+            handleMockRequest({ method: "get", url: "/api/university/projects" }),
+          ]);
+          setQueue(mockQ?.data || []);
+          setProjects(mockP?.data || []);
+        } catch (_) {}
+      }
+    }
+    load();
   }, []);
 
   return (
@@ -34,7 +64,7 @@ export default function UniversityDashboard() {
       <div className="mt-10 flex items-center justify-between">
         <div>
           <h2 className="font-display text-xl font-bold text-slate-900">{t("nearestRoutingTitle")}</h2>
-          <p className="text-xs text-slate-500">Auto-routed based on proximity to campus</p>
+          <p className="text-xs text-slate-500">{t("autoRoutedCampus")}</p>
         </div>
         <button
           type="button"

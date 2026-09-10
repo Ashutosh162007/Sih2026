@@ -70,6 +70,12 @@ const getUniversityProjects = async (req, res, next) => {
       team: p.team,
       proposal: p.proposal,
       milestones: p.milestones,
+      disbursedAmount: p.disbursedAmount || 0,
+      tranches: p.tranches || [],
+      certificateStatus: p.certificateStatus || 'none',
+      certificateApprovedAt: p.certificateApprovedAt || null,
+      certificateApprovedBy: p.certificateApprovedBy || null,
+      certificateNotes: p.certificateNotes || '',
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     }));

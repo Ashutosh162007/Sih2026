@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Award,
   Download,
@@ -12,8 +12,13 @@ import {
   Calendar,
   Sparkles,
   QrCode,
+  Lock,
+  AlertTriangle,
+  Clock,
+  Stamp,
 } from "lucide-react";
 import { formatDate } from "../lib/format";
+import { useLanguageStore } from "../store/languageStore";
 
 export default function CsrImpactCertificateModal({
   isOpen,
@@ -23,7 +28,23 @@ export default function CsrImpactCertificateModal({
 }) {
   if (!isOpen) return null;
 
+  const { t } = useLanguageStore();
   const certificateRef = useRef(null);
+
+  // Close on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  // Approval status checks
+  const certStatus = project?.certificateStatus || "none";
+  const isApproved = certStatus === "approved";
+  const isPending = certStatus === "pending_approval";
+  const isRejected = certStatus === "rejected";
 
   // Derived details
   const issueTitle = issue?.title || project?.title || "Civic Innovation Project";
@@ -31,9 +52,11 @@ export default function CsrImpactCertificateModal({
   const district = issue?.district || issue?.location?.district || "Ranchi, Jharkhand";
   const university = project?.university || issue?.assignee || "Birla Institute of Technology (BIT) Mesra";
   const industry = project?.industry || "Tata Steel Foundation CSR";
-  const budget = project?.budget ? `₹${project.budget.toLocaleString("en-IN")}` : "₹3,50,000";
+  const budget = project?.fundingAmount ? `₹${project.fundingAmount.toLocaleString("en-IN")}` : (project?.budget ? `₹${project.budget.toLocaleString("en-IN")}` : "₹3,50,000");
   const rating = issue?.feedback?.rating || 5;
-  const certId = `JH-CSR-2026-${(project?.id || issue?.id || "9842").toString().slice(-4).toUpperCase()}`;
+  const certId = `JH-CSR-2026-${(project?.id || project?._id || issue?.id || "9842").toString().slice(-4).toUpperCase()}`;
+  const approvedDate = project?.certificateApprovedAt ? formatDate(project.certificateApprovedAt) : formatDate(new Date().toISOString());
+  const approvedBy = project?.certificateApprovedBy || "Jharkhand State Innovation Council Admin";
 
   const team = project?.team || [
     { name: "Dr. A. K. Srivastava", role: "Faculty Principal Investigator", dept: "Civil & Environmental Eng." },
@@ -42,11 +65,19 @@ export default function CsrImpactCertificateModal({
   ];
 
   const handlePrint = () => {
+    if (!isApproved) {
+      alert("Notice: This certificate is an Unofficial Draft awaiting Admin Approval from the State Innovation Council.");
+    }
     window.print();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4 overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm p-3 sm:p-6 flex justify-center items-start"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       {/* Print Specific CSS to format as exact A4 single-page PDF */}
       <style>{`
         @media print {
@@ -63,7 +94,7 @@ export default function CsrImpactCertificateModal({
             width: 100vw;
             height: 100vh;
             margin: 0;
-            padding: 24px;
+            padding: 20px;
             box-shadow: none;
             border: none;
             background: white !important;
@@ -75,25 +106,54 @@ export default function CsrImpactCertificateModal({
         }
       `}</style>
 
-      <div className="relative w-full max-w-3xl rounded-3xl bg-white shadow-2xl overflow-hidden my-8 border border-slate-200">
-        {/* Action Header (Hidden during Print) */}
-        <div className="no-print flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4">
+      <div
+        className="relative w-full max-w-3xl rounded-3xl bg-white shadow-2xl overflow-hidden my-4 sm:my-6 border border-slate-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Action Header (Hidden during Print) - Sticky so print and close are ALWAYS accessible */}
+        <div className="no-print sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-md px-6 py-3.5 shadow-xs">
           <div className="flex items-center gap-2">
-            <Award className="text-[#0E4B4C]" size={20} />
-            <h3 className="font-display text-sm font-bold text-slate-900">
-              CSR Grant Impact & Innovation Certificate
-            </h3>
+            <Award className={isApproved ? "text-[#0E4B4C]" : "text-amber-600"} size={20} />
+            <div>
+              <h3 className="font-display text-sm font-bold text-slate-900">
+                {t("csrImpactCertBtn")}
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                {isApproved
+                  ? `${t("certApproved")}: ${approvedDate}`
+                  : isPending
+                  ? t("certPendingApproval")
+                  : t("certRejected")}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 rounded-xl bg-[#0E4B4C] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c] transition cursor-pointer"
-            >
-              <Printer size={15} />
-              <span>Download / Print PDF</span>
-            </button>
+            {isApproved ? (
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 rounded-xl bg-[#0E4B4C] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c] transition cursor-pointer"
+              >
+                <Printer size={15} />
+                <span>{t("downloadApprovedCertBtn")}</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-100/70 border border-amber-300 rounded-lg px-2.5 py-1">
+                  <Clock size={13} /> {t("certPendingApproval")}
+                </span>
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                  title="Print draft preview"
+                >
+                  <Printer size={14} />
+                  <span>Draft Preview</span>
+                </button>
+              </div>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -104,11 +164,30 @@ export default function CsrImpactCertificateModal({
           </div>
         </div>
 
+        {/* Warning / Authorization Banner */}
+        <div className="no-print">
+          {!isApproved ? (
+            <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 flex items-center gap-2 text-xs font-semibold text-amber-900">
+              <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+              <span>
+                <strong>{t("certDraftWarning")}:</strong> {t("certDraftAlertDesc")}
+              </span>
+            </div>
+          ) : (
+            <div className="bg-emerald-50 border-b border-emerald-200 px-6 py-2 flex items-center gap-2 text-xs font-semibold text-emerald-900">
+              <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+              <span>
+                <strong>{t("certAdminApprovalSeal")}:</strong> {t("certSignedBy")} on {approvedDate}.
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Certificate Body (The Printable Document) */}
         <div
           id="csr-certificate-print-area"
           ref={certificateRef}
-          className="p-8 sm:p-10 bg-gradient-to-b from-white via-slate-50/30 to-teal-50/20 relative"
+          className="p-8 sm:p-10 bg-gradient-to-b from-white via-slate-50/30 to-teal-50/20 relative overflow-hidden"
         >
           {/* Certificate Ornamental Border */}
           <div className="border-4 border-double border-[#0E4B4C]/40 rounded-2xl p-6 sm:p-8 bg-white relative shadow-xs">
@@ -116,6 +195,20 @@ export default function CsrImpactCertificateModal({
             <div className="absolute inset-0 flex items-center justify-center opacity-4 pointer-events-none">
               <Award size={360} className="text-[#0E4B4C]" />
             </div>
+
+            {/* Unofficial Draft Watermark Overlay if NOT Approved */}
+            {!isApproved && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 select-none">
+                <div className="transform -rotate-25 border-4 border-dashed border-rose-500/40 rounded-3xl p-6 text-center bg-rose-50/20 backdrop-blur-[1px]">
+                  <p className="font-display text-2xl sm:text-3xl font-black text-rose-500/50 tracking-widest uppercase">
+                    UNOFFICIAL DRAFT
+                  </p>
+                  <p className="text-[10px] font-bold tracking-wider text-rose-600/60 uppercase mt-1">
+                    Pending State Innovation Council Admin Authorization
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Header / State Emblem / Portal Logo */}
             <div className="text-center space-y-1.5 border-b border-[#0E4B4C]/20 pb-5">
@@ -133,9 +226,15 @@ export default function CsrImpactCertificateModal({
               <h1 className="font-display text-2xl font-black text-slate-900 tracking-wide pt-2">
                 CERTIFICATE OF SOCIETAL INNOVATION & CSR IMPACT
               </h1>
-              <p className="text-xs font-mono text-teal-800 font-semibold">
-                Certificate ID: {certId} · Issued under Jharkhand R&D Ecosystem Framework
-              </p>
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
+                <span className="font-mono text-teal-800 font-semibold">
+                  Certificate ID: {certId}
+                </span>
+                <span className="text-slate-300">•</span>
+                <span className="text-slate-600 font-medium">
+                  Issued under Jharkhand R&D Ecosystem Framework
+                </span>
+              </div>
             </div>
 
             {/* Certificate Statement */}
@@ -150,9 +249,17 @@ export default function CsrImpactCertificateModal({
                   <span className="text-[11px] font-bold text-[#0E4B4C] uppercase tracking-wider">
                     {category} · {district}
                   </span>
-                  <span className="rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-bold">
-                    ✅ Verified on Ground
-                  </span>
+                  {isApproved ? (
+                    <span className="rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-bold flex items-center gap-1">
+                      <ShieldCheck size={12} className="text-emerald-700" />
+                      {t("certApproved")} · State Council Validated
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-0.5 text-[10px] font-bold flex items-center gap-1">
+                      <Clock size={12} className="text-amber-700" />
+                      {t("certPendingApproval")}
+                    </span>
+                  )}
                 </div>
                 <h2 className="font-display text-base font-bold text-slate-900">
                   {issueTitle}
@@ -206,31 +313,74 @@ export default function CsrImpactCertificateModal({
             </div>
 
             {/* Signatures & Verification Stamp */}
-            <div className="pt-6 flex items-end justify-between">
-              {/* QR Code Stamp */}
+            <div className="pt-6 flex flex-col sm:flex-row items-end justify-between gap-4">
+              {/* QR Code & Digital Approval Stamp */}
               <div className="flex items-center gap-2.5">
-                <div className="h-14 w-14 rounded-xl border border-slate-300 bg-white p-1.5 flex items-center justify-center shadow-xs">
-                  <QrCode size={40} className="text-slate-800" />
+                <div className="h-16 w-16 rounded-xl border border-slate-300 bg-white p-1.5 flex items-center justify-center shadow-xs">
+                  <QrCode size={48} className="text-slate-800" />
                 </div>
                 <div className="text-[10px] text-slate-500 space-y-0.5">
-                  <p className="font-bold text-slate-700">Digital Seal Verified</p>
-                  <p>Scan to verify authenticity</p>
+                  <p className="font-bold text-slate-800 flex items-center gap-1">
+                    {isApproved ? (
+                      <>
+                        <ShieldCheck size={13} className="text-emerald-600" />
+                        <span>State Seal Verified</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock size={13} className="text-amber-600" />
+                        <span>Awaiting Admin Seal</span>
+                      </>
+                    )}
+                  </p>
+                  <p>
+                    {isApproved
+                      ? `Auth Ref: ${certId}-SIC`
+                      : "Draft Preview Only"}
+                  </p>
                   <p className="font-mono text-[9px] text-slate-400">auth.sahayog.jh.gov.in</p>
                 </div>
               </div>
 
-              {/* Signatures */}
-              <div className="flex gap-8 text-center text-xs">
+              {/* Signatures: Dean, Industry CSR, and State Innovation Council Admin */}
+              <div className="flex gap-4 sm:gap-6 text-center text-xs">
+                {/* Dean */}
                 <div className="space-y-1">
-                  <div className="h-9 border-b border-slate-300 w-28 mx-auto" />
-                  <p className="font-bold text-slate-800 text-[11px]">Dean of R&D</p>
-                  <p className="text-[10px] text-slate-400">Higher Education Institute</p>
+                  <div className="h-8 border-b border-slate-300 w-24 mx-auto flex items-end justify-center pb-0.5">
+                    <span className="font-serif italic text-slate-500 text-[11px]">Dr. A.K. Rao</span>
+                  </div>
+                  <p className="font-bold text-slate-800 text-[10px]">Dean of R&D</p>
+                  <p className="text-[9px] text-slate-400">Higher Education Inst.</p>
                 </div>
 
+                {/* CSR Head */}
                 <div className="space-y-1">
-                  <div className="h-9 border-b border-slate-300 w-28 mx-auto" />
-                  <p className="font-bold text-slate-800 text-[11px]">CSR Committee Head</p>
-                  <p className="text-[10px] text-slate-400">Industry Partner</p>
+                  <div className="h-8 border-b border-slate-300 w-24 mx-auto flex items-end justify-center pb-0.5">
+                    <span className="font-serif italic text-slate-500 text-[11px]">R. Desai</span>
+                  </div>
+                  <p className="font-bold text-slate-800 text-[10px]">CSR Head</p>
+                  <p className="text-[9px] text-slate-400">Industry Partner</p>
+                </div>
+
+                {/* State Innovation Council Admin */}
+                <div className="space-y-1">
+                  <div className="h-8 border-b-2 border-emerald-600 w-28 mx-auto flex items-end justify-center pb-0.5">
+                    {isApproved ? (
+                      <span className="font-serif font-bold italic text-emerald-800 text-[11px] flex items-center gap-1">
+                        <CheckCircle2 size={11} className="text-emerald-600" /> M. Iyer, CIO
+                      </span>
+                    ) : (
+                      <span className="italic text-slate-400 text-[10px] font-sans">
+                        [Pending Sign]
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-bold text-slate-800 text-[10px]">
+                    State Council Admin
+                  </p>
+                  <p className="text-[9px] text-slate-400">
+                    {isApproved ? approvedDate : "Awaiting Approval"}
+                  </p>
                 </div>
               </div>
             </div>

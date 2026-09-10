@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Issue = require('../models/Issue');
 const Project = require('../models/Project');
@@ -14,18 +15,8 @@ const spark = (seed) =>
 // @access  Private (Admin)
 const getPendingVerifications = async (req, res, next) => {
   try {
-    const pendingUsers = await User.find({ status: 'pending' }).select('-password');
-    const formatted = pendingUsers.map((u) => ({
-      id: u._id,
-      _id: u._id,
-      name: u.name,
-      email: u.email,
-      role: u.role,
-      org: u.org,
-      status: u.status,
-      createdAt: u.createdAt,
-    }));
-    res.json(formatted);
+    const pending = await User.find({ status: 'pending' }).select('-password');
+    res.json(pending);
   } catch (err) {
     next(err);
   }
@@ -37,7 +28,17 @@ const getPendingVerifications = async (req, res, next) => {
 const decideVerification = async (req, res, next) => {
   try {
     const { decision } = req.body;
-    const user = await User.findById(req.params.userId);
+    const { userId } = req.params;
+
+    let user = null;
+    if (mongoose.isValidObjectId(userId)) {
+      user = await User.findById(userId);
+    }
+    if (!user) {
+      user = await User.findOne({
+        $or: [{ email: userId }, { name: userId }, ...(mongoose.isValidObjectId(userId) ? [{ _id: userId }] : [])],
+      });
+    }
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
@@ -122,8 +123,80 @@ const getAnalytics = async (req, res, next) => {
   }
 };
 
+// @desc    Get projects requiring CSR Impact Certificate approval
+// @route   GET /api/admin/certificates
+// @access  Private (Admin)
+const getCertificateRequests = async (req, res, next) => {
+  try {
+    const projects = await Project.find({
+      $or: [
+        { status: 'Completed' },
+        { certificateStatus: { $in: ['pending_approval', 'approved', 'rejected'] } },
+      ],
+    }).sort({ updatedAt: -1 });
+
+    res.json(projects);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Approve or reject project CSR Impact Certificate
+// @route   PATCH /api/admin/certificates/:projectId
+// @access  Private (Admin)
+const decideCertificate = async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+    let project = null;
+    if (mongoose.isValidObjectId(projectId)) {
+      project = await Project.findById(projectId);
+    }
+    if (!project) {
+      project = await Project.findOne({
+        $or: [
+          { issueId: projectId },
+          ...(mongoose.isValidObjectId(projectId) ? [{ _id: projectId }] : []),
+        ],
+      });
+    }
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    if (decision === 'approve') {
+      project.certificateStatus = 'approved';
+      project.certificateApprovedAt = new Date();
+      project.certificateApprovedBy = req.user?.name || req.user?.org || 'Jharkhand State Innovation Council Admin';
+    } else {
+      project.certificateStatus = 'rejected';
+      project.certificateApprovedAt = null;
+    }
+
+    if (notes !== undefined) {
+      project.certificateNotes = notes;
+    }
+
+    await project.save();
+
+    res.json({
+      id: project._id,
+      _id: project._id,
+      title: project.title,
+      certificateStatus: project.certificateStatus,
+      certificateApprovedAt: project.certificateApprovedAt,
+      certificateApprovedBy: project.certificateApprovedBy,
+      certificateNotes: project.certificateNotes,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getPendingVerifications,
   decideVerification,
   getAnalytics,
+  getCertificateRequests,
+  decideCertificate,
 };

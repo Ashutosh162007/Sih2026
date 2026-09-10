@@ -51,6 +51,19 @@ const ProjectSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    disbursedAmount: {
+      type: Number,
+      default: 0,
+    },
+    tranches: [
+      {
+        tranche: { type: Number },
+        percent: { type: Number },
+        amount: { type: Number },
+        released: { type: Boolean, default: false },
+        releasedAt: { type: Date, default: null },
+      },
+    ],
     deadline: {
       type: Date,
       default: null,
@@ -82,6 +95,23 @@ const ProjectSchema = new mongoose.Schema(
         notes: { type: String, default: '' },
       },
     ],
+    certificateStatus: {
+      type: String,
+      enum: ['none', 'pending_approval', 'approved', 'rejected'],
+      default: 'none',
+    },
+    certificateApprovedAt: {
+      type: Date,
+      default: null,
+    },
+    certificateApprovedBy: {
+      type: String,
+      default: null,
+    },
+    certificateNotes: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,
