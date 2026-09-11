@@ -1,0 +1,214 @@
+================================================================================
+FUNDED — WHAT HAPPENS AFTER AN INDUSTRY PARTNER FIXES A FUNDING BUDGET
+Sahayog SIH 2026 · Execution Workflow
+================================================================================
+
+This document traces, end-to-end, every detail of what happens the moment an
+industry partner decides the funded budget for a proposal, and everything that
+flows from that decision — every write to the database, every notification,
+every status change, and every place that information travels.
+
+--------------------------------------------------------------------------------
+1. THE ONE TRIGGER ACTION
+--------------------------------------------------------------------------------
+
+The industry partner (business / CSR partner) approves a proposal with a budget.
+This is the single API call that starts everything:
+
+    POST /api/projects/:projectId/fund
+    Body:  { fundingAmount, deadline, mentorshipNotes }
+    Auth:  industry-partner token
+
+The industry name is taken from the logged-in user (req.user.org / name), e.g.
+"Tata Steel CSR & Sustainability".
+
+--------------------------------------------------------------------------------
+2. INSTANT EFFECTS ON THE PROJECT  (the moment 'fund' runs)
+--------------------------------------------------------------------------------
+
+The project record (Backend/models/Project.js) is updated in one save():
+
+  a) funded                = true
+  b) status                = "Funded"   (was "Awaiting funding")
+  c) industry              = the industry partner org name
+  d) industryId            = the industry user's _id  (ties the project to them)
+  e) fundingAmount         = the decided budget (defaults to 250000 if unset)
+  f) fundingDate           = now
+  g) deadline              = the industry-provided target completion date (optional)
+  h) mentorshipNotes       = the industry's optional notes (optional)
+
+  i) disbursedAmount       = 40% of the budget (the advance is auto-disbursed)
+  j) tranches              = a 3-tranche payment schedule is created:
+
+        Tranche 1   40%   released = TRUE  (releasedAt = now)  → the advance
+        Tranche 2   40%   released = FALSE (locked until industry releases it)
+        Tranche 3   20%   released = FALSE (locked until industry releases it)
+
+  The 40/40/20 split means: 40% up-front for the university team to begin work,
+  the remaining 60% released later by the industry partner in two stages.
+
+--------------------------------------------------------------------------------
+3. EVERYWHERE THAT INFORMATION TRAVELS (immediately after funding)
+--------------------------------------------------------------------------------
+
+3.1 THE LINKED ISSUE (the original civic issue the team is solving)
+    - Issue.status is set to "In progress" (from "Resolved" candidates etc.)
+    - A timeline entry is appended:
+        "Industry funding (₹X) approved by <industry>. Target completion: <deadline>"
+      recorded under actor = industry, role = industry.
+
+3.2 NOTIFICATION → CITIZEN REPORTER (the citizen who reported the issue)
+    - A Notification is created:
+        title   = "Project Funded & Execution Started! 🚀"
+        message = "<industry> approved funding for '<issue>'. University team has
+                   commenced implementation with a set completion deadline."
+        type    = funding_approved
+        recipient = the issue reporter, role = citizen
+
+3.3 NOTIFICATION → UNIVERSITY (the partnered team)
+    - A Notification is created:
+        title   = "Funding Approved: <project title>"
+        message = "<industry> committed ₹X with target deadline <deadline or default '3 months>'."
+        type    = funding_approved
+        recipient = project.universityId, role = university
+
+3.4 RESPONSE BACK TO THE INDUSTRY PARTNER
+    - The full funded project payload is returned to the caller:
+        id, _id, issueId, title, funded, status, industry,
+        fundingAmount, disbursedAmount, tranches, deadline,
+        milestones, certificateStatus
+
+--------------------------------------------------------------------------------
+4. WHERE THE FUNDED PROJECT NOW APPEARS (visibility of information)
+--------------------------------------------------------------------------------
+
+  - Industry dashboard ("My Funded Projects")  →  GET /api/industry/projects
+        Returns every project with funded = true, including disbursedAmount,
+        tranches, certificateStatus, funding amount/date, deadline, milestones.
+
+  - Execution Workflow list                    →  GET /api/workflow/projects
+        Returns projects scoped to the industry partner (by industryId / org),
+        so the funded project now appears in the workflow section and the
+        partner can open the deep project page.
+
+  - University project views / workflow board   →  GET /api/university/projects
+        The university sees the same project with status "Funded".
+
+  - Admin certificate view                      →  GET /api/admin/certificates
+        Lists only projects with certificateStatus in
+        pending_approval / approved / rejected.
+
+--------------------------------------------------------------------------------
+5. THE DISBURSEMENT / TRANCHES LIFECYCLE (industry controls the purse)
+--------------------------------------------------------------------------------
+
+  Advance released automatically at funding time:
+      Tranche 1 (40%) = released = true, disbursedAmount += 40%.
+
+  Remaining money is released when the industry partner chooses:
+
+      POST /api/projects/:projectId/tranche-release
+      Body: { trancheIndex }           (0-based: 0, 1, 2)
+
+  On each release:
+      - tranches[idx].released   = true
+      - tranches[idx].releasedAt = now
+      - disbursedAmount         += the tranche amount
+      - Issue timeline gets a system-visible entry:
+          "CSR Tranche <n> (₹X) released to university team"  (actor = industry)
+
+  So the full 40/40/20 = 100% is paid out across three releases, tracked live on
+  the project for both the industry and the university to see.
+
+--------------------------------------------------------------------------------
+6. PROGRESS TRACKING (milestones) AND COMPLETION
+--------------------------------------------------------------------------------
+
+  University teams update milestone progress on the project:
+
+      PATCH /api/projects/:projectId/milestones
+      Body: { milestones: [ { name, due, done, notes } ] }
+
+  When a milestone is marked done (newlyCompleted):
+      - Issue timeline entry: "Milestone completed: <name>" (actor = university)
+      - Citizen reporter gets a notification:
+          title   = "Milestone Achieved! ⚙️"
+          message = "University team completed milestone '<name>' for '<project>'."
+          type    = milestone_completed
+
+  When ALL milestones are marked done (allDone):
+      - Project.status = "Completed"
+      - Issue.status   = "Resolved"
+      - Issue timeline: "All project milestones achieved. Issue verified as
+        Resolved on the ground."  (actor = Sahayog Platform, role = system)
+      - Citizen reporter gets a notification:
+          title   = "Civic Issue Resolved & Verified! ✅"
+          message = "The solution for '<issue>' has been successfully deployed and verified."
+          type    = issue_resolved
+
+  If milestones are later un-marked (some no longer done):
+      - Project.status returns to "Funded" if it had been "Completed"
+      - certificateStatus is reset to "none" if it had been pending_approval
+
+--------------------------------------------------------------------------------
+7. THE CSR IMPACT CERTIFICATE (final stage for the industry partner)
+--------------------------------------------------------------------------------
+
+  When all milestones are completed the first time:
+      - certificateStatus = "pending_approval"   (auto-queued for admin)
+
+  The certificate then travels to the admin for sign-off:
+
+      PATCH /api/admin/certificates/:projectId
+      Body: { decision: "approve" | "reject", notes }
+
+  - approve  → certificateStatus = "approved", certificateApprovedAt = now,
+               certificateApprovedBy = admin name/org
+  - reject   → certificateStatus = "rejected", certificateApprovedAt = null,
+               certificateNotes = the admin's reason
+
+  This is the visible "success document" for the industry —
+  proof of the CSR impact funded by the industry partner.
+
+--------------------------------------------------------------------------------
+8. SUMMARY — THE FULL DATA FLOW IN ONE PASS
+--------------------------------------------------------------------------------
+
+  INDUSTRY decides budget
+     │
+     ├─► Project:   funded=true, status=Funded, industry(+id), fundingAmount,
+     │              fundingDate, deadline, mentorshipNotes,
+     │              disbursedAmount=40%, tranches [40%✓ | 40% | 20%]
+     │
+     ├─► Issue:     status → In progress  + timeline entry "funding approved"
+     │
+     ├─► Notification → Citizen (funding_approved)
+     ├─► Notification → University (funding_approved)
+     │
+     └─► Returns full funded payload to industry
+            │
+            ▼
+   Funded project is now visible in:
+     - GET /api/industry/projects      (industry funded projects)
+     - GET /api/workflow/projects      (workflow list, scoped to partner)
+     - University workflows & dashboards
+            │
+            │  (over time)
+            ▼
+   INDUSTRY releases Tranche 2 (40%) and Tranche 3 (20%)  → disbursedAmount = 100%
+            │
+            ▼
+   UNIVERSITY marks milestones done  →  notifications to citizen per milestone
+            │
+            ▼
+   ALL milestones done  →  Project=Completed, Issue=Resolved, notification to citizen
+            │
+            ▼
+   certificateStatus = pending_approval  →  ADMIN approves/rejects  →  certificate
+            │
+            ▼
+   Final CSR Impact Certificate visible to industry, university and admin.
+
+================================================================================
+END OF DOCUMENT — FUNDED
+================================================================================
