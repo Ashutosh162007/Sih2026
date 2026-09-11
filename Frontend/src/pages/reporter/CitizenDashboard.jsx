@@ -80,15 +80,11 @@ export default function CitizenDashboard() {
                 ? "bg-blue-50 border-blue-300 text-blue-800"
                 : "bg-[#D7F5DE] border-emerald-300 text-[#0E4B4C]"
             }`}>
-              {user?.role === "govt_org" ? "🏛️ Official Local Authority" : t("activeReporterBadge")}
+              {user?.role === "govt_org" ? `🏛️ ${t("govtOrg")}` : t("activeReporterBadge")}
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            {user?.role === "govt_org" ? (
-              <>Welcome official representative, <strong>{user?.name}</strong>. Log and monitor grassroots challenges for academic problem-solving.</>
-            ) : (
-              <>{t("citizenWelcomePre")} <strong>{user?.name || t("citizen")}</strong>. {t("citizenWelcomeSub")}</>
-            )}
+            {t("citizenWelcomePre")} <strong>{user?.name || (user?.role === "govt_org" ? t("govtOrg") : t("citizen"))}</strong>. {t("citizenWelcomeSub")}
           </p>
         </div>
 
@@ -243,9 +239,9 @@ export default function CitizenDashboard() {
       <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-[#D7F5DE]/50 to-teal-50/40 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div>
-            <h3 className="font-display font-bold text-slate-900 text-base">How Sahayog Resolves Your Civic Reports</h3>
+            <h3 className="font-display font-bold text-slate-900 text-base">{t("howSahayogResolves")}</h3>
             <p className="text-xs text-slate-600 mt-0.5 max-w-xl">
-              When you submit a challenge, our AI Engine synthesizes a formal research statement and calculates severity. It is auto-routed to nearest universities (e.g. BIT Mesra, NIT Jamshedpur) where student-faculty teams build engineering prototypes funded by corporate CSR sponsors.
+              {t("howSahayogResolvesDesc")}
             </p>
           </div>
         </div>
@@ -254,7 +250,7 @@ export default function CitizenDashboard() {
           onClick={() => navigate("/help")}
           className="rounded-xl bg-[#0E4B4C] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#0b3b3c] shrink-0 cursor-pointer"
         >
-          View Full Guide
+          {t("viewFullGuide")}
         </button>
       </div>
     </div>

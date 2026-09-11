@@ -18,6 +18,7 @@ import {
   JHARKHAND_DISTRICT_COORDS,
   DEFAULT_JHARKHAND_COORDS,
   ISSUE_CATEGORIES,
+  getCategoryLabel,
 } from "../../lib/constants";
 import { useLanguageStore } from "../../store/languageStore";
 
@@ -49,7 +50,7 @@ function MapCenterController({ center, zoom }) {
 import { handleMockRequest } from "../../api/mockAdapter";
 
 export default function StateMapExplorer() {
-  const { t } = useLanguageStore();
+  const { language, t } = useLanguageStore();
   const navigate = useNavigate();
   const [issues, setIssues] = useState([]);
   const [district, setDistrict] = useState("all");
@@ -160,7 +161,7 @@ export default function StateMapExplorer() {
             <option value="all">{t("categoryLabel")} (All)</option>
             {ISSUE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {c}
+                {getCategoryLabel(c, language)}
               </option>
             ))}
           </select>
@@ -175,7 +176,7 @@ export default function StateMapExplorer() {
             onChange={(e) => setStatus(e.target.value)}
             className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-[#0E4B4C]"
           >
-            <option value="all">All Statuses</option>
+            <option value="all">{t("filterAllStatuses")}</option>
             <option value="New">{t("statusNew")}</option>
             <option value="Assigned">{t("statusAssigned")}</option>
             <option value="In progress">{t("statusInProgress")}</option>
@@ -248,7 +249,7 @@ export default function StateMapExplorer() {
             <h2 className="font-display font-bold text-slate-900 text-sm">
               Issues in View ({filteredIssues.length})
             </h2>
-            <span className="text-[11px] text-slate-400">Click to pin on map</span>
+            <span className="text-[11px] text-slate-400">{t("clickToPinMap")}</span>
           </div>
 
           <div className="mt-3 flex-1 overflow-y-auto space-y-2.5 pr-1">

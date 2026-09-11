@@ -15,14 +15,14 @@ import {
   Sparkles,
 } from "lucide-react";
 import StatusBadge from "../../components/StatusBadge";
-import { JHARKHAND_DISTRICTS, ISSUE_CATEGORIES, ISSUE_STATUSES, PRIORITIES } from "../../lib/constants";
+import { JHARKHAND_DISTRICTS, ISSUE_CATEGORIES, ISSUE_STATUSES, PRIORITIES, getCategoryLabel } from "../../lib/constants";
 import axiosClient from "../../api/axiosClient";
 import { useLanguageStore } from "../../store/languageStore";
 import { formatDate } from "../../lib/format";
 import { handleMockRequest } from "../../api/mockAdapter";
 
 export default function AdminIssuesConsole() {
-  const { t } = useLanguageStore();
+  const { language, t } = useLanguageStore();
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -100,19 +100,19 @@ export default function AdminIssuesConsole() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="font-display text-3xl font-bold text-slate-900">Master Issue Oversight Console</h1>
+            <h1 className="font-display text-3xl font-bold text-slate-900">{t("masterOversightTitle")}</h1>
             <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
-              Statewide Audit
+              {t("statewideAudit")}
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Monitor, prioritize, and manage all citizen and local government challenge tickets across Jharkhand's 24 districts.
+            {t("masterOversightSubtitle")}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs">
-            Total Issues: <span className="text-[#0E4B4C] font-extrabold">{issues.length}</span>
+            {t("totalIssuesCount")} <span className="text-[#0E4B4C] font-extrabold">{issues.length}</span>
           </span>
         </div>
       </div>
@@ -132,7 +132,7 @@ export default function AdminIssuesConsole() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by title, description, district, or reporting body..."
+              placeholder={t("searchPlaceholder")}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 py-2 text-xs outline-none transition focus:border-[#0E4B4C] focus:bg-white"
             />
           </div>
@@ -143,7 +143,7 @@ export default function AdminIssuesConsole() {
             onChange={(e) => setDistrictFilter(e.target.value)}
             className="w-full md:w-48 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-[#0E4B4C]"
           >
-            <option value="all">All 24 Districts</option>
+            <option value="all">{t("filterAllDistricts")}</option>
             {JHARKHAND_DISTRICTS.map((d) => (
               <option key={d} value={d}>
                 {d}
@@ -157,10 +157,10 @@ export default function AdminIssuesConsole() {
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="w-full md:w-44 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-[#0E4B4C]"
           >
-            <option value="all">All Domains</option>
+            <option value="all">{t("filterAllDomains")}</option>
             {ISSUE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {c}
+                {getCategoryLabel(c, language)}
               </option>
             ))}
           </select>
@@ -171,7 +171,7 @@ export default function AdminIssuesConsole() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full md:w-36 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-[#0E4B4C]"
           >
-            <option value="all">All Statuses</option>
+            <option value="all">{t("filterAllStatuses")}</option>
             {ISSUE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -185,9 +185,9 @@ export default function AdminIssuesConsole() {
             onChange={(e) => setReporterFilter(e.target.value)}
             className="w-full md:w-44 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-[#0E4B4C]"
           >
-            <option value="all">All Reporter Types</option>
-            <option value="govt_org">🏛️ Govt / Local Bodies</option>
-            <option value="citizen">👤 Individual Citizens</option>
+            <option value="all">{t("filterAllReporters")}</option>
+            <option value="govt_org">{t("filterGovtReporters")}</option>
+            <option value="citizen">{t("filterCitizenReporters")}</option>
           </select>
         </div>
       </div>
@@ -197,24 +197,24 @@ export default function AdminIssuesConsole() {
         {loading ? (
           <div className="py-12 text-center text-sm text-slate-500">
             <Sparkles size={24} className="mx-auto mb-2 text-[#0E4B4C] animate-pulse" />
-            Loading statewide challenge registry...
+            {t("loadingRegistry")}
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-12 text-center text-sm text-slate-500">
             <ClipboardList size={32} className="mx-auto mb-2 text-slate-400" />
-            No issues match the selected filter criteria.
+            {t("noMatchingIssues")}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold">
-                  <th className="px-5 py-3.5">Issue Title & Details</th>
-                  <th className="px-4 py-3.5">Reporter / Entity</th>
-                  <th className="px-4 py-3.5">Location</th>
-                  <th className="px-4 py-3.5">AI Severity</th>
-                  <th className="px-4 py-3.5">Status</th>
-                  <th className="px-4 py-3.5 text-right">Administrative Action</th>
+                  <th className="px-5 py-3.5">{t("thTitleDetails")}</th>
+                  <th className="px-4 py-3.5">{t("thReporterEntity")}</th>
+                  <th className="px-4 py-3.5">{t("thLocation")}</th>
+                  <th className="px-4 py-3.5">{t("thAiSeverity")}</th>
+                  <th className="px-4 py-3.5">{t("thStatus")}</th>
+                  <th className="px-4 py-3.5 text-right">{t("thAdminAction")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -259,7 +259,7 @@ export default function AdminIssuesConsole() {
                           <span className="font-bold text-[#0E4B4C] text-sm">
                             {item.severity?.score || 65}%
                           </span>
-                          <span className="text-[10px] text-slate-400">Score</span>
+                          <span className="text-[10px] text-slate-400">{t("scoreLabel")}</span>
                         </div>
                       </td>
 
@@ -282,7 +282,7 @@ export default function AdminIssuesConsole() {
                           to={`/issues/${item.id || item._id}`}
                           className="inline-flex items-center gap-1 rounded-xl bg-slate-100 hover:bg-[#0E4B4C] hover:text-white px-3 py-1.5 text-xs font-bold text-slate-700 transition cursor-pointer"
                         >
-                          View Details <ChevronRight size={13} />
+                          {t("viewDetailsBtn")} <ChevronRight size={13} />
                         </Link>
                       </td>
                     </tr>

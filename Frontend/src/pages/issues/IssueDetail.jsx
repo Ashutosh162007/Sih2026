@@ -344,7 +344,7 @@ export default function IssueDetail() {
             {/* Dispute Reopen Button (if Resolved) */}
             {issue.status === "Resolved" && (
               <div className="mt-6 border-t border-slate-100 pt-4 flex justify-between items-center text-xs text-slate-500">
-                <span>Ground issue not fully resolved?</span>
+                <span>{t("notFullyResolved")}</span>
                 <button
                   type="button"
                   onClick={() => setOpenDisputeModal(true)}
@@ -463,7 +463,7 @@ export default function IssueDetail() {
             <h3 className="font-display text-base font-bold text-slate-900 flex items-center gap-2">
               <Building2 size={16} className="text-blue-600" /> {t("nearestRoutingTitle")}
             </h3>
-            <p className="text-xs text-slate-500 mt-1">Calculated via Geodesic Haversine algorithm</p>
+            <p className="text-xs text-slate-500 mt-1">{t("calculatedHaversine")}</p>
             <div className="mt-3 space-y-2.5 text-xs">
               {issue.nearestUniversities && issue.nearestUniversities.length > 0 ? (
                 issue.nearestUniversities.map((uni, idx) => (
@@ -513,7 +513,7 @@ export default function IssueDetail() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
           <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-display text-lg font-bold text-slate-900">Edit Challenge Details</h3>
+              <h3 className="font-display text-lg font-bold text-slate-900">{t("editChallengeDetails")}</h3>
               <button type="button" onClick={() => setOpenEditModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X size={18} />
               </button>

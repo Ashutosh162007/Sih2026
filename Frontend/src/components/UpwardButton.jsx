@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { ArrowUp } from "lucide-react";
 import axiosClient from "../api/axiosClient";
+import { useLanguageStore } from "../store/languageStore";
 
 export default function UpwardButton({ issueId, count, hasUpwarded, size = "sm" }) {
+  const { t } = useLanguageStore();
   const [upwardsCount, setUpwardsCount] = useState(count || 0);
   const [active, setActive] = useState(hasUpwarded || false);
   const [busy, setBusy] = useState(false);
@@ -47,7 +49,7 @@ export default function UpwardButton({ issueId, count, hasUpwarded, size = "sm" 
     >
       <ArrowUp size={size === "lg" ? 16 : 13} className={active ? "fill-[#0E4B4C]" : ""} />
       <span>
-        {upwardsCount} {upwardsCount === 1 ? "Upward" : "Upwards"}
+        {upwardsCount} {upwardsCount === 1 ? t("upwardLabel") : t("upwardsLabel")}
       </span>
     </button>
   );

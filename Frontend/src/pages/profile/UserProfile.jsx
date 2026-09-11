@@ -69,10 +69,10 @@ export default function UserProfile() {
         useAuthStore.setState({ user: data.user });
         localStorage.setItem("sahayog_user", JSON.stringify(data.user));
       }
-      setProfileMsg("Profile details updated successfully!");
+      setProfileMsg(t("profileUpdatedSuccess"));
       setTimeout(() => setProfileMsg(""), 4000);
     } catch (err) {
-      setProfileMsg("Failed to update profile.");
+      setProfileMsg(t("failedUpdateProfile"));
     } finally {
       setSaving(false);
     }
@@ -83,11 +83,11 @@ export default function UserProfile() {
     setPassErr("");
     setPassMsg("");
     if (newPassword !== confirmPassword) {
-      setPassErr("New passwords do not match.");
+      setPassErr(t("passwordsDoNotMatch"));
       return;
     }
     if (newPassword.length < 6) {
-      setPassErr("Password must be at least 6 characters.");
+      setPassErr(t("passwordMinLength"));
       return;
     }
     setPassSaving(true);
@@ -96,13 +96,13 @@ export default function UserProfile() {
         currentPassword,
         newPassword,
       });
-      setPassMsg("Password changed successfully!");
+      setPassMsg(t("passwordChangedSuccess"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setTimeout(() => setPassMsg(""), 4000);
     } catch (err) {
-      setPassErr(err.response?.data?.message || "Failed to change password.");
+      setPassErr(err.response?.data?.message || t("failedUpdateProfile"));
     } finally {
       setPassSaving(false);
     }
@@ -113,6 +113,21 @@ export default function UserProfile() {
       setSelectedDisciplines(selectedDisciplines.filter((x) => x !== d));
     } else {
       setSelectedDisciplines([...selectedDisciplines, d]);
+    }
+  };
+
+  const getRoleLabel = (r) => {
+    switch (r) {
+      case ROLES.REPORTER:
+        return t("citizen");
+      case ROLES.GOVT_ORG:
+        return t("govtOrg");
+      case ROLES.UNIVERSITY:
+        return t("university");
+      case ROLES.INDUSTRY:
+        return t("industry");
+      default:
+        return ROLE_LABELS[r] || r;
     }
   };
 
@@ -130,13 +145,13 @@ export default function UserProfile() {
               <p className="text-xs text-slate-500 mt-1">{user?.email}</p>
               <div className="mt-2.5 flex flex-wrap items-center gap-2">
                 <span className="rounded-md bg-[#D7F5DE] border border-emerald-300 px-2.5 py-0.5 text-xs font-bold text-[#0E4B4C]">
-                  {ROLE_LABELS[user?.role] || user?.role}
+                  {getRoleLabel(user?.role)}
                 </span>
                 <span className="rounded-md bg-slate-100 text-slate-700 px-2.5 py-0.5 text-xs font-medium">
                   📍 {district}, {block}
                 </span>
                 <span className="rounded-md bg-emerald-50 text-emerald-800 px-2 py-0.5 text-xs font-semibold flex items-center gap-1">
-                  <ShieldCheck size={13} /> Verified
+                  <ShieldCheck size={13} /> {t("verifiedBadge")}
                 </span>
               </div>
             </div>
@@ -149,7 +164,7 @@ export default function UserProfile() {
         {/* Personal & Institutional Information */}
         <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm">
           <h2 className="font-display text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-            <User size={18} className="text-[#0E4B4C]" /> Account Details & Affiliations
+            <User size={18} className="text-[#0E4B4C]" /> {t("accountDetailsAffiliations")}
           </h2>
 
           {profileMsg && (
@@ -161,7 +176,7 @@ export default function UserProfile() {
           <form onSubmit={handleProfileSave} className="mt-5 space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-                Full Name
+                {t("fullNameLabel")}
                 <input
                   type="text"
                   value={name}
@@ -172,7 +187,7 @@ export default function UserProfile() {
               </label>
 
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-                Phone Number
+                {t("phoneNumberLabel")}
                 <input
                   type="text"
                   value={phone}
@@ -184,7 +199,7 @@ export default function UserProfile() {
 
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-                District (Jharkhand)
+                {t("districtLabel")}
                 <select
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
@@ -199,7 +214,7 @@ export default function UserProfile() {
               </label>
 
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-                Block / Municipality
+                {t("blockMunicipalityLabel")}
                 <input
                   type="text"
                   value={block}
@@ -211,7 +226,7 @@ export default function UserProfile() {
 
             {user?.role !== ROLES.REPORTER && (
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-                Institution / Corporate Enterprise
+                {t("instEnterpriseProfile")}
                 <input
                   type="text"
                   value={org}
@@ -222,12 +237,12 @@ export default function UserProfile() {
             )}
 
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-              Biography / Professional Summary
+              {t("bioSummaryLabel")}
               <textarea
                 rows={3}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="Brief summary of your academic or civic interests..."
+                placeholder={t("bioPlaceholder")}
                 className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs normal-case text-slate-900 outline-none focus:border-[#0E4B4C] leading-relaxed"
               />
             </label>
@@ -236,7 +251,7 @@ export default function UserProfile() {
             {user?.role === ROLES.UNIVERSITY && (
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center gap-1.5">
-                  <BookOpen size={14} /> Department Disciplines
+                  <BookOpen size={14} /> {t("deptDisciplines")}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {DISCIPLINES.map((d) => {
@@ -266,7 +281,7 @@ export default function UserProfile() {
                 disabled={saving}
                 className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c] transition cursor-pointer"
               >
-                <Save size={15} /> {saving ? "Saving Changes..." : "Save Profile Details"}
+                <Save size={15} /> {saving ? t("btnSavingChanges") : t("btnSaveProfile")}
               </button>
             </div>
           </form>
@@ -276,7 +291,7 @@ export default function UserProfile() {
         <section className="space-y-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="font-display text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-              <KeyRound size={16} className="text-[#0E4B4C]" /> Change Password
+              <KeyRound size={16} className="text-[#0E4B4C]" /> {t("changePasswordTitle")}
             </h2>
 
             {passMsg && (
@@ -292,7 +307,7 @@ export default function UserProfile() {
 
             <form onSubmit={handlePasswordChange} className="mt-4 space-y-3.5 text-xs">
               <label className="block font-semibold text-slate-700">
-                Current Password
+                {t("currentPasswordLabel")}
                 <input
                   type="password"
                   value={currentPassword}
@@ -303,7 +318,7 @@ export default function UserProfile() {
               </label>
 
               <label className="block font-semibold text-slate-700">
-                New Password
+                {t("newPasswordLabel")}
                 <input
                   type="password"
                   value={newPassword}
@@ -314,7 +329,7 @@ export default function UserProfile() {
               </label>
 
               <label className="block font-semibold text-slate-700">
-                Confirm New Password
+                {t("confirmPasswordLabel")}
                 <input
                   type="password"
                   value={confirmPassword}
@@ -329,7 +344,7 @@ export default function UserProfile() {
                 disabled={passSaving}
                 className="w-full rounded-xl border border-[#0E4B4C] bg-white py-2.5 text-xs font-bold text-[#0E4B4C] hover:bg-teal-50 transition cursor-pointer"
               >
-                {passSaving ? "Updating..." : "Update Password"}
+                {passSaving ? t("btnUpdatingPassword") : t("btnUpdatePassword")}
               </button>
             </form>
           </div>

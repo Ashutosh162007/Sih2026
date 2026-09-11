@@ -114,9 +114,9 @@ export default function HelpFaq() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0E4B4C] text-white font-bold text-sm">
             1
           </div>
-          <h3 className="mt-3 font-display font-bold text-slate-900 text-sm">Citizen Reports</h3>
+          <h3 className="mt-3 font-display font-bold text-slate-900 text-sm">{t("stepCitizenReports")}</h3>
           <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-            Citizens describe issues with photo & GPS location. AI synthesizes a formal engineering problem statement.
+            {t("stepCitizenReportsDesc")}
           </p>
         </div>
 
@@ -124,9 +124,9 @@ export default function HelpFaq() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white font-bold text-sm">
             2
           </div>
-          <h3 className="mt-3 font-display font-bold text-slate-900 text-sm">Campus Claims</h3>
+          <h3 className="mt-3 font-display font-bold text-slate-900 text-sm">{t("stepCampusClaims")}</h3>
           <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-            Nearest university faculty and students assemble a multidisciplinary team and submit solution proposals.
+            {t("stepCampusClaimsDesc")}
           </p>
         </div>
 
@@ -134,9 +134,9 @@ export default function HelpFaq() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600 text-white font-bold text-sm">
             3
           </div>
-          <h3 className="mt-3 font-display font-bold text-slate-900 text-sm">CSR Funds</h3>
+          <h3 className="mt-3 font-display font-bold text-slate-900 text-sm">{t("stepCsrFunds")}</h3>
           <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-            Corporate industry partners evaluate budgets, sponsor projects, and release milestone-linked grant tranches.
+            {t("stepCsrFundsDesc")}
           </p>
         </div>
 
@@ -144,9 +144,9 @@ export default function HelpFaq() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-sm">
             4
           </div>
-          <h3 className="mt-3 font-display font-bold text-slate-900 text-sm">Citizen Verified</h3>
+          <h3 className="mt-3 font-display font-bold text-slate-900 text-sm">{t("stepCitizenVerified")}</h3>
           <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-            Upon ground deployment, the reporting citizen tests the fix, rates satisfaction, and generates CSR certificates.
+            {t("stepCitizenVerifiedDesc")}
           </p>
         </div>
       </div>
@@ -154,7 +154,7 @@ export default function HelpFaq() {
       {/* FAQ Accordion */}
       <div className="space-y-6">
         <h2 className="font-display text-2xl font-bold text-slate-900 text-center">
-          Frequently Asked Questions
+          {t("faqHeading")}
         </h2>
 
         <div className="space-y-6">

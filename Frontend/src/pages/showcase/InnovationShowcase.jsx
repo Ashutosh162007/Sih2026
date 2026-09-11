@@ -14,14 +14,14 @@ import {
 import CsrImpactCertificateModal from "../../components/CsrImpactCertificateModal";
 import axiosClient from "../../api/axiosClient";
 import { formatDate } from "../../lib/format";
-import { ISSUE_CATEGORIES } from "../../lib/constants";
+import { ISSUE_CATEGORIES, getCategoryLabel } from "../../lib/constants";
 import { useLanguageStore } from "../../store/languageStore";
 
 import { handleMockRequest } from "../../api/mockAdapter";
 
 export default function InnovationShowcase() {
   const navigate = useNavigate();
-  const { t } = useLanguageStore();
+  const { language, t } = useLanguageStore();
   const [issues, setIssues] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -103,7 +103,7 @@ export default function InnovationShowcase() {
                 : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
             }`}
           >
-            {cat}
+            {getCategoryLabel(cat, language)}
           </button>
         ))}
       </div>
@@ -128,7 +128,7 @@ export default function InnovationShowcase() {
                       src={typeof issue.images[0] === "string" ? issue.images[0] : (issue.images[0].url || issue.images[0].preview)}
                     />
                     <span className="absolute top-3 right-3 rounded-full bg-emerald-600/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-white shadow-md flex items-center gap-1">
-                      <CheckCircle2 size={13} /> Deployed & Verified
+                      <CheckCircle2 size={13} /> {t("deployedAndVerified")}
                     </span>
                   </div>
                 ) : (
@@ -137,7 +137,7 @@ export default function InnovationShowcase() {
                       {issue.category}
                     </span>
                     <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white flex items-center gap-1">
-                      <CheckCircle2 size={13} /> Verified Ground Solution
+                      <CheckCircle2 size={13} /> {t("verifiedGroundSolution")}
                     </span>
                   </div>
                 )}
@@ -159,7 +159,7 @@ export default function InnovationShowcase() {
                   <div className="mt-5 rounded-2xl bg-[#F7F8FA] border border-slate-100 p-4 space-y-2.5 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400 font-medium flex items-center gap-1">
-                        <Building2 size={13} className="text-blue-600" /> Research Lead:
+                        <Building2 size={13} className="text-blue-600" /> {t("researchLeadLabel")}
                       </span>
                       <strong className="text-slate-800 text-right truncate max-w-[200px]">
                         {issue.assignee || project?.university || "BIT Mesra"}
@@ -168,7 +168,7 @@ export default function InnovationShowcase() {
 
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400 font-medium flex items-center gap-1">
-                        <Award size={13} className="text-amber-600" /> CSR Sponsor:
+                        <Award size={13} className="text-amber-600" /> {t("csrSponsorLabel")}
                       </span>
                       <strong className="text-emerald-800 text-right truncate max-w-[200px]">
                         {project?.industry || "Tata Steel CSR"} (₹{(project?.fundingAmount || 420000).toLocaleString("en-IN")})
@@ -177,7 +177,7 @@ export default function InnovationShowcase() {
 
                     {issue.feedback?.rating && (
                       <div className="flex items-center justify-between border-t border-slate-200/60 pt-2">
-                        <span className="text-slate-400 font-medium">Citizen Rating:</span>
+                        <span className="text-slate-400 font-medium">{t("citizenRatingLabel")}</span>
                         <span className="flex items-center gap-1 font-bold text-amber-600">
                           <Star size={13} className="fill-amber-400 text-amber-400" /> {issue.feedback.rating}/5.0 ({issue.feedback.comment ? `"${issue.feedback.comment.slice(0, 30)}..."` : "Verified"})
                         </span>
@@ -195,7 +195,7 @@ export default function InnovationShowcase() {
                   className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-teal-300 bg-teal-50/60 py-2.5 text-xs font-bold text-[#0E4B4C] hover:bg-teal-100/80 transition cursor-pointer shadow-xs"
                 >
                   <Award size={14} className="text-teal-700" />
-                  <span>CSR Impact Certificate</span>
+                  <span>{t("csrImpactCertBtn")}</span>
                 </button>
 
                 <button
@@ -203,7 +203,7 @@ export default function InnovationShowcase() {
                   onClick={() => navigate(`/issues/${issue.id || issue._id}`)}
                   className="rounded-xl bg-[#0E4B4C] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#0b3b3c] transition cursor-pointer"
                 >
-                  Tracker →
+                  {t("trackerBtn")}
                 </button>
               </div>
             </div>
@@ -213,9 +213,9 @@ export default function InnovationShowcase() {
         {filtered.length === 0 && (
           <div className="col-span-2 rounded-3xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500 shadow-sm">
             <Award size={36} className="mx-auto mb-3 text-teal-600" />
-            <p className="font-semibold text-slate-800">No resolved showcases in this category yet.</p>
+            <p className="font-semibold text-slate-800">{t("noShowcasesFound")}</p>
             <p className="mt-1 text-xs text-slate-400">
-              As university and industry projects reach 100% milestone completion and citizen rating, they will be archived here.
+              {t("noShowcasesDesc")}
             </p>
           </div>
         )}

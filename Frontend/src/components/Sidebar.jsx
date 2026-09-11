@@ -80,11 +80,9 @@ export default function Sidebar() {
 
   const items = NAV[user?.role] || NAV.citizen || [];
   const cta =
-    user?.role === "citizen" || user?.role === "community_reporter" || user?.role === ROLES.REPORTER || user?.role === "govt_org"
-      ? { to: "/report", label: t("ctaReportCivic") }
-      : user?.role === ROLES.UNIVERSITY
-        ? { to: "/university/queue", label: t("ctaExploreQueue") }
-        : null;
+    user?.role === ROLES.UNIVERSITY
+      ? { to: "/university/queue", label: t("ctaExploreQueue") }
+      : null;
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">

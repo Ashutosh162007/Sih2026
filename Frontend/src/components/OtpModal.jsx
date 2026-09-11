@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Mail, ArrowRight, RefreshCw, X, AlertCircle, ShieldCheck } from "lucide-react";
+import { useLanguageStore } from "../store/languageStore";
 
 export default function OtpModal({
   isOpen,
@@ -10,6 +11,7 @@ export default function OtpModal({
   loading = false,
   error = null,
 }) {
+  const { t } = useLanguageStore();
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [cooldown, setCooldown] = useState(60);
   const [resending, setResending] = useState(false);
@@ -105,8 +107,8 @@ export default function OtpModal({
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0E4B4C]/10 text-[#0E4B4C]">
             <ShieldCheck className="h-7 w-7" />
           </div>
-          <h3 className="mt-4 font-display text-xl font-bold text-slate-900">Verify Your Email</h3>
-          <p className="mt-1 text-xs text-slate-500">We have sent a 6-digit OTP code to</p>
+          <h3 className="mt-4 font-display text-xl font-bold text-slate-900">{t("verifyEmailTitle")}</h3>
+          <p className="mt-1 text-xs text-slate-500">{t("otpSentNotice")}</p>
           <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             <Mail className="h-3.5 w-3.5 text-[#0E4B4C]" />
             <span>{email}</span>
@@ -152,11 +154,11 @@ export default function OtpModal({
             {loading ? (
               <>
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                <span>Verifying Code...</span>
+                <span>{t("verifyingCode")}</span>
               </>
             ) : (
               <>
-                <span>Verify OTP & Enter Platform</span>
+                <span>{t("verifyOtpBtn")}</span>
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
@@ -165,10 +167,10 @@ export default function OtpModal({
 
         {/* Resend Timer */}
         <div className="mt-5 text-center text-xs text-slate-500">
-          Didn't receive the OTP?{" "}
+          {t("didntReceiveOtp")}{" "}
           {cooldown > 0 ? (
             <span className="font-semibold text-slate-600">
-              Resend in <span className="font-mono text-[#0E4B4C]">{cooldown}s</span>
+              {t("resendIn")} <span className="font-mono text-[#0E4B4C]">{cooldown}s</span>
             </span>
           ) : (
             <button
@@ -177,7 +179,7 @@ export default function OtpModal({
               disabled={resending}
               className="font-bold text-[#0E4B4C] hover:underline disabled:opacity-50 cursor-pointer"
             >
-              {resending ? "Sending..." : "Resend OTP"}
+              {resending ? "Sending..." : t("resendOtp")}
             </button>
           )}
         </div>

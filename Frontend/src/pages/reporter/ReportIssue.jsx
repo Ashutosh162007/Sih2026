@@ -5,7 +5,7 @@ import Stepper from "../../components/Stepper";
 import FileDropzone from "../../components/FileDropzone";
 import MapLocationPicker from "../../components/MapLocationPicker";
 import AssessmentSlider from "../../components/AssessmentSlider";
-import { ISSUE_CATEGORIES, JHARKHAND_DISTRICTS, JHARKHAND_DISTRICT_COORDS, DEFAULT_JHARKHAND_COORDS } from "../../lib/constants";
+import { ISSUE_CATEGORIES, JHARKHAND_DISTRICTS, JHARKHAND_DISTRICT_COORDS, DEFAULT_JHARKHAND_COORDS, getCategoryLabel } from "../../lib/constants";
 import { useWizardStore } from "../../store/wizardStore";
 import { useAuthStore } from "../../store/authStore";
 import { useLanguageStore } from "../../store/languageStore";
@@ -14,7 +14,7 @@ import axiosClient from "../../api/axiosClient";
 export default function ReportIssue() {
   const { step, data, setStep, next, back, update, reset } = useWizardStore();
   const user = useAuthStore((s) => s.user);
-  const { t } = useLanguageStore();
+  const { language, t } = useLanguageStore();
   const [submitting, setSubmitting] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiPreviewData, setAiPreviewData] = useState(null);
@@ -162,7 +162,7 @@ export default function ReportIssue() {
                 <option value="">{t("selectCategory")}</option>
                 {ISSUE_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {getCategoryLabel(c, language)}
                   </option>
                 ))}
               </select>
@@ -311,14 +311,14 @@ export default function ReportIssue() {
               ) : error ? (
                 <div className="py-6 px-4 text-center rounded-xl bg-rose-50 border border-rose-200 mt-4">
                   <ShieldAlert size={28} className="mx-auto mb-2 text-rose-600" />
-                  <h4 className="text-sm font-bold text-rose-900">Content Validation Alert</h4>
+                  <h4 className="text-sm font-bold text-rose-900">{t("contentValidationAlert")}</h4>
                   <p className="mt-1 text-xs text-rose-700 max-w-md mx-auto">{error}</p>
                   <button
                     type="button"
                     onClick={() => setStep(0)}
                     className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 transition"
                   >
-                    Edit Issue Details
+                    {t("editChallengeDetails")}
                   </button>
                 </div>
               ) : (
@@ -332,21 +332,21 @@ export default function ReportIssue() {
             {/* Submission Summary */}
             <dl className="grid sm:grid-cols-2 gap-3 text-xs rounded-xl border border-slate-200 bg-slate-50/70 p-4">
               <div>
-                <dt className="text-slate-400 font-medium">Issue Title</dt>
+                <dt className="text-slate-400 font-medium">{t("issueTitleLabel")}</dt>
                 <dd className="font-semibold text-slate-800 text-sm mt-0.5">{data.title}</dd>
               </div>
               <div>
-                <dt className="text-slate-400 font-medium">Domain Category</dt>
-                <dd className="font-semibold text-slate-800 text-sm mt-0.5">{data.category}</dd>
+                <dt className="text-slate-400 font-medium">{t("categoryLabel")}</dt>
+                <dd className="font-semibold text-slate-800 text-sm mt-0.5">{getCategoryLabel(data.category, language)}</dd>
               </div>
               <div>
-                <dt className="text-slate-400 font-medium">Location Coordinates</dt>
+                <dt className="text-slate-400 font-medium">{t("locationCoordinates")}</dt>
                 <dd className="text-slate-700 mt-0.5">
                   {data.district}, {data.block} ({data.lat?.toFixed(3)}, {data.lng?.toFixed(3)})
                 </dd>
               </div>
               <div>
-                <dt className="text-slate-400 font-medium">Evidence Attached</dt>
+                <dt className="text-slate-400 font-medium">{t("evidenceAttached")}</dt>
                 <dd className="text-slate-700 mt-0.5">{data.evidence?.length || 0} file(s)</dd>
               </div>
             </dl>

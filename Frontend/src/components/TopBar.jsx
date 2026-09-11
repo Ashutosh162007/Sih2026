@@ -23,6 +23,7 @@ import {
 import { ROLE_LABELS, ROLES } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
 import { useLanguageStore } from "../store/languageStore";
+import { useThemeStore } from "../store/themeStore";
 import axiosClient from "../api/axiosClient";
 import { formatDate } from "../lib/format";
 
@@ -30,6 +31,8 @@ export default function TopBar() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const { language, setLanguage, t } = useLanguageStore();
+  const { theme, toggleTheme } = useThemeStore();
+  const darkMode = theme === "dark";
   const navigate = useNavigate();
 
   const [openNotifs, setOpenNotifs] = useState(false);
@@ -43,24 +46,6 @@ export default function TopBar() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-
-  // Dark mode state
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("sahayog_theme") === "dark" ||
-      document.documentElement.classList.contains("dark");
-  });
-
-  const toggleDarkMode = () => {
-    if (darkMode) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("sahayog_theme", "light");
-      setDarkMode(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("sahayog_theme", "dark");
-      setDarkMode(true);
-    }
-  };
 
   const fetchNotifs = async () => {
     try {
@@ -232,12 +217,12 @@ export default function TopBar() {
       {/* Dark Mode Theme Toggle */}
       <button
         type="button"
-        onClick={toggleDarkMode}
+        onClick={toggleTheme}
         className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 transition cursor-pointer"
         aria-label="Toggle Theme"
-        title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        title={darkMode ? "Switch to Light Mode" : "Switch to Midnight Dark"}
       >
-        {darkMode ? <Sun size={17} className="text-amber-500" /> : <Moon size={17} className="text-slate-600" />}
+        {darkMode ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-slate-600" />}
       </button>
 
       {/* Language Switcher */}

@@ -40,6 +40,24 @@ export const ISSUE_CATEGORIES = [
   "Mobility",
 ];
 
+export const CATEGORY_TRANSLATIONS = {
+  Infrastructure: { en: "Infrastructure", hi: "बुनियादी ढांचा", kht: "बुनियादी ढांचा" },
+  "Water & Sanitation": { en: "Water & Sanitation", hi: "जल एवं स्वच्छता", kht: "पानी आरु सफाई" },
+  "Waste Management": { en: "Waste Management", hi: "कचरा प्रबंधन", kht: "कचरा व्यवस्था" },
+  "Public Safety": { en: "Public Safety", hi: "सार्वजनिक सुरक्षा", kht: "जन सुरक्षा" },
+  Environment: { en: "Environment", hi: "पर्यावरण", kht: "पर्यावरण" },
+  Agriculture: { en: "Agriculture", hi: "कृषि", kht: "खेती-बारी" },
+  Healthcare: { en: "Healthcare", hi: "स्वास्थ्य", kht: "इलाज-दवा आरु स्वास्थ्य" },
+  Education: { en: "Education", hi: "शिक्षा", kht: "पढ़ाई-लिखाई" },
+  "Rural Livelihoods": { en: "Rural Livelihoods", hi: "ग्रामीण आजीविका", kht: "गांव-देहात के रोजी-रोजगार" },
+  Mobility: { en: "Mobility", hi: "यातायात", kht: "सड़क आरु आवागमन" },
+};
+
+export function getCategoryLabel(category, language = "en") {
+  if (!category) return "";
+  return CATEGORY_TRANSLATIONS[category]?.[language] || CATEGORY_TRANSLATIONS[category]?.en || category;
+}
+
 export const JHARKHAND_DISTRICTS = [
   "Ranchi",
   "East Singhbhum (Jamshedpur)",

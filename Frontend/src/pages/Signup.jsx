@@ -8,6 +8,7 @@ import { Check, X, Eye, EyeOff } from "lucide-react";
 import AuthLayout from "../layouts/AuthLayout";
 import { ROLES, ROLE_LABELS, JHARKHAND_DISTRICTS, GOVT_ORG_TYPES } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
+import { useLanguageStore } from "../store/languageStore";
 import OtpModal from "../components/OtpModal";
 
 const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -26,6 +27,7 @@ const schema = z.object({
 });
 
 export default function Signup() {
+  const { t } = useLanguageStore();
   const [showPassword, setShowPassword] = useState(false);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [pendingValues, setPendingValues] = useState(null);
@@ -69,11 +71,11 @@ export default function Signup() {
 
   // Password Criteria checks
   const criteria = [
-    { label: "At least 8 characters", met: password.length >= 8 },
-    { label: "At least 1 uppercase letter (A-Z)", met: /[A-Z]/.test(password) },
-    { label: "At least 1 lowercase letter (a-z)", met: /[a-z]/.test(password) },
-    { label: "At least 1 number (0-9)", met: /[0-9]/.test(password) },
-    { label: "At least 1 special character (@, $, !, %, *, #, etc.)", met: /[@$!%*?&#^()_+\-=[\]{};':"\\|,.<>/?]/.test(password) },
+    { label: t("critLength"), met: password.length >= 8 },
+    { label: t("critUpper"), met: /[A-Z]/.test(password) },
+    { label: t("critLower"), met: /[a-z]/.test(password) },
+    { label: t("critNumber"), met: /[0-9]/.test(password) },
+    { label: t("critSpecial"), met: /[@$!%*?&#^()_+\-=[\]{};':"\\|,.<>/?]/.test(password) },
   ];
 
   // Step 1: Click "Join Sahayog Network" -> Send OTP to email
@@ -147,11 +149,26 @@ export default function Signup() {
     }
   }
 
+  const getRoleLabel = (r) => {
+    switch (r) {
+      case ROLES.REPORTER:
+        return t("citizen");
+      case ROLES.GOVT_ORG:
+        return t("govtOrg");
+      case ROLES.UNIVERSITY:
+        return t("university");
+      case ROLES.INDUSTRY:
+        return t("industry");
+      default:
+        return ROLE_LABELS[r] || r;
+    }
+  };
+
   return (
-    <AuthLayout headline="Join the Sahayog Innovation Network">
-      <h2 className="font-display text-3xl font-bold text-slate-900">Create account</h2>
+    <AuthLayout>
+      <h2 className="font-display text-3xl font-bold text-slate-900">{t("createAccountTitle")}</h2>
       <p className="mt-1 text-sm text-slate-500">
-        Citizens get instant access; University and Industry accounts undergo verification.
+        {t("instantAccessHint")}
       </p>
 
       {/* Google Sign-up Button */}
@@ -173,16 +190,16 @@ export default function Signup() {
       </div>
 
       <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
-        <span className="h-px flex-1 bg-slate-200" /> or register with email <span className="h-px flex-1 bg-slate-200" />
+        <span className="h-px flex-1 bg-slate-200" /> {t("orRegisterEmail")} <span className="h-px flex-1 bg-slate-200" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Full Name */}
         <label className="block text-sm font-medium text-slate-700">
-          Full Name
+          {t("fullNameLabel")}
           <input
             {...register("name")}
-            placeholder="e.g. Ramesh Kumar / Asha Menon"
+            placeholder={t("fullNamePlaceholder")}
             className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
           />
           {formState.errors.name && <p className="text-xs text-rose-600 mt-1">{formState.errors.name.message}</p>}
@@ -190,14 +207,14 @@ export default function Signup() {
 
         {/* Role Type */}
         <label className="block text-sm font-medium text-slate-700">
-          Role Type
+          {t("roleTypeLabel")}
           <select
             {...register("role")}
             className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10 bg-white"
           >
             {[ROLES.REPORTER, ROLES.GOVT_ORG, ROLES.UNIVERSITY, ROLES.INDUSTRY].map((r) => (
               <option key={r} value={r}>
-                {ROLE_LABELS[r]}
+                {getRoleLabel(r)}
               </option>
             ))}
           </select>
@@ -206,24 +223,24 @@ export default function Signup() {
         {role === ROLES.GOVT_ORG && (
           <div className="space-y-3">
             <label className="block text-sm font-medium text-slate-700">
-              Government / Local Body Type
+              {t("govtTypeLabel")}
               <select
                 {...register("orgType")}
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10 bg-white"
               >
-                {GOVT_ORG_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                {GOVT_ORG_TYPES.map((tType) => (
+                  <option key={tType} value={tType}>
+                    {tType}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="block text-sm font-medium text-slate-700">
-              Local Body / Panchayat Samiti / Office Name
+              {t("localBodyNameLabel")}
               <input
                 {...register("org")}
-                placeholder="e.g. Panchayat Samiti - Tamar / Zilla Parishad - Ranchi"
+                placeholder={t("localBodyPlaceholder")}
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
               />
             </label>
@@ -232,17 +249,17 @@ export default function Signup() {
 
         {(role === ROLES.UNIVERSITY || role === ROLES.INDUSTRY) && (
           <label className="block text-sm font-medium text-slate-700">
-            Institution / Enterprise Name
+            {t("instEnterpriseLabel")}
             <input
               {...register("org")}
-              placeholder={role === ROLES.UNIVERSITY ? "e.g. BIT Mesra / NIT Jamshedpur" : "e.g. Tata Steel CSR"}
+              placeholder={role === ROLES.UNIVERSITY ? t("instPlaceholderUni") : t("instPlaceholderInd")}
               className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
             />
           </label>
         )}
 
         <label className="block text-sm font-medium text-slate-700">
-          District (Jharkhand)
+          {t("districtLabel")}
           <select
             {...register("district")}
             className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10 bg-white"
@@ -257,7 +274,7 @@ export default function Signup() {
 
         {/* Dynamic Email address */}
         <label className="block text-sm font-medium text-slate-700">
-          Email address
+          {t("emailAddress")}
           <input
             {...register("email")}
             placeholder={getEmailPlaceholder()}
@@ -268,12 +285,12 @@ export default function Signup() {
 
         {/* Strong Password */}
         <label className="block text-sm font-medium text-slate-700">
-          Password
+          {t("password")}
           <div className="relative mt-1">
             <input
               type={showPassword ? "text" : "password"}
               {...register("password")}
-              placeholder="Enter a strong password"
+              placeholder={t("password")}
               className="w-full rounded-xl border border-slate-200 pl-3.5 pr-10 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
             />
             <button
@@ -289,7 +306,7 @@ export default function Signup() {
 
         {/* Strong Password Criteria Guide */}
         <div className="rounded-xl border border-slate-200 bg-slate-50/75 p-3 text-xs">
-          <p className="font-semibold text-slate-700 mb-1.5">Password Criteria:</p>
+          <p className="font-semibold text-slate-700 mb-1.5">{t("passwordCriteriaTitle")}</p>
           <div className="space-y-1">
             {criteria.map((item, idx) => (
               <div key={idx} className="flex items-center gap-2">
@@ -312,14 +329,14 @@ export default function Signup() {
           disabled={loading || otpLoading}
           className="w-full rounded-xl bg-[#0E4B4C] py-3 text-sm font-semibold text-white shadow-md shadow-[#0E4B4C]/20 transition hover:bg-[#0b3b3c] disabled:opacity-60 cursor-pointer"
         >
-          {loading || otpLoading ? "Sending Verification Code..." : "Join Sahayog Network"}
+          {loading || otpLoading ? t("btnSendingCode") : t("btnJoinNetwork")}
         </button>
       </form>
 
       <p className="mt-5 text-center text-sm text-slate-500">
-        Already registered?{" "}
+        {t("alreadyRegistered")}{" "}
         <Link to="/login" className="font-semibold text-[#0E4B4C] hover:underline">
-          Log in
+          {t("logInLink")}
         </Link>
       </p>
 

@@ -3,9 +3,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
-import { ShieldCheck, Eye, EyeOff, Lock, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Eye, EyeOff, Lock, ArrowLeft, Languages } from "lucide-react";
 import BrandLogo from "../../components/BrandLogo";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguageStore } from "../../store/languageStore";
 
 const schema = z.object({
   email: z.string().email("Valid administrative email required"),
@@ -13,6 +14,7 @@ const schema = z.object({
 });
 
 export default function AdminLogin() {
+  const { language, setLanguage, t } = useLanguageStore();
   const [showPassword, setShowPassword] = useState(false);
   const login = useAuthStore((s) => s.login);
   const error = useAuthStore((s) => s.error);
@@ -41,7 +43,45 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-[#0A2E2F] to-slate-950 text-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-[#0A2E2F] to-slate-950 text-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      {/* Top Language Switcher */}
+      <div className="absolute top-6 right-6 flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-800/80 p-1 shadow-lg">
+        <Languages size={14} className="ml-1.5 mr-0.5 text-emerald-400 hidden sm:block" />
+        <button
+          type="button"
+          onClick={() => setLanguage("en")}
+          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+            language === "en"
+              ? "bg-emerald-600 text-white shadow-xs"
+              : "text-slate-400 hover:text-white"
+          }`}
+        >
+          EN
+        </button>
+        <button
+          type="button"
+          onClick={() => setLanguage("hi")}
+          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+            language === "hi"
+              ? "bg-emerald-600 text-white shadow-xs"
+              : "text-slate-400 hover:text-white"
+          }`}
+        >
+          हिंदी
+        </button>
+        <button
+          type="button"
+          onClick={() => setLanguage("kht")}
+          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+            language === "kht"
+              ? "bg-emerald-600 text-white shadow-xs"
+              : "text-slate-400 hover:text-white"
+          }`}
+        >
+          खोरठा
+        </button>
+      </div>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="flex justify-center">
           <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl">
@@ -53,10 +93,10 @@ export default function AdminLogin() {
         </div>
 
         <h2 className="font-display mt-6 text-3xl font-extrabold tracking-tight text-white">
-          State Innovation Command Center
+          {t("commandCenterTitle")}
         </h2>
         <p className="mt-2 text-xs font-semibold uppercase tracking-widest text-emerald-400">
-          Jharkhand State Higher & Technical Education Oversight Portal
+          {t("commandCenterSubtitle")}
         </p>
       </div>
 
@@ -65,22 +105,22 @@ export default function AdminLogin() {
           <div className="mb-6 rounded-2xl bg-emerald-950/50 border border-emerald-500/30 p-3.5 text-xs text-emerald-200 flex items-start gap-2.5">
             <ShieldCheck size={18} className="shrink-0 text-emerald-400 mt-0.5" />
             <div>
-              <p className="font-bold text-emerald-300">Authorized Personnel Only</p>
+              <p className="font-bold text-emerald-300">{t("authorizedPersonnelOnly")}</p>
               <p className="text-[11px] text-emerald-200/80 mt-0.5">
-                Restricted access for State Innovation Council, HEI Accreditation Auditors, and CSR Tax Authorization Authorities.
+                {t("restrictedNotice")}
               </p>
             </div>
           </div>
 
           {/* Quick Demo Fill for Admin */}
           <div className="mb-5 flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800/60 px-3.5 py-2 text-xs">
-            <span className="text-slate-300 font-medium">Quick Demo Admin:</span>
+            <span className="text-slate-300 font-medium">{t("quickDemoAdmin")}</span>
             <button
               type="button"
               onClick={fillAdminDemo}
               className="rounded-lg bg-emerald-600/30 border border-emerald-500/40 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-600/50 transition cursor-pointer"
             >
-              Fill Admin Credentials
+              {t("fillAdminCreds")}
             </button>
           </div>
 
@@ -92,7 +132,7 @@ export default function AdminLogin() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-              Administrative Email
+              {t("adminEmailLabel")}
               <input
                 {...register("email")}
                 type="email"
@@ -105,7 +145,7 @@ export default function AdminLogin() {
             </label>
 
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-              Security Password
+              {t("securityPasswordLabel")}
               <div className="relative mt-1.5">
                 <input
                   {...register("password")}
@@ -132,7 +172,7 @@ export default function AdminLogin() {
               className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/40 transition hover:from-emerald-500 hover:to-teal-600 disabled:opacity-50 cursor-pointer"
             >
               <Lock size={16} />
-              {loading ? "Authenticating Authority..." : "Sign In to Admin Command Center"}
+              {loading ? t("btnAuthAuthority") : t("btnSignInAdmin")}
             </button>
           </form>
 
@@ -141,7 +181,7 @@ export default function AdminLogin() {
               to="/"
               className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-emerald-300 transition"
             >
-              <ArrowLeft size={14} /> Return to Public Sahayog Portal
+              <ArrowLeft size={14} /> {t("returnPublicPortal")}
             </Link>
           </div>
         </div>

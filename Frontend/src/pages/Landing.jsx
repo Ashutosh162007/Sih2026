@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
-import { BrainCircuit, MapPin, Building2, Briefcase, Award, ArrowRight, ShieldCheck, CheckCircle2, Globe } from "lucide-react";
+import { BrainCircuit, MapPin, Building2, Briefcase, Award, ArrowRight, ShieldCheck, CheckCircle2, Globe, Sun, Moon } from "lucide-react";
 import StatCard from "../components/StatCard";
 import BrandLogo from "../components/BrandLogo";
 import { mockAnalytics } from "../api/mockData";
 import { useLanguageStore } from "../store/languageStore";
+import { useThemeStore } from "../store/themeStore";
 
 export default function Landing() {
   const { language, setLanguage, t } = useLanguageStore();
+  const { theme, toggleTheme } = useThemeStore();
+  const darkMode = theme === "dark";
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-slate-900">
@@ -20,6 +23,16 @@ export default function Landing() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {/* Dark Mode Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50 transition cursor-pointer shadow-xs"
+              aria-label="Toggle Theme"
+              title={darkMode ? "Switch to Light Mode" : "Switch to Midnight Dark"}
+            >
+              {darkMode ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-slate-600" />}
+            </button>
             {/* Language Switcher 3-Way Selector */}
             <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-xs">
               <Globe size={14} className="ml-1.5 mr-0.5 text-[#0E4B4C] hidden sm:block" />

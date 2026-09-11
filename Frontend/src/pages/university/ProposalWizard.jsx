@@ -86,7 +86,7 @@ export default function ProposalWizard() {
             <label className="block text-sm font-medium text-slate-700">
               <span className="flex items-center justify-between">
                 <span>{t("solutionTitleLabel")}</span>
-                <span className="text-xs text-rose-500 font-normal">* Required</span>
+                <span className="text-xs text-rose-500 font-normal">{t("reqField")}</span>
               </span>
               <input
                 value={title}
@@ -103,7 +103,7 @@ export default function ProposalWizard() {
             <label className="block text-sm font-medium text-slate-700">
               <span className="flex items-center justify-between">
                 <span>{t("expectedImpactLabel")}</span>
-                <span className="text-xs text-rose-500 font-normal">* Required</span>
+                <span className="text-xs text-rose-500 font-normal">{t("reqField")}</span>
               </span>
               <textarea
                 rows={4}
@@ -125,7 +125,7 @@ export default function ProposalWizard() {
           <div>
             <div className="flex items-center justify-between mb-1">
               <p className="text-sm font-medium text-slate-700">{t("teamTitle")}</p>
-              <span className="text-xs text-rose-500 font-normal">* At least 1 member required</span>
+              <span className="text-xs text-rose-500 font-normal">{t("minTeamMemberReq")}</span>
             </div>
             <p className="text-xs text-slate-500 mb-4">
               {t("teamSubtitle")}
@@ -143,7 +143,7 @@ export default function ProposalWizard() {
           <label className="block text-sm font-medium text-slate-700">
             <span className="flex items-center justify-between">
               <span>{t("methodologyLabel")}</span>
-              <span className="text-xs text-rose-500 font-normal">* Required</span>
+              <span className="text-xs text-rose-500 font-normal">{t("reqField")}</span>
             </span>
             <textarea
               rows={10}
@@ -163,7 +163,7 @@ export default function ProposalWizard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-slate-700">{t("milestonesTimelineLabel")}</p>
-              <span className="text-xs text-rose-500 font-normal">* All milestones require a title and due date</span>
+              <span className="text-xs text-rose-500 font-normal">{t("milestonesReq")}</span>
             </div>
             <div className="space-y-3">
               {milestones.map((m, i) => (

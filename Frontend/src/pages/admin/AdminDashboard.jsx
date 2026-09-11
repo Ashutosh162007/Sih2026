@@ -153,7 +153,7 @@ export default function AdminDashboard() {
 
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="font-display font-bold text-slate-900 text-base">{t("categoryLabel")}</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Thematic Distribution of Community Reports</p>
+          <p className="text-xs text-slate-500 mt-0.5">{t("thematicDistribution")}</p>
           <div className="mt-4 h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

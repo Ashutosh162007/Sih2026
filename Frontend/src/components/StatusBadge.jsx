@@ -1,4 +1,5 @@
 import { useLanguageStore } from "../store/languageStore";
+import { getCategoryLabel } from "../lib/constants";
 
 const palettes = {
   High: "bg-rose-100 text-rose-800 border border-rose-200",
@@ -17,6 +18,10 @@ const palettes = {
   "Public Safety": "bg-sky-100 text-sky-800",
   Environment: "bg-sky-100 text-sky-800",
   Mobility: "bg-sky-100 text-sky-800",
+  Agriculture: "bg-emerald-100 text-emerald-800",
+  Healthcare: "bg-teal-100 text-teal-800",
+  Education: "bg-amber-100 text-amber-800",
+  "Rural Livelihoods": "bg-emerald-100 text-emerald-800",
 };
 
 const HINDI_STATUS_MAP = {
@@ -30,18 +35,32 @@ const HINDI_STATUS_MAP = {
   High: "उच्च प्राथमिकता",
   Medium: "मध्यम प्राथमिकता",
   Low: "सामान्य प्राथमिकता",
-  Infrastructure: "बुनियादी ढांचा",
-  "Water & Sanitation": "जल एवं स्वच्छता",
-  "Waste Management": "कचरा प्रबंधन",
-  "Public Safety": "सार्वजनिक सुरक्षा",
-  Environment: "पर्यावरण",
-  Mobility: "यातायात",
+};
+
+const KHORTHA_STATUS_MAP = {
+  New: "नया समस्या",
+  "Under review": "जांच में",
+  Assigned: "यूनिवर्सिटी देल गेल",
+  "In progress": "काज चालू",
+  Funded: "अनुदान पास",
+  Resolved: "हल भेल",
+  "Awaiting funding": "अनुदान के आस",
+  High: "भारी जरूरी",
+  Medium: "मंझोला जरूरी",
+  Low: "साधारण जरूरी",
 };
 
 export default function StatusBadge({ label, variant = "status" }) {
   const language = useLanguageStore((s) => s.language);
   const cls = palettes[label] || "bg-slate-100 text-slate-700";
-  const displayLabel = language === "hi" && HINDI_STATUS_MAP[label] ? HINDI_STATUS_MAP[label] : label;
+  const displayLabel =
+    variant === "category"
+      ? getCategoryLabel(label, language)
+      : language === "hi" && HINDI_STATUS_MAP[label]
+        ? HINDI_STATUS_MAP[label]
+        : language === "kht" && KHORTHA_STATUS_MAP[label]
+          ? KHORTHA_STATUS_MAP[label]
+          : getCategoryLabel(label, language);
 
   return (
     <span

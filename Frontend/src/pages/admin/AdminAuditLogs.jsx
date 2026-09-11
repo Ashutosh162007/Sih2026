@@ -13,8 +13,10 @@ import {
 } from "lucide-react";
 import axiosClient from "../../api/axiosClient";
 import { formatDate } from "../../lib/format";
+import { useLanguageStore } from "../../store/languageStore";
 
 export default function AdminAuditLogs() {
+  const { t } = useLanguageStore();
   const [logs, setLogs] = useState([
     {
       id: "log-1",
@@ -69,19 +71,19 @@ export default function AdminAuditLogs() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="font-display text-3xl font-bold text-slate-900">System Audit & Operations Log</h1>
+            <h1 className="font-display text-3xl font-bold text-slate-900">{t("auditTitle")}</h1>
             <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-bold text-emerald-800 flex items-center gap-1">
-              <Activity size={13} className="text-emerald-600 animate-pulse" /> Live Telemetry
+              <Activity size={13} className="text-emerald-600 animate-pulse" /> {t("liveTelemetry")}
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Immutable administrative audit log of all platform operations, AI structuring runs, financial escrow disbursements, and accreditation checks.
+            {t("auditSubtitle")}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs">
-            <Server size={14} className="text-[#0E4B4C]" /> Node Cluster: <span className="text-emerald-700">Healthy (200 OK)</span>
+            <Server size={14} className="text-[#0E4B4C]" /> {t("nodeClusterHealthy")}
           </span>
         </div>
       </div>
@@ -89,17 +91,17 @@ export default function AdminAuditLogs() {
       {/* System Metrics Overview */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">AI Structuring Throughput</p>
+          <p className="text-xs font-semibold text-slate-500">{t("aiThroughput")}</p>
           <p className="font-display text-2xl font-bold text-slate-900 mt-1">100% Validated</p>
           <p className="text-[11px] text-emerald-700 font-medium mt-0.5">Powered by NVIDIA NIM</p>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Escrow Security Checks</p>
+          <p className="text-xs font-semibold text-slate-500">{t("escrowSecurity")}</p>
           <p className="font-display text-2xl font-bold text-[#0E4B4C] mt-1">₹1.48 Cr Protected</p>
           <p className="text-[11px] text-slate-500 font-medium mt-0.5">Dual-signatory verification</p>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Accredited Entities</p>
+          <p className="text-xs font-semibold text-slate-500">{t("accreditedEntities")}</p>
           <p className="font-display text-2xl font-bold text-slate-900 mt-1">42 Institutions</p>
           <p className="text-[11px] text-slate-500 font-medium mt-0.5">Universities, Industry & Local Bodies</p>
         </div>
@@ -108,8 +110,8 @@ export default function AdminAuditLogs() {
       {/* Log Feed */}
       <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
-          <h2 className="font-display font-bold text-slate-800 text-sm">Real-time Platform Audit Stream</h2>
-          <span className="text-[11px] text-slate-400">Showing last 24h events</span>
+          <h2 className="font-display font-bold text-slate-800 text-sm">{t("auditStreamTitle")}</h2>
+          <span className="text-[11px] text-slate-400">{t("showingLast24h")}</span>
         </div>
 
         <div className="divide-y divide-slate-100">
