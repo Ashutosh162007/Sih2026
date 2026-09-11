@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { BrainCircuit, MapPin, Building2, Briefcase, Award, ArrowRight, ShieldCheck, CheckCircle2, Globe, FileText } from "lucide-react";
+import { BrainCircuit, MapPin, Building2, Briefcase, Award, ArrowRight, ShieldCheck, CheckCircle2, Globe } from "lucide-react";
 import StatCard from "../components/StatCard";
 import BrandLogo from "../components/BrandLogo";
 import { mockAnalytics } from "../api/mockData";
@@ -8,25 +7,6 @@ import { useLanguageStore } from "../store/languageStore";
 
 export default function Landing() {
   const { language, setLanguage, t } = useLanguageStore();
-
-  const [docText, setDocText] = useState("");
-  const [docLoading, setDocLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    fetch(`${import.meta.env.BASE_URL}whiteboard-workflow.txt`)
-      .then((r) => (r.ok ? r.text() : ""))
-      .then((txt) => {
-        if (mounted) setDocText(txt);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (mounted) setDocLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-slate-900">
@@ -227,29 +207,6 @@ export default function Landing() {
           {mockAnalytics.stats.map((s) => (
             <StatCard key={s.label} {...s} />
           ))}
-        </div>
-      </section>
-
-      {/* Visual Workflow Notes Documentation */}
-      <section className="border-t border-slate-200 bg-white py-16">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-6 text-center">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#0E4B4C]">{t("workflowDocTag")}</p>
-            <h2 className="font-display mt-2 text-3xl font-bold text-slate-950 sm:text-4xl">
-              {t("workflowDocTitle")}
-            </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-500">{t("workflowDocSubtitle")}</p>
-          </div>
-          <div className="mx-auto max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-[#F7F8FA] shadow-sm">
-            <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50/70 px-4 py-2.5 text-xs font-semibold text-slate-600">
-              <FileText size={14} className="text-[#0E4B4C]" />
-              whiteboard-workflow.txt
-              {docLoading && <span className="ml-auto animate-pulse text-slate-400">…</span>}
-            </div>
-            <pre className="max-h-[540px] overflow-auto p-5 font-mono text-[12.5px] leading-relaxed whitespace-pre-wrap text-slate-700">
-              {docText || (docLoading ? `${t("workflowDocLoading")}…` : t("workflowDocEmpty"))}
-            </pre>
-          </div>
         </div>
       </section>
 

@@ -234,13 +234,6 @@ export const TRANSLATIONS = {
     copyrightFooter: "© 2026 Sahayog — Societal Innovation Collaboration Platform. All rights reserved.",
     collabCivicSolving: "Collaborative Civic Problem Solving",
 
-    // Visual Workflow Notes Documentation (Landing)
-    workflowDocTag: "Documentation",
-    workflowDocTitle: "Visual Workflow Notes — Whiteboard Documentation",
-    workflowDocSubtitle: "The complete specification of the whiteboard and suggestions workflow, shown directly on this page.",
-    workflowDocLoading: "Loading documentation",
-    workflowDocEmpty: "Documentation could not be loaded.",
-
     // Auth (Login & Signup)
     welcomeBack: "Welcome to Sahayog",
     signInWorkspace: "Sign in to your collaboration workspace.",
