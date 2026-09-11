@@ -448,19 +448,36 @@ export default function WhiteboardCanvas({ objects, editable, onSave, suggested 
 
   const clampRound = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(v)));
 
+  const measureLineWidth = useCallback((text, fontSize) => {
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return text.length * fontSize * 0.6;
+    ctx.save();
+    ctx.font = `${fontSize}px 'Plus Jakarta Sans', system-ui, sans-serif`;
+    const w = text.length === 0 ? 0 : ctx.measureText(text).width;
+    ctx.restore();
+    return w;
+  }, []);
+
+  const computeTextMetrics = useCallback((text, fontSize) => {
+    const lines = String(text || "").split("\n");
+    const maxLineW = Math.max(...lines.map((l) => measureLineWidth(l, fontSize)), 0);
+    const w = Math.max(120, Math.round(maxLineW + fontSize * 1.2));
+    const h = Math.round(lines.length * fontSize * 1.28 + fontSize * 0.5);
+    return { w, h };
+  }, [measureLineWidth]);
+
   const openTextEditor = useCallback((box = {}) => {
     const x = box.x ?? 150;
     const y = box.y ?? 120;
-    const w = box.w && box.w > 0 ? box.w : 260;
     const fontSize = box.fontSize || 36;
-    const h = box.h && box.h > 0 ? box.h : Math.round(fontSize * 1.28);
+    const { w, h } = computeTextMetrics("", fontSize);
     setTextEdit({
       key: Date.now(),
       x, y, w, h, fontSize,
       value: "",
       editingId: null,
     });
-  }, []);
+  }, [computeTextMetrics]);
 
   const handlePointerUp = useCallback(() => {
     const d = drawingRef.current;
@@ -518,7 +535,7 @@ export default function WhiteboardCanvas({ objects, editable, onSave, suggested 
         const list = [...(objectsRef.current || [])];
         const idx = list.findIndex((o) => o.id === te.editingId);
         if (idx >= 0) {
-          list[idx] = { ...list[idx], text: te.value.trim(), w: te.w, fontSize: te.fontSize };
+          list[idx] = { ...list[idx], text: te.value.trim(), w: 0, fontSize: te.fontSize };
           pushHistory();
           objectsRef.current = list;
           markDirty();
@@ -528,7 +545,7 @@ export default function WhiteboardCanvas({ objects, editable, onSave, suggested 
         const obj = {
           id: `obj-${Date.now()}`,
           kind: "text",
-          x: te.x, y: te.y, w: te.w || 0, h: te.h || 0, x2: 0, y2: 0,
+          x: te.x, y: te.y, w: 0, h: 0, x2: 0, y2: 0,
           points: [],
           text: te.value.trim(),
           fontSize: te.fontSize || 36,
@@ -635,7 +652,6 @@ export default function WhiteboardCanvas({ objects, editable, onSave, suggested 
     return {
       left: `${(textEdit.x / W) * displayW}px`,
       top: `${(textEdit.y / H) * cssH}px`,
-      width: `${Math.max(120, ((textEdit.w || 240) / W) * displayW)}px`,
     };
   }, [textEdit, displayW]);
 
@@ -799,25 +815,33 @@ export default function WhiteboardCanvas({ objects, editable, onSave, suggested 
           <textarea
             autoFocus
             value={textEdit.value}
-            onChange={(e) => setTextEdit((te) => ({ ...te, value: e.target.value }))}
+            onChange={(e) => {
+              const val = e.target.value;
+              const fs = textEdit.fontSize || 36;
+              const { w: newW, h: newH } = computeTextMetrics(val, fs);
+              setTextEdit((te) => ({ ...te, value: val, w: newW, h: newH }));
+            }}
             onKeyDown={(e) => {
               e.stopPropagation();
-              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); finishTextEdit(false); }
               if (e.key === "Escape") { e.preventDefault(); finishTextEdit(true); }
             }}
             onBlur={() => finishTextEdit(false)}
-            rows={1}
-            wrap="soft"
-            className="absolute z-10 wb-inline-text resize-none overflow-hidden whitespace-pre-wrap bg-transparent p-0 outline-none"
+            wrap="off"
+            className="absolute z-10 wb-inline-text resize-none overflow-hidden whitespace-pre bg-transparent p-1 outline-none"
             style={{
               "--wb-inline-color": color,
               ...textOverlayStyle,
-              minHeight: `${Math.max(30, ((textEdit.h || 46) / H) * (displayW * (H / W)))}px`,
+              width: `${Math.max(100, ((textEdit.w || 120) / W) * displayW)}px`,
+              height: `${Math.max(30, ((textEdit.h || 46) / H) * (displayW * (H / W)))}px`,
               color,
               caretColor: color,
               fontSize: `${(textEdit.fontSize || 36) * (displayW / W)}px`,
               lineHeight: 1.28,
               fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+              border: "2px dashed",
+              borderColor: color,
+              borderRadius: 6,
+              opacity: 0.92,
             }}
           />
         )}
