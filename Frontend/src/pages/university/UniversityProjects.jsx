@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, FolderKanban, PlusCircle } from "lucide-react";
+import { FolderKanban, PlusCircle } from "lucide-react";
 import ListItemCard from "../../components/ListItemCard";
 import axiosClient from "../../api/axiosClient";
 import { useLanguageStore } from "../../store/languageStore";

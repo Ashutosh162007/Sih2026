@@ -4,7 +4,6 @@ import {
   ChevronDown,
   ChevronUp,
   MessageSquare,
-  Sparkles,
   Send,
   CheckCircle2,
   BookOpen,

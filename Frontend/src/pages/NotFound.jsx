@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Home, Sparkles, MapPin, HelpCircle } from "lucide-react";
+import { ArrowLeft, Home, MapPin, HelpCircle } from "lucide-react";
 import BrandLogo from "../components/BrandLogo";
 
 export default function NotFound() {

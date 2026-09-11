@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, MapPin, Building2, Briefcase, Award, ArrowRight, ShieldCheck, CheckCircle2, Globe, FileText } from "lucide-react";
+import { BrainCircuit, MapPin, Building2, Briefcase, Award, ArrowRight, ShieldCheck, CheckCircle2, Globe, FileText } from "lucide-react";
 import StatCard from "../components/StatCard";
 import BrandLogo from "../components/BrandLogo";
 import { mockAnalytics } from "../api/mockData";
@@ -99,7 +99,7 @@ export default function Landing() {
         <div className="grid items-center gap-12 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-[#D7F5DE]/70 px-3.5 py-1 text-xs font-semibold text-[#0E4B4C]">
-              <Sparkles size={14} /> {t("heroBadge")}
+              {t("heroBadge")}
             </div>
             <h1 className="font-display mt-5 text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl lg:leading-[1.15]">
               {t("heroTitlePre")}{" "}
@@ -183,7 +183,7 @@ export default function Landing() {
             </div>
             <div className="rounded-2xl border border-slate-200 bg-[#F7F8FA] p-6 transition hover:shadow-md">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
-                <Sparkles size={22} />
+                <BrainCircuit size={22} />
               </div>
               <h3 className="mt-4 font-display text-lg font-bold text-slate-900">{t("workflowStep2Title")}</h3>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed">

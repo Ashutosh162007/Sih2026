@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Bell,
   Search,
-  Sparkles,
   CheckCheck,
   User,
   Mail,

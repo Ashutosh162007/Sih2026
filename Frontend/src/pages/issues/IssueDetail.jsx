@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Sparkles,
   MapPin,
   Building2,
   Calendar,
@@ -301,7 +300,7 @@ export default function IssueDetail() {
             {issue.aiProblemStatement && (
               <div className="mt-6 rounded-2xl border border-teal-200 bg-[#D7F5DE]/25 p-5">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0E4B4C]">
-                  <Sparkles size={16} /> {t("aiSynthesizedTitle")}
+                  {t("aiSynthesizedTitle")}
                 </div>
                 <div className="mt-2.5 text-xs text-slate-800 font-mono whitespace-pre-wrap leading-relaxed">
                   {issue.aiProblemStatement}
@@ -436,7 +435,7 @@ export default function IssueDetail() {
           {/* Severity Assessment */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="font-display text-base font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles size={16} className="text-[#0E4B4C]" /> {t("compositeScore")}
+              {t("compositeScore")}
             </h2>
             <div className="mt-4 space-y-4">
               <AssessmentSlider label="Hydrological / Hazard Vulnerability" value={issue.severity?.flooding || 65} />

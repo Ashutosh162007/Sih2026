@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PlusCircle, Sparkles, AlertCircle } from "lucide-react";
+import { PlusCircle, Inbox, AlertCircle } from "lucide-react";
 import ListItemCard from "../../components/ListItemCard";
 import axiosClient from "../../api/axiosClient";
 import { useAuthStore } from "../../store/authStore";
@@ -75,7 +75,7 @@ export default function MyIssues() {
 
         {issues.length === 0 && (
           <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500 shadow-sm">
-            <Sparkles size={32} className="mx-auto mb-3 text-teal-600" />
+            <Inbox size={32} className="mx-auto mb-3 text-teal-600" />
             <p className="font-semibold text-slate-800">{t("noReportedIssues")}</p>
             <p className="mt-1 text-xs text-slate-400">
               {t("noReportedHelper")}

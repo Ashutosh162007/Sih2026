@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, ShieldCheck, CheckCircle2, MessageSquare, Sparkles, Clock } from "lucide-react";
+import { Star, ShieldCheck, CheckCircle2, MessageSquare, Clock } from "lucide-react";
 import { useLanguageStore } from "../store/languageStore";
 import { useAuthStore } from "../store/authStore";
 import { ROLES } from "../lib/constants";
@@ -130,7 +130,7 @@ export default function CitizenFeedbackCard({ issue, onFeedbackSubmitted }) {
     <div className="rounded-3xl border border-teal-200 bg-gradient-to-br from-[#D7F5DE]/30 via-white to-teal-50/20 p-6 shadow-sm">
       <div className="flex items-center gap-2.5">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#0E4B4C] text-white shadow-md shadow-[#0E4B4C]/20">
-          <Sparkles size={20} />
+          <MessageSquare size={20} />
         </div>
         <div>
           <h3 className="font-display text-lg font-bold text-slate-900">

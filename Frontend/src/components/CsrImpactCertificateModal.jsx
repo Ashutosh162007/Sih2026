@@ -10,7 +10,6 @@ import {
   Users,
   CheckCircle2,
   Calendar,
-  Sparkles,
   QrCode,
   Lock,
   AlertTriangle,
@@ -214,7 +213,7 @@ export default function CsrImpactCertificateModal({
             <div className="text-center space-y-1.5 border-b border-[#0E4B4C]/20 pb-5">
               <div className="flex items-center justify-center gap-2 mb-1">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0E4B4C] text-white shadow-sm">
-                  <Sparkles size={18} className="text-[#D7F5DE]" />
+                  <Award size={18} className="text-[#D7F5DE]" />
                 </div>
                 <span className="font-display text-xl font-black text-[#0E4B4C] tracking-tight">
                   Sahayog Innovation Network

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Calendar, DollarSign, CheckCircle2, Building2, ArrowRight, X } from "lucide-react";
+import { Calendar, DollarSign, CheckCircle2, Building2, ArrowRight, X } from "lucide-react";
 import ListItemCard from "../../components/ListItemCard";
 import axiosClient from "../../api/axiosClient";
 import { handleMockRequest } from "../../api/mockAdapter";
