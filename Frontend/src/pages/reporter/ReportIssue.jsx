@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Wand2, ShieldAlert, CheckCircle2, MapPin, AlertCircle, ArrowRight } from "lucide-react";
+import { BrainCircuit, Loader2, Lightbulb, Wand2, ShieldAlert, CheckCircle2, MapPin, AlertCircle, ArrowRight } from "lucide-react";
 import Stepper from "../../components/Stepper";
 import FileDropzone from "../../components/FileDropzone";
 import MapLocationPicker from "../../components/MapLocationPicker";
@@ -116,9 +116,7 @@ export default function ReportIssue() {
             {t("reportSubtitle")}
           </p>
         </div>
-        <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 border border-emerald-200">
-          <Sparkles size={14} /> AI-Assisted
-        </div>
+
       </div>
 
       <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -161,7 +159,7 @@ export default function ReportIssue() {
         {step === 1 && (
           <div className="space-y-4">
             <div className="rounded-xl bg-[#D7F5DE]/30 border border-emerald-200 p-3 text-xs text-emerald-900 flex items-start gap-2">
-              <Sparkles size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+              <Lightbulb size={16} className="text-emerald-700 shrink-0 mt-0.5" />
               <span>
                 <strong>Tip:</strong> Keep it concise! Mention who is affected, key hazard details, and duration. The Sahayog AI model will automatically synthesize a formal, comprehensive problem statement for university researchers.
               </span>
@@ -252,7 +250,7 @@ export default function ReportIssue() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0E4B4C] text-white">
-                    <Sparkles size={16} />
+                    <BrainCircuit size={16} />
                   </div>
                   <h3 className="font-display font-bold text-slate-900">
                     {t("aiFormulatedTitle")}
@@ -297,7 +295,7 @@ export default function ReportIssue() {
                 </div>
               ) : (
                 <div className="py-6 text-center text-sm text-slate-500">
-                  <Sparkles size={24} className="mx-auto mb-2 text-[#0E4B4C] animate-pulse" />
+                  <Loader2 size={24} className="mx-auto mb-2 text-[#0E4B4C] animate-spin" />
                   {t("aiSynthesizing")}
                 </div>
               )}

@@ -272,6 +272,21 @@ html.dark select:focus {
   outline: none;
 }
 
+/* Whiteboard inline text editor: keep the drawn color, stay transparent on the canvas */
+html.dark textarea.wb-inline-text {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: var(--wb-inline-color, #dc2626) !important;
+  caret-color: var(--wb-inline-color, #dc2626) !important;
+  outline: none !important;
+}
+
+/* Civic progress visualization: bar fills in from left as it is completed */
+@keyframes wf-bar-fill {
+  from { opacity: 0; transform: scaleY(0.4); }
+  to   { opacity: 1; transform: scaleY(1); }
+}
+
 /* Tables */
 html.dark table thead {
   background-color: #0d151c !important;

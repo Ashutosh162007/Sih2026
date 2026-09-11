@@ -108,6 +108,26 @@ let workflowSuggestions = load("sahayog_workflow_suggestions", [
   },
 ]);
 let supportTickets = load("sahayog_support_tickets", []);
+let workflowCanvases = load("sahayog_workflow_canvases", [
+  {
+    projectId: "prj-201",
+    universityName: "Birla Institute of Technology (BIT) Mesra",
+    objects: [
+      { id: "w-201-1", kind: "text", x: 320, y: 60, w: 0, h: 0, x2: 0, y2: 0, points: [], text: "Fluoride Water Safe-Drink Pipeline", fontSize: 30, color: "#0E4B4C", strokeWidth: 0 },
+    ],
+    createdAt: new Date(Date.now() - 12 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+  },
+  {
+    projectId: "prj-101",
+    universityName: "Birla Institute of Technology (BIT) Mesra",
+    objects: [
+      { id: "w-101-1", kind: "text", x: 380, y: 50, w: 0, h: 0, x2: 0, y2: 0, points: [], text: "Drainage Grate Handover Flow", fontSize: 28, color: "#0E4B4C", strokeWidth: 0 },
+    ],
+    createdAt: new Date(Date.now() - 40 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 25 * 86400000).toISOString(),
+  },
+]);
 let notifications = load("sahayog_notifications", [
   {
     id: "notif-1",
@@ -134,6 +154,7 @@ function persist() {
   save("sahayog_notifications", notifications);
   save("sahayog_support_tickets", supportTickets);
   save("sahayog_workflow_notes", workflowNotes);
+  save("sahayog_workflow_canvases", workflowCanvases);
   save("sahayog_workflow_suggestions", workflowSuggestions);
 }
 
@@ -423,8 +444,8 @@ export async function handleMockRequest(config) {
       category: body.category || aiAnalysis.category,
       status: "New",
       priority: body.priority || aiAnalysis.priority,
-      upvotes: 1,
-      upvoters: [auth.id],
+      upwardsCount: 0,
+      upwardsUsers: [],
       reporterId: auth.id,
       reporterName: auth.name,
       district: body.location?.district || body.district || "Ranchi",
@@ -493,33 +514,66 @@ export async function handleMockRequest(config) {
         (a, b) => Math.hypot(a.lat - la, a.lng - ln) - Math.hypot(b.lat - la, b.lng - ln),
       );
     }
-    return json(config, list);
+    // Enrich with upwardsCount and hasUpwarded
+    const enriched = list.map((i) => ({
+      ...i,
+      upwardsCount: i.upwardsCount || 0,
+      hasUpwarded: auth ? (i.upwardsUsers || []).includes(auth.id) : false,
+    }));
+    return json(config, enriched);
   }
 
   // Issues: Get detail
   if ((m = match(config, "get", "/api/issues/:id"))) {
     const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
     if (!issue) error("Issue not found", 404);
-    return json(config, issue);
+    return json(config, {
+      ...issue,
+      upwardsCount: issue.upwardsCount || 0,
+      hasUpwarded: auth ? (issue.upwardsUsers || []).includes(auth.id) : false,
+    });
   }
 
-  // Issues: Upvote (+1 Me Too)
-  if ((m = match(config, "post", "/api/issues/:id/upvote"))) {
+  // Issues: Upward (POST /api/issues/:id/upward) — idempotent add
+  if ((m = match(config, "post", "/api/issues/:id/upward"))) {
     const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
     if (!issue) error("Issue not found", 404);
     const userId = auth?.id || "anonymous-guest";
-    issue.upvoters = issue.upvoters || [];
-    const hasUpvoted = issue.upvoters.includes(userId);
+    issue.upwardsUsers = issue.upwardsUsers || [];
+    let hasUpwarded = issue.upwardsUsers.includes(userId);
 
-    if (hasUpvoted) {
-      issue.upvoters = issue.upvoters.filter((id) => id !== userId);
-      issue.upvotes = Math.max(0, (issue.upvotes || 1) - 1);
-    } else {
-      issue.upvoters.push(userId);
-      issue.upvotes = (issue.upvotes || 0) + 1;
+    if (!hasUpwarded) {
+      issue.upwardsUsers.push(userId);
+      issue.upwardsCount = (issue.upwardsCount || 0) + 1;
+      hasUpwarded = true;
     }
     persist();
-    return json(config, { success: true, upvotes: issue.upvotes, hasUpvoted: !hasUpvoted, issue });
+    return json(config, { success: true, upwardsCount: issue.upwardsCount, hasUpwarded });
+  }
+
+  // Issues: Remove Upward (DELETE /api/issues/:id/upward) — idempotent remove
+  if ((m = match(config, "delete", "/api/issues/:id/upward"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    const userId = auth?.id || "anonymous-guest";
+    issue.upwardsUsers = issue.upwardsUsers || [];
+    if (issue.upwardsUsers.includes(userId)) {
+      issue.upwardsUsers = issue.upwardsUsers.filter((id) => id !== userId);
+      issue.upwardsCount = Math.max(0, issue.upwardsCount - 1);
+    }
+    persist();
+    return json(config, { success: true, upwardsCount: issue.upwardsCount || 0, hasUpwarded: false });
+  }
+
+  // Issues: Get upwards status (GET /api/issues/:id/upwards)
+  if ((m = match(config, "get", "/api/issues/:id/upwards"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    return json(config, {
+      success: true,
+      upwardsCount: issue.upwardsCount || 0,
+      hasUpwarded: auth ? (issue.upwardsUsers || []).includes(auth.id) : false,
+    });
   }
 
   // Issues: Comments (Post & Get)
@@ -999,9 +1053,6 @@ export async function handleMockRequest(config) {
     if (auth?.role === "university") {
       list = list.filter((n) => n.universityId === auth.id || n.universityId === "u-university");
     }
-    if (auth?.role === "industry") {
-      // Industry can view notes for projects they're involved in
-    }
     return json(config, list);
   }
 
@@ -1044,12 +1095,11 @@ export async function handleMockRequest(config) {
     const idx = workflowNotes.findIndex((n) => n.id === m.params.id || n._id === m.params.id);
     if (idx === -1) error("Note not found", 404);
     workflowNotes.splice(idx, 1);
-    workflowSuggestions = workflowSuggestions.filter((s) => s.noteId !== m.params.id);
     persist();
     return json(config, { success: true, message: "Note deleted" });
   }
 
-  // ──────── Workflow Suggestions ────────
+  // ──────── Workflow Suggestions (note-based) ────────
   if ((m = match(config, "get", "/api/workflow/suggestions"))) {
     let list = [...workflowSuggestions];
     if (m.query.noteId) list = list.filter((s) => s.noteId === m.query.noteId);
@@ -1089,6 +1139,53 @@ export async function handleMockRequest(config) {
     suggestion.updatedAt = new Date().toISOString();
     persist();
     return json(config, suggestion);
+  }
+
+  // ──────── Canvas-based Workflow (remote) ────────
+  const findWorkflowProject = (ref) =>
+    projects.find(
+      (p) =>
+        String(p.id) === String(ref) ||
+        String(p._id) === String(ref) ||
+        String(p.issueId) === String(ref)
+    );
+
+  const workflowAccess = (project, user) => {
+    const access = { canView: false, canEdit: false, canSuggest: false, canManageSuggestions: false };
+    if (!user || !project) return access;
+    if (user.role === "admin") {
+      access.canView = true;
+    } else if (user.role === "university" && project.university === user.org) {
+      access.canView = true;
+      access.canEdit = true;
+      access.canManageSuggestions = true;
+    } else if (user.role === "industry" && project.industry === user.org) {
+      access.canView = true;
+      access.canSuggest = true;
+    }
+    return access;
+  };
+
+  if ((m = match(config, "get", "/api/workflow/projects"))) {
+    if (!auth) error("Unauthorized", 401);
+    if (!["university", "industry", "admin"].includes(auth.role)) {
+      error("Workflow is private to universities, industry partners and admin only", 403);
+    }
+    const visible = projects.filter((p) => {
+      if (auth.role === "admin") return true;
+      if (auth.role === "university") return p.university === auth.org;
+      return p.industry === auth.org;
+    });
+    return json(config, visible);
+  }
+
+  if ((m = match(config, "get", "/api/workflow/projects/:projectId"))) {
+    if (!auth) error("Unauthorized", 401);
+    const project = findWorkflowProject(m.params.projectId);
+    if (!project) error("Project not found", 404);
+    const ac = workflowAccess(project, auth);
+    if (!ac.canView) error("You are not authorized to access this workflow", 403);
+    return json(config, { project, access: ac });
   }
 
   error(`No mock for ${config.method} ${config.url}`, 404);

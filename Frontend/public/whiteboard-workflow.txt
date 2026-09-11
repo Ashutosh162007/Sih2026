@@ -1,0 +1,168 @@
+VISUAL WORKFLOW NOTES — WHITEBOARD & SUGGESTIONS
+Documentation of the Visual Workflow Notes feature on the Sahayog platform.
+Feature area: /workflow (Workflow page) · API base: /api/workflow
+
+-------------------------------------------------------------------
+1. WHAT IT IS
+-------------------------------------------------------------------
+Visual Workflow Notes is a per-project whiteboard where a university
+research team visually documents a funded civic-issues project. It is
+an HTML5 canvas where objects (freehand strokes, rectangles, ellipses,
+arrows, and text boxes) are drawn, edited, and auto-saved. Industry
+partners can view the whiteboard and submit suggestions; the university
+reviews and accepts/rejects them.
+
+The purpose is to capture the project's working notes and progress
+visually, so both the university team and the sponsoring industry
+partner can see and discuss the solution at a glance.
+
+-------------------------------------------------------------------
+2. WHO CAN DO WHAT (ROLE ACCESS)
+-------------------------------------------------------------------
+The access rules are enforced on the BACKEND, never by the UI alone.
+
+  Role            Can view   Can edit canvas   Can suggest   Can manage suggestions
+  -------------   --------   ---------------   -----------   ----------------------
+  University*     YES        YES                no            YES
+  Industry*       YES        no                 YES           no
+  Admin           YES        no                 no            no
+  Citizen         no         no                 no            no
+  Not logged in   no         no                 no            no
+
+  * "University" = the university that owns the project.
+    "Industry"   = the industry partner funded into the project.
+    Ownership is matched by the project's universityId / industryId,
+    or by a fallback match on the organization name.
+
+-------------------------------------------------------------------
+3. THE CANVAS
+-------------------------------------------------------------------
+The whiteboard lives inside the "Whiteboard" tab of a project detail
+page. It is a single HTML5 <canvas> rendered at device resolution and
+scaled to fit its container.
+
+Drawing tools (toolbar):
+  Select      - pick an object; drag it anywhere (shapes, arrows,
+                strokes, and text all move). A selection box shows
+                the picked object's bounds.
+  Draw        - freehand pen stroke.
+  Rectangle   - drag to size a rectangle.
+  Ellipse     - drag to size an ellipse/oval.
+  Arrow       - drag from the tail to the arrowhead.
+  Text        - see "Text notes" below.
+  Stroke width- pen width selector.
+  Colour swatch- colour of the NEXT object you draw (all kinds,
+                including text, use this colour).
+
+Other controls:
+  Undo        - undo the last committed action (one step).
+  Clear       - clear the whole whiteboard.
+  Save status - the canvas auto-saves in the background; the UI shows
+                "Saving..." then "Saved" once the server confirmed.
+  Unsaved     - if the page is left while changes are pending, they
+                are saved on the way out.
+
+Object model (all canvases, stored per project):
+  { id, kind, x, y, w, h, x2, y2, points, text, fontSize,
+    color, strokeWidth }
+  kinds: stroke | rect | ellipse | arrow | text
+
+-------------------------------------------------------------------
+4. TEXT NOTES (behaviour details)
+-------------------------------------------------------------------
+Text on the whiteboard is created by the Text tool:
+
+  * Simple click on the canvas  -> an editor opens with the DEFAULT
+    size (font 36px, wrap width 260 logical units).
+  * Click-hold-drag on canvas   -> you draw the text BOX first. The
+    box's HEIGHT decides the font size (height * 0.72, clamped to
+   16..160px); the box's WIDTH decides the line-wrap width.
+  * The text is rendered on the canvas in the currently selected
+    toolbar colour, and the colour is applied as soon as you type -
+    there is no placeholder text and no intermediate colour change.
+  * Enter            -> commit the text as a text object.
+  * Shift+Enter      -> new line inside the text box.
+  * Escape           -> cancel (no text added).
+  * Click away / change tool -> commits the current text.
+  * Double-click an existing text object -> reopens the editor with
+    that object's own box, ready to edit its text. While editing, the
+    old copy is hidden so the text never appears duplicated.
+
+-------------------------------------------------------------------
+5. LIVE COLLABORATION (SUGGESTIONS)
+-------------------------------------------------------------------
+Industry partners cannot draw on the university's whiteboard, but they
+can participate through suggestions:
+
+  * "Suggestions" tab shows every suggestion for the project.
+  * Industry sees a form: write a note (what to add/change/consider)
+    and submit. It is stored per project.
+  * The university sees the same list with action buttons and can move
+    any suggestion through the statuses:
+        Pending -> Reviewed -> Accepted   (or)
+        Pending -> Reviewed -> Rejected
+  * Each card shows the sender's organisation, message, submitted date
+    and current status.
+  * Users who cannot manage suggestions see the statuses but no action
+    buttons.
+
+-------------------------------------------------------------------
+6. API (backend, all behind the protect middleware)
+-------------------------------------------------------------------
+  GET    /api/workflow/projects
+         List projects the current user can see, with whiteboard
+         summary fields (objectCount, canvasBuilt).
+
+  GET    /api/workflow/projects/:projectId
+         Project detail incl.:
+           canvas       { objects:[...], updatedAt }  - whiteboard
+           suggestions  [ { businessName, message, status,
+                            createdAt } ]
+           access       { canView, canEdit, canSuggest,
+                          canManageSuggestions }
+         Returns 401 unauth, 403 forbidden, 404 unknown project.
+
+  PUT    /api/workflow/projects/:projectId/canvas
+         Body: { objects: [...] }  - replaces the whole whiteboard
+         (auto-save). University only; 403 otherwise. Objects are
+         sanitized/validated server-side (kinds, finite numbers,
+         size caps).
+
+  POST   /api/workflow/projects/:projectId/suggestions
+         Body: { message }  - industry only (project-scoped).
+         Returns 201 created / 400 empty message / 403 forbidden.
+
+  PATCH  /api/workflow/suggestions/:suggestionId
+         Body: { status: "Reviewed"|"Accepted"|"Rejected" }
+         University only (owner of the project the suggestion belongs
+         to). Transitions: Pending->Reviewed->Accepted/Rejected.
+
+  Data models:
+    WorkflowWhiteboard - one per project (unique project ref), the
+                         objects[] array, timestamps.
+    BusinessSuggestion - one per suggestion, references its project.
+
+-------------------------------------------------------------------
+7. STORAGE
+-------------------------------------------------------------------
+Both collections live in the Sahayog MongoDB database:
+    sahayog_workflow_canvases   (the whiteboards)
+    sahayog_workflow_suggestions (the suggestions)
+The whiteboard is persisted as a whole document per project, so a
+reload brings back exactly what was last saved. The current real
+project id used for end-to-end testing is 6a9d6ffaf70c04be08a9e890.
+
+-------------------------------------------------------------------
+8. KEY FILES
+-------------------------------------------------------------------
+  Frontend
+    src/pages/workflow/WhiteboardCanvas.jsx  - canvas, tools & text editor
+    src/pages/workflow/WorkflowPage.jsx      - project list, detail,
+                                               Whiteboard + Suggestions tabs
+    src/store/languageStore.js               - UI strings (en/hi/kht)
+
+  Backend
+    routes/workflowRoutes.js                 - route wiring + protect
+    controllers/workflowController.js        - access rules + handlers
+    models/WorkflowWhiteboard.js             - whiteboard schema
+    models/BusinessSuggestion.js             - suggestion schema

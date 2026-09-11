@@ -6,13 +6,14 @@ import {
   Building2,
   Briefcase,
   User,
-  Sparkles,
+  FileText,
   ChevronDown,
   ChevronUp,
   ShieldCheck,
   Flame,
   ArrowRight,
   TrendingUp,
+  Info,
 } from "lucide-react";
 import { formatDate } from "../lib/format";
 import { useLanguageStore } from "../store/languageStore";
@@ -24,7 +25,7 @@ const STAGES = [
     labelKey: "stageReported",
     shortLabel: "Reported",
     shortLabelHi: "दर्ज",
-    icon: Sparkles,
+    icon: FileText,
   },
   {
     id: 2,
@@ -303,7 +304,7 @@ export default function TicketProgressTracker({ issue, project }) {
                   ) : event.role === "citizen" ? (
                     <User size={15} className="text-teal-700" />
                   ) : (
-                    <Sparkles size={15} className="text-[#0E4B4C]" />
+                    <Info size={15} className="text-[#0E4B4C]" />
                   )}
                 </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import Stepper from "../../components/Stepper";
 import TeamBuilder from "../../components/TeamBuilder";
 import axiosClient from "../../api/axiosClient";
@@ -167,7 +167,7 @@ export default function ProposalWizard() {
               onClick={submit}
               className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-7 py-2.5 text-sm font-bold text-white shadow-md shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c] cursor-pointer"
             >
-              {t("submitToIndustryBtn")} <Sparkles size={16} />
+              {t("submitToIndustryBtn")} <ArrowRight size={16} />
             </button>
           )}
         </div>

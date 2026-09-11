@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, MapPin, Building2, ArrowRight } from "lucide-react";
+import { MapPin, Building2, ArrowRight } from "lucide-react";
 import StatCard from "../../components/StatCard";
 import ListItemCard from "../../components/ListItemCard";
 import axiosClient from "../../api/axiosClient";

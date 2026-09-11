@@ -2,7 +2,6 @@ const WorkflowNote = require('../models/WorkflowNote');
 const WorkflowSuggestion = require('../models/WorkflowSuggestion');
 const Project = require('../models/Project');
 
-// Helper: check if user owns the project via universityId
 function isProjectOwner(project, user) {
   if (!project || !user) return false;
   const uid = String(user._id || user.id);
@@ -17,9 +16,6 @@ function isProjectBusiness(project, user) {
 
 // ─────────────────────── NOTES ───────────────────────
 
-// @desc    Get all notes for a project
-// @route   GET /api/workflow/notes?projectId=xxx
-// @access  Private (university, industry, admin)
 const getNotes = async (req, res, next) => {
   try {
     const { projectId } = req.query;
@@ -35,12 +31,9 @@ const getNotes = async (req, res, next) => {
     const user = req.user;
     const role = user.role;
 
-    // Citizens have no access
     if (role === 'citizen') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
-
-    // University must own the project; industry must be involved; admin can see all
     if (role === 'university' && !isProjectOwner(project, user)) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
@@ -59,9 +52,6 @@ const getNotes = async (req, res, next) => {
   }
 };
 
-// @desc    Get single note by ID
-// @route   GET /api/workflow/notes/:id
-// @access  Private
 const getNoteById = async (req, res, next) => {
   try {
     const note = await WorkflowNote.findById(req.params.id)
@@ -92,9 +82,6 @@ const getNoteById = async (req, res, next) => {
   }
 };
 
-// @desc    Create a workflow note
-// @route   POST /api/workflow/notes
-// @access  Private (university only — must own the project)
 const createNote = async (req, res, next) => {
   try {
     const { title, content, projectId } = req.body;
@@ -128,9 +115,6 @@ const createNote = async (req, res, next) => {
   }
 };
 
-// @desc    Update a workflow note
-// @route   PUT /api/workflow/notes/:id
-// @access  Private (university only — must own the project)
 const updateNote = async (req, res, next) => {
   try {
     const { title, content } = req.body;
@@ -160,9 +144,6 @@ const updateNote = async (req, res, next) => {
   }
 };
 
-// @desc    Delete a workflow note
-// @route   DELETE /api/workflow/notes/:id
-// @access  Private (university only — must own the project)
 const deleteNote = async (req, res, next) => {
   try {
     const user = req.user;
@@ -192,9 +173,6 @@ const deleteNote = async (req, res, next) => {
 
 // ─────────────────────── SUGGESTIONS ───────────────────────
 
-// @desc    Get suggestions for a project
-// @route   GET /api/workflow/suggestions?projectId=xxx&noteId=xxx
-// @access  Private (university, industry, admin)
 const getSuggestions = async (req, res, next) => {
   try {
     const { projectId, noteId } = req.query;
@@ -208,12 +186,10 @@ const getSuggestions = async (req, res, next) => {
     if (projectId) filter.projectId = projectId;
     if (noteId) filter.noteId = noteId;
 
-    // Industry users only see their own suggestions
     if (user.role === 'industry') {
       filter.businessId = user._id;
     }
 
-    // University users only see suggestions for their projects
     if (user.role === 'university') {
       const projectIds = (await Project.find({ universityId: user._id })).map((p) => p._id);
       filter.projectId = { $in: projectIds };
@@ -231,9 +207,6 @@ const getSuggestions = async (req, res, next) => {
   }
 };
 
-// @desc    Create a suggestion on a note
-// @route   POST /api/workflow/suggestions
-// @access  Private (industry only)
 const createSuggestion = async (req, res, next) => {
   try {
     const { noteId, message } = req.body;
@@ -269,9 +242,6 @@ const createSuggestion = async (req, res, next) => {
   }
 };
 
-// @desc    Update suggestion status (accept/reject)
-// @route   PATCH /api/workflow/suggestions/:id/status
-// @access  Private (university only — must own the project)
 const updateSuggestionStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
