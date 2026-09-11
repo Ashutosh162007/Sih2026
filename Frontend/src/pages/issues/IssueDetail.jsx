@@ -281,7 +281,15 @@ export default function IssueDetail() {
 
             <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-500 border-b border-slate-100 pb-4">
               <span className="flex items-center gap-1 font-medium text-slate-700">
-                <User size={14} className="text-teal-700" /> {issue.reporterName || t("citizen")}
+                {issue.reporterRole === "govt_org" || issue.reporterOrg ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 font-semibold border border-blue-200">
+                    🏛️ {issue.reporterOrg || "Govt Local Body"} ({issue.reporterName})
+                  </span>
+                ) : (
+                  <>
+                    <User size={14} className="text-teal-700" /> {issue.reporterName || t("citizen")}
+                  </>
+                )}
               </span>
               <span className="flex items-center gap-1">
                 <MapPin size={14} /> {issue.district}, {issue.block} {issue.landmark ? `(${issue.landmark})` : ""}

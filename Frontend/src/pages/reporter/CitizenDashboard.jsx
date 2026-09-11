@@ -73,14 +73,22 @@ export default function CitizenDashboard() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-display text-3xl font-bold text-slate-900">
-              {t("citizenDashboardTitle")}
+              {user?.role === "govt_org" ? (user?.org || "Local Government Body Portal") : t("citizenDashboardTitle")}
             </h1>
-            <span className="rounded-full bg-[#D7F5DE] border border-emerald-300 px-2.5 py-0.5 text-xs font-bold text-[#0E4B4C]">
-              {t("activeReporterBadge")}
+            <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${
+              user?.role === "govt_org"
+                ? "bg-blue-50 border-blue-300 text-blue-800"
+                : "bg-[#D7F5DE] border-emerald-300 text-[#0E4B4C]"
+            }`}>
+              {user?.role === "govt_org" ? "🏛️ Official Local Authority" : t("activeReporterBadge")}
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            {t("citizenWelcomePre")} <strong>{user?.name || t("citizen")}</strong>. {t("citizenWelcomeSub")}
+            {user?.role === "govt_org" ? (
+              <>Welcome official representative, <strong>{user?.name}</strong>. Log and monitor grassroots challenges for academic problem-solving.</>
+            ) : (
+              <>{t("citizenWelcomePre")} <strong>{user?.name || t("citizen")}</strong>. {t("citizenWelcomeSub")}</>
+            )}
           </p>
         </div>
 

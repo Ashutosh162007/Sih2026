@@ -41,6 +41,15 @@ const seedData = async () => {
         location: { district: 'Ranchi', block: 'Kanke', lat: 23.3441, lng: 85.3096 },
       },
       {
+        name: 'Rajeshwar Soren',
+        email: 'panchayat@sahayog.in',
+        password: 'password',
+        role: 'govt_org',
+        status: 'active',
+        org: 'Panchayat Samiti - Tamar',
+        location: { district: 'Ranchi', block: 'Tamar', lat: 23.0515, lng: 85.6492 },
+      },
+      {
         name: 'Dr. Kavita Rao (Dean R&D)',
         email: 'university@sahayog.in',
         password: 'password',
@@ -81,10 +90,11 @@ const seedData = async () => {
     ]);
 
     const reporter = users[0];
-    const uni = users[1];
-    const industry = users[3];
+    const govtOrg = users[1];
+    const uni = users[2];
+    const industry = users[4];
 
-    // Seed Issues (1 clean sample issue for testing university & industry queue)
+    // Seed Issues
     const issues = await Issue.create([
       {
         title: 'Fluoride and heavy metal contamination in rural borewell water',
@@ -98,6 +108,8 @@ const seedData = async () => {
         reporter: reporter._id,
         reporterId: String(reporter._id),
         reporterName: reporter.name,
+        reporterRole: 'citizen',
+        reporterOrg: '',
         district: 'Ranchi',
         block: 'Tamar',
         landmark: 'Near Tamar Community Health Center',
@@ -115,6 +127,37 @@ const seedData = async () => {
           { at: new Date(Date.now() - 8 * 86400000), label: 'AI formulated structured research problem', actor: 'Sahayog AI', role: 'system' },
           { at: new Date(Date.now() - 6 * 86400000), label: `Multidisciplinary team assembled by ${uni.org}`, actor: uni.name, role: 'university' },
           { at: new Date(Date.now() - 2 * 86400000), label: `Industry grant ₹3,50,000 approved by ${industry.org}`, actor: industry.name, role: 'industry' },
+        ],
+      },
+      {
+        title: 'Vaccine cold chain failure at Primary Health Centers across Tamar Block',
+        description: 'Frequent 8 to 12-hour rural power outages in Tamar Block disrupt vaccine refrigeration at 3 sub-health centers, jeopardizing critical infant immunization stocks and snakebite anti-venom vials.',
+        aiProblemStatement: '**Structured Problem Formulation:**\n\n**Context & Location:** Tamar Block, Ranchi District (Healthcare & Renewable Energy Infrastructure).\n\n**Core Challenge:** Severe electrical grid intermittency and lack of thermal energy storage compromise vaccine cold chain integrity across 3 rural healthcare sub-centers.\n\n**Severity Assessment:** High Priority (Score 89/100). Urgency: 94%, Public Risk: 92%, Hazard Index: 15%.\n\n**Innovation Objective:** Develop and deploy an off-grid phase-change material (PCM) solar vaccine refrigerator equipped with automated GSM/IoT temperature telemetry.',
+        aiSummary: 'Critical power instability threatening vaccine viability in rural Tamar clinics.',
+        category: 'Healthcare',
+        status: 'Under review',
+        priority: 'High',
+        severity: { flooding: 10, publicRisk: 92, urgency: 94, score: 89, factors: ['Cold-chain breakdown', 'Immunization risk'] },
+        reporter: govtOrg._id,
+        reporterId: String(govtOrg._id),
+        reporterName: govtOrg.name,
+        reporterRole: 'govt_org',
+        reporterOrg: 'Panchayat Samiti - Tamar',
+        district: 'Ranchi',
+        block: 'Tamar',
+        landmark: 'Tamar Community Health Center & Salgadih Panchayat Bhawan',
+        lat: 23.0515,
+        lng: 85.6492,
+        images: [],
+        assignee: null,
+        nearestUniversities: [
+          { universityId: 'uni-bit-mesra', name: 'Birla Institute of Technology (BIT) Mesra', distanceKm: 43.5, district: 'Ranchi', matchScore: 95 },
+          { universityId: 'uni-nit-jsr', name: 'NIT Jamshedpur', distanceKm: 82.0, district: 'East Singhbhum', matchScore: 87 },
+        ],
+        timeline: [
+          { at: new Date(Date.now() - 4 * 86400000), label: 'Reported by Local Govt Body (Panchayat Samiti - Tamar)', actor: govtOrg.name, role: 'govt_org' },
+          { at: new Date(Date.now() - 4 * 86400000), label: 'AI formulated structured research problem & severity score (89/100)', actor: 'Sahayog AI', role: 'system' },
+          { at: new Date(Date.now() - 3 * 86400000), label: 'Dispatched to BIT Mesra Dept of Mechanical & Electrical Engineering', actor: 'Sahayog Router', role: 'system' },
         ],
       },
     ]);

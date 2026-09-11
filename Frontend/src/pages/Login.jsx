@@ -89,6 +89,13 @@ export default function Login() {
           </button>
           <button
             type="button"
+            onClick={() => quickLogin("panchayat@sahayog.in")}
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700 cursor-pointer"
+          >
+            🏛️ {t("govtOrg") || "Govt / Local Body"}
+          </button>
+          <button
+            type="button"
             onClick={() => quickLogin("university@sahayog.in")}
             className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700 cursor-pointer"
           >
@@ -100,13 +107,6 @@ export default function Login() {
             className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700 cursor-pointer"
           >
             🏢 {t("industry")}
-          </button>
-          <button
-            type="button"
-            onClick={() => quickLogin("admin@sahayog.in")}
-            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left font-medium text-slate-700 hover:border-teal-500 hover:text-teal-700 cursor-pointer"
-          >
-            🛡️ {t("admin")}
           </button>
         </div>
       </div>
@@ -160,12 +160,20 @@ export default function Login() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-xs text-slate-500">
-        {t("newToSahayog")}{" "}
-        <Link to="/signup" className="font-semibold text-[#0E4B4C] hover:underline">
-          {t("createAnAccount")}
-        </Link>
-      </p>
+      <div className="mt-6 flex flex-col items-center gap-2 text-xs text-slate-500">
+        <p>
+          {t("newToSahayog")}{" "}
+          <Link to="/signup" className="font-semibold text-[#0E4B4C] hover:underline">
+            {t("createAnAccount")}
+          </Link>
+        </p>
+        <p className="pt-2 border-t border-slate-100 w-full text-center">
+          State Innovation Council Admin?{" "}
+          <Link to="/admin/login" className="font-semibold text-[#0E4B4C] hover:underline">
+            Admin Portal Login →
+          </Link>
+        </p>
+      </div>
     </AuthLayout>
   );
 }

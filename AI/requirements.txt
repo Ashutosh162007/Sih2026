@@ -1,9 +1,9 @@
 langchain
 langchain-core
 langchain-community
-langgraph
+langchain-nvidia-ai-endpoints
 langchain-openai
-langchain-google-genai
+langgraph
 langchain-groq
 langchain-mistralai
 python-dotenv
@@ -12,3 +12,5 @@ tiktoken
 fastapi
 uvicorn
 requests
+httpx
+openai

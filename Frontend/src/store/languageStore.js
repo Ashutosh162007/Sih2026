@@ -17,9 +17,11 @@ export const TRANSLATIONS = {
     
     // Roles
     citizen: "Citizen",
+    govtOrg: "Govt / Local Body",
+    govt_org: "Govt / Local Body",
     university: "University / HEI",
     industry: "Industry Partner",
-    admin: "Admin / State Oversight",
+    admin: "State Innovation Council (Admin)",
 
     // Navigation & Sidebar
     portalBrand: "Sahayog",
@@ -38,6 +40,8 @@ export const TRANSLATIONS = {
     navFundedProjects: "Funded",
     navAdminAnalytics: "Analytics",
     navVerifyAccounts: "Approvals",
+    navAdminIssues: "Master Issue Console",
+    navAdminAudit: "System Audit Logs",
     navWorkflow: "Workflow",
     workflowSubtitle: "Project-based collaboration notes between universities, industry, and government.",
     workflowNotes: "Workflow Notes",
@@ -210,6 +214,7 @@ export const TRANSLATIONS = {
     heroSubtitle: "Citizens report grassroots civic issues with a brief summary & photo. Our AI Engine formulates structured problem statements and computes severity scores, auto-routing them to the nearest universities to form multidisciplinary research teams funded by industry partners with tracked milestones.",
     reportCivicBtn: "Report a Civic Issue",
     loginBtn: "University / Industry Login",
+    adminLoginBtn: "Admin Login",
     signIn: "Sign in",
     joinNetwork: "Join Network",
     heroCheck1: "AI Problem Structuring",
@@ -498,9 +503,11 @@ export const TRANSLATIONS = {
 
     // Roles
     citizen: "नागरिक",
+    govtOrg: "सरकारी / स्थानीय निकाय",
+    govt_org: "सरकारी / स्थानीय निकाय",
     university: "विश्वविद्यालय / संस्थान",
     industry: "उद्योग / CSR भागीदार",
-    admin: "राज्य प्रशासन / इनोवेशन काउंसिल",
+    admin: "राज्य नवाचार परिषद (प्रशासन)",
 
     // Navigation & Sidebar
     portalBrand: "सहयोग",
@@ -519,6 +526,8 @@ export const TRANSLATIONS = {
     navFundedProjects: "स्वीकृत",
     navAdminAnalytics: "विश्लेषण",
     navVerifyAccounts: "अनुमोदन",
+    navAdminIssues: "मास्टर समस्या कंसोल",
+    navAdminAudit: "सिस्टम ऑडिट लॉग्स",
     navWorkflow: "वर्कफ़्लो",
     workflowSubtitle: "विश्वविद्यालय, उद्योग और सरकार के बीच परियोजना सहयोग संबंधी नोट्स।",
     workflowNotes: "वर्कफ़्लो नोट्स",
@@ -691,6 +700,7 @@ export const TRANSLATIONS = {
     heroSubtitle: "नागरिक फोटो और संक्षिप्त विवरण के साथ जमीनी समस्याएं दर्ज करते हैं। हमारा AI इंजन औपचारिक शोध समस्या विवरण तैयार कर नजदीकी विश्वविद्यालयों को भेजता है, जहां बहुविषयक टीमें उद्योग सीएसआर फंडिंग से समाधान बनाती हैं।",
     reportCivicBtn: "नागरिक समस्या दर्ज करें",
     loginBtn: "विश्वविद्यालय / उद्योग लॉगिन",
+    adminLoginBtn: "प्रशासक लॉगिन",
     signIn: "लॉगिन करें",
     joinNetwork: "नेटवर्क से जुड़ें",
     heroCheck1: "AI समस्या सूत्रीकरण",
@@ -980,9 +990,11 @@ export const TRANSLATIONS = {
 
     // Roles
     citizen: "नागरिक / जनता",
+    govtOrg: "सरकारी / स्थानीय संस्था",
+    govt_org: "सरकारी / स्थानीय संस्था",
     university: "विश्वविद्यालय / कॉलेज",
     industry: "उद्योग / CSR साथी",
-    admin: "सरकार / एडमिन",
+    admin: "राज्य नवाचार परिषद (एडमिन)",
 
     // Navigation & Sidebar
     portalBrand: "सहयोग",
@@ -1001,6 +1013,8 @@ export const TRANSLATIONS = {
     navFundedProjects: "स्वीकृत",
     navAdminAnalytics: "राज्य भरक विश्लेषण",
     navVerifyAccounts: "अनुमोदन",
+    navAdminIssues: "मास्टर समस्या कंसोल",
+    navAdminAudit: "सिस्टम ऑडिट लॉग",
     navWorkflow: "वर्कफ़्लो",
     workflowSubtitle: "यूनिवर्सिटी, उद्योग आरु सरकार के बीच प्रोजेक्ट सहयोग नोट्स।",
     workflowNotes: "वर्कफ़्लो नोट्स",
@@ -1173,6 +1187,7 @@ export const TRANSLATIONS = {
     heroSubtitle: "नागरिक फोटो आरु थोड़का बात लिख के समस्या दर्ज करथीन। हमर AI इंजन समस्या के जांच के नजदीकी यूनिवर्सिटी सब के भेज देहे, जहां प्रोफेसर-छात्र मिल के CSR अनुदान से समाधान बनावथीन।",
     reportCivicBtn: "समस्या दर्ज करा",
     loginBtn: "यूनिवर्सिटी / उद्योग लॉगिन",
+    adminLoginBtn: "एडमिन लॉगिन",
     signIn: "लॉगिन करा",
     joinNetwork: "नेटवर्क में जुड़ा",
     heroCheck1: "AI समस्या सूत्रीकरण",

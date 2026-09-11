@@ -1,6 +1,7 @@
 export const ROLES = {
   CITIZEN: "citizen",
   REPORTER: "citizen",
+  GOVT_ORG: "govt_org",
   UNIVERSITY: "university",
   INDUSTRY: "industry",
   ADMIN: "admin",
@@ -9,10 +10,22 @@ export const ROLES = {
 export const ROLE_LABELS = {
   citizen: "Citizen",
   community_reporter: "Citizen",
+  govt_org: "Govt / Local Body",
+  [ROLES.GOVT_ORG]: "Govt / Local Body",
   [ROLES.UNIVERSITY]: "University / HEI",
   [ROLES.INDUSTRY]: "Industry Partner",
-  [ROLES.ADMIN]: "Admin / Govt Oversight",
+  [ROLES.ADMIN]: "State Innovation Council (Admin)",
 };
+
+export const GOVT_ORG_TYPES = [
+  "Panchayat Samiti",
+  "Zilla Parishad",
+  "Gram Panchayat",
+  "Municipal Corporation (Nagar Nigam)",
+  "Nagar Parishad / Nagar Panchayat",
+  "Block Development Office (BDO)",
+  "District Administration Office",
+];
 
 export const ISSUE_CATEGORIES = [
   "Infrastructure",
