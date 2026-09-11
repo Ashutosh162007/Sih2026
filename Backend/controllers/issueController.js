@@ -12,12 +12,23 @@ const { uploadToCloudinary, uploadDataUriToCloudinary } = require('../services/c
 const previewAI = async (req, res, next) => {
   try {
     const { title, description, category, district, block, landmark } = req.body;
+
+    // Send all filled issue text to the AI model to evaluate validity, scale, and problem formulation
     const aiResult = await analyzeProblemWithAI({
       title,
       description,
       category,
       location: { district, block, landmark },
     });
+
+    if (aiResult.isLegitimate === false) {
+      return res.status(400).json({
+        success: false,
+        message: aiResult.rejectionReason || 'The AI model evaluated this issue and could not accept it as a valid, non-trivial civic challenge.',
+        reason: 'AI_REJECTED',
+      });
+    }
+
     res.json({ success: true, ...aiResult });
   } catch (err) {
     next(err);
@@ -44,13 +55,21 @@ const createIssue = async (req, res, next) => {
     const issueLat = Number(lat) || 23.3441;
     const issueLng = Number(lng) || 85.3096;
 
-    // 1. Run AI Problem Formulation & Severity Engine
+    // 1. Run NVIDIA AI Model to evaluate validity, appropriateness, and generate structured formulation
     const aiAnalysis = await analyzeProblemWithAI({
       title,
       description,
       category,
       location: { district, block, landmark },
     });
+
+    if (aiAnalysis.isLegitimate === false) {
+      return res.status(400).json({
+        success: false,
+        message: aiAnalysis.rejectionReason || 'The AI model rejected this submission as inappropriate, unintelligible, or too trivial.',
+        reason: 'AI_REJECTED',
+      });
+    }
 
     // 2. Compute Nearest Universities using Haversine Geodesic Routing
     const nearestUniversities = rankUniversitiesForIssue({
@@ -360,6 +379,7 @@ const updateIssueStatus = async (req, res, next) => {
 const submitFeedback = async (req, res, next) => {
   try {
     const { rating, comment, verifiedByCitizen } = req.body;
+
     const issue = await Issue.findById(req.params.id);
 
     if (!issue) {

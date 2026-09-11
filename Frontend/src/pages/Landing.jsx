@@ -118,10 +118,10 @@ export default function Landing() {
                 {t("reportCivicBtn")} <ArrowRight size={16} />
               </Link>
               <Link
-                to="/login"
-                className="rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                to="/admin/login"
+                className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-teal-600 hover:text-[#0E4B4C]"
               >
-                {t("loginBtn")}
+                <ShieldCheck size={16} className="text-[#0E4B4C]" /> {t("adminLoginBtn")}
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-6 text-xs text-slate-500">

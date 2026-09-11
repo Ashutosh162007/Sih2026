@@ -17,9 +17,12 @@ import ProposalWizard from "./pages/university/ProposalWizard";
 import IndustryDashboard from "./pages/industry/IndustryDashboard";
 import IndustryQueue from "./pages/industry/IndustryQueue";
 import IndustryProjects from "./pages/industry/IndustryProjects";
+import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import VerifyAccounts from "./pages/admin/VerifyAccounts";
 import WorkflowPage from "./pages/workflow/WorkflowPage";
+import AdminIssuesConsole from "./pages/admin/AdminIssuesConsole";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import StateMapExplorer from "./pages/map/StateMapExplorer";
 import UserProfile from "./pages/profile/UserProfile";
 import InnovationShowcase from "./pages/showcase/InnovationShowcase";
@@ -34,6 +37,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/signup/pending" element={<SignupPending />} />
 
@@ -48,8 +52,8 @@ export default function App() {
             <Route path="/map" element={<StateMapExplorer />} />
             <Route path="/profile" element={<UserProfile />} />
 
-            {/* Citizen / Community Reporter Routes */}
-            <Route element={<ProtectedRoute roles={[ROLES.REPORTER, "community_reporter", "citizen"]} />}>
+            {/* Citizen & Government / Local Body Routes */}
+            <Route element={<ProtectedRoute roles={[ROLES.REPORTER, ROLES.GOVT_ORG, "govt_org", "community_reporter", "citizen"]} />}>
               <Route path="/citizen/dashboard" element={<CitizenDashboard />} />
               <Route path="/report" element={<ReportIssue />} />
               <Route path="/my-issues" element={<MyIssues />} />
@@ -80,6 +84,8 @@ export default function App() {
             <Route element={<ProtectedRoute roles={[ROLES.ADMIN]} />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/verify-accounts" element={<VerifyAccounts />} />
+              <Route path="/admin/issues" element={<AdminIssuesConsole />} />
+              <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
             </Route>
 
             {/* Workflow canvas (university + industry only) */}

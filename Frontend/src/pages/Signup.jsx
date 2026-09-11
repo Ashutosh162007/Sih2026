@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { Check, X, Eye, EyeOff } from "lucide-react";
 import AuthLayout from "../layouts/AuthLayout";
-import { ROLES, ROLE_LABELS, JHARKHAND_DISTRICTS } from "../lib/constants";
+import { ROLES, ROLE_LABELS, JHARKHAND_DISTRICTS, GOVT_ORG_TYPES } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
 import OtpModal from "../components/OtpModal";
 
@@ -20,8 +20,9 @@ const schema = z.object({
     .min(8, "Password must be at least 8 characters")
     .regex(strongPasswordRegex, "Password must meet all strong password criteria below"),
   org: z.string().optional(),
+  orgType: z.string().optional(),
   district: z.string().optional(),
-  role: z.enum([ROLES.REPORTER, ROLES.UNIVERSITY, ROLES.INDUSTRY]),
+  role: z.enum([ROLES.REPORTER, ROLES.GOVT_ORG, ROLES.UNIVERSITY, ROLES.INDUSTRY]),
 });
 
 export default function Signup() {
@@ -54,6 +55,8 @@ export default function Signup() {
   // Dynamic Email Placeholder according to selected role
   const getEmailPlaceholder = () => {
     switch (role) {
+      case ROLES.GOVT_ORG:
+        return "e.g. bdo.tamar@jharkhand.gov.in / panchayat@gov.in";
       case ROLES.UNIVERSITY:
         return "e.g. faculty@university.edu.in";
       case ROLES.INDUSTRY:
@@ -192,13 +195,40 @@ export default function Signup() {
             {...register("role")}
             className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10 bg-white"
           >
-            {[ROLES.REPORTER, ROLES.UNIVERSITY, ROLES.INDUSTRY].map((r) => (
+            {[ROLES.REPORTER, ROLES.GOVT_ORG, ROLES.UNIVERSITY, ROLES.INDUSTRY].map((r) => (
               <option key={r} value={r}>
                 {ROLE_LABELS[r]}
               </option>
             ))}
           </select>
         </label>
+
+        {role === ROLES.GOVT_ORG && (
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-slate-700">
+              Government / Local Body Type
+              <select
+                {...register("orgType")}
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10 bg-white"
+              >
+                {GOVT_ORG_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block text-sm font-medium text-slate-700">
+              Local Body / Panchayat Samiti / Office Name
+              <input
+                {...register("org")}
+                placeholder="e.g. Panchayat Samiti - Tamar / Zilla Parishad - Ranchi"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E4B4C] focus:ring-2 focus:ring-[#0E4B4C]/10"
+              />
+            </label>
+          </div>
+        )}
 
         {(role === ROLES.UNIVERSITY || role === ROLES.INDUSTRY) && (
           <label className="block text-sm font-medium text-slate-700">

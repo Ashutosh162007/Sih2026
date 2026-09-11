@@ -36,7 +36,17 @@ let users = load("sahayog_users", mockUsers).map((u) => {
   }
   return u;
 });
+mockUsers.forEach((mu) => {
+  if (!users.some((u) => u.id === mu.id || u.email === mu.email)) {
+    users.push(mu);
+  }
+});
 let issues = load("sahayog_issues", seedIssues);
+seedIssues.forEach((si) => {
+  if (!issues.some((i) => i.id === si.id)) {
+    issues.push(si);
+  }
+});
 let projects = load("sahayog_projects", seedProjects).map((p) => {
   const seed = seedProjects.find((sp) => sp.id === p.id);
   if (seed && !p.certificateStatus) {
@@ -288,20 +298,58 @@ function match(config, method, pattern) {
   return { params, query: Object.fromEntries(url.searchParams) };
 }
 
-function computeAIAnalysis({ title, description, category, district, block }) {
-  const text = `${title} ${description}`.toLowerCase();
+function computeAIAnalysis({ title = "", description = "", category = "", district = "", block = "" }) {
+  const fullText = `${title} ${description}`.trim().toLowerCase();
+  
+  // 1. Unintelligible text / keyboard mash check
+  const words = fullText.replace(/[^a-zA-Z\s]/g, "").split(/\s+/).filter(Boolean);
+  const isGibberish = words.some((w) => {
+    if (w.length >= 6) {
+      const unique = new Set(w.split("")).size;
+      const vowels = (w.match(/[aeiou]/gi) || []).length;
+      if (unique <= 3 || vowels === 0) return true;
+      if (w.length >= 8 && unique <= 4) return true;
+      if (w.length >= 8 && vowels / w.length < 0.15) return true;
+      if (/(?:as|df|sd|fa|ds|fd|jk|kj|hl|lh|gh|hg|ad|da|sa){3,}/i.test(w)) return true;
+    }
+    return false;
+  });
+
+  const totalLetters = words.join("").length;
+  const totalVowels = (words.join("").match(/[aeiou]/gi) || []).length;
+  const abnormalVowelRatio = totalLetters >= 8 && (totalVowels / totalLetters < 0.15 || totalVowels / totalLetters > 0.85);
+
+  if (isGibberish || abnormalVowelRatio || fullText.length < 8) {
+    return {
+      isLegitimate: false,
+      rejectionReason: "The AI model evaluated the submission and rejected it as unintelligible or random keyboard text. Please provide clear details about an actual community challenge.",
+    };
+  }
+
+  // 2. Very small / trivial issue filter
+  const trivialTerms = [
+    "pen is lost", "lost my pen", "shoe dirty", "leaf fell", "dropped pencil", "pencil broke",
+    "my dog barked", "cat meowed", "homework hard", "video game lag", "shirt stained", "food cold"
+  ];
+  if (trivialTerms.some((t) => fullText.includes(t))) {
+    return {
+      isLegitimate: false,
+      rejectionReason: "The AI model determined that this issue is a minor personal matter rather than a significant civic, municipal, or societal challenge.",
+    };
+  }
+
   let urgency = 50;
   let publicRisk = 45;
   let flooding = 35;
 
-  if (text.includes("accident") || text.includes("fatal") || text.includes("urgent") || text.includes("toxic") || text.includes("death")) {
+  if (fullText.includes("accident") || fullText.includes("fatal") || fullText.includes("urgent") || fullText.includes("toxic") || fullText.includes("death")) {
     urgency += 25;
     publicRisk += 30;
   }
-  if (text.includes("flood") || text.includes("water") || text.includes("drain") || text.includes("leakage") || text.includes("contamination")) {
+  if (fullText.includes("flood") || fullText.includes("water") || fullText.includes("drain") || fullText.includes("leakage") || fullText.includes("contamination")) {
     flooding += 45;
   }
-  if (text.includes("dark") || text.includes("light") || text.includes("women") || text.includes("school") || text.includes("children")) {
+  if (fullText.includes("dark") || fullText.includes("light") || fullText.includes("women") || fullText.includes("school") || fullText.includes("children")) {
     publicRisk += 35;
     urgency += 20;
   }
@@ -320,6 +368,7 @@ function computeAIAnalysis({ title, description, category, district, block }) {
     `**Recommended Innovation Objective:** Formulate multidisciplinary student & faculty technical interventions for durable grassroots deployment.`;
 
   return {
+    isLegitimate: true,
     category: category || "Infrastructure",
     aiProblemStatement,
     severity: { flooding, publicRisk, urgency, score },
@@ -515,6 +564,9 @@ export async function handleMockRequest(config) {
   if ((m = match(config, "post", "/api/issues"))) {
     if (!auth) error("Unauthorized", 401);
     const aiAnalysis = computeAIAnalysis(body);
+    if (aiAnalysis.isLegitimate === false) {
+      error(aiAnalysis.rejectionReason, 400);
+    }
     const issue = {
       id: `iss-${Date.now()}`,
       title: body.title,
@@ -527,6 +579,8 @@ export async function handleMockRequest(config) {
       upwardsUsers: [],
       reporterId: auth.id,
       reporterName: auth.name,
+      reporterRole: auth.role || ROLES.REPORTER,
+      reporterOrg: auth.org || "",
       district: body.location?.district || body.district || "Ranchi",
       block: body.location?.block || body.block || "Kanke",
       landmark: body.location?.landmark || body.landmark || "",
@@ -548,7 +602,12 @@ export async function handleMockRequest(config) {
       assignee: null,
       comments: [],
       timeline: [
-        { at: new Date().toISOString(), label: "Reported by Citizen" },
+        {
+          at: new Date().toISOString(),
+          label: auth.role === ROLES.GOVT_ORG
+            ? `Reported by Local Govt Body (${auth.org || "Panchayat / Local Authority"})`
+            : "Reported by Citizen",
+        },
         { at: new Date().toISOString(), label: `AI synthesized formal problem statement (${aiAnalysis.priority} Priority, ${aiAnalysis.severity.score}% severity)` },
         { at: new Date().toISOString(), label: "Routed to nearest Higher Education Institutions" },
       ],
