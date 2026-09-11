@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Award,
-  Sparkles,
   Building2,
   CheckCircle2,
   Calendar,
@@ -71,9 +70,6 @@ export default function InnovationShowcase() {
       {/* Hero Banner */}
       <div className="rounded-3xl border border-teal-200 bg-gradient-to-br from-[#0E4B4C] to-[#082E2F] p-8 sm:p-10 text-white shadow-xl">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#D7F5DE]/20 border border-[#D7F5DE]/30 px-3.5 py-1 text-xs font-semibold text-[#D7F5DE] backdrop-blur-sm">
-            <Sparkles size={14} /> {t("showcaseHeroBadge")}
-          </div>
           <h1 className="font-display mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight">
             {t("showcaseHeroTitle")}
           </h1>

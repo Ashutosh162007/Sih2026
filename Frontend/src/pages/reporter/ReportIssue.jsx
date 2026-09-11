@@ -116,9 +116,7 @@ export default function ReportIssue() {
             {t("reportSubtitle")}
           </p>
         </div>
-        <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 border border-emerald-200">
-          <Sparkles size={14} /> AI-Assisted
-        </div>
+
       </div>
 
       <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

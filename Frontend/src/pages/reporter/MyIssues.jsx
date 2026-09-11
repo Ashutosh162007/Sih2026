@@ -64,6 +64,11 @@ export default function MyIssues() {
               assignee: issue.assignee ? `Assigned to ${issue.assignee}` : "Routing to nearest universities",
               date: issue.createdAt,
             }}
+            upwards={{
+              issueId: issue.id || issue._id,
+              count: issue.upwardsCount,
+              hasUpwarded: issue.hasUpwarded,
+            }}
             onClick={() => navigate(`/issues/${issue.id || issue._id}`)}
           />
         ))}

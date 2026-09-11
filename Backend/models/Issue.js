@@ -127,6 +127,11 @@ const IssueSchema = new mongoose.Schema(
       verifiedByCitizen: { type: Boolean, default: true },
       submittedAt: { type: Date },
     },
+    upwardsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,

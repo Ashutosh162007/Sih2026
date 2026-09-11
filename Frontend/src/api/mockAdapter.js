@@ -55,7 +55,127 @@ seedProjects.forEach((sp) => {
     projects.push(sp);
   }
 });
+function makeText(id, x, y, text, color = "#0E4B4C", fontSize = 22) {
+  return { id, kind: "text", x, y, w: 0, h: 0, x2: 0, y2: 0, points: [], text, fontSize, color, strokeWidth: 0 };
+}
+function makeRect(id, x, y, w, h, color = "#0E4B4C") {
+  return { id, kind: "rect", x, y, w, h, x2: 0, y2: 0, points: [], text: "", fontSize: 20, color, strokeWidth: 3 };
+}
+function makeEllipse(id, x, y, rx, ry, color = "#0891B2") {
+  return { id, kind: "ellipse", x, y, w: rx, h: ry, x2: 0, y2: 0, points: [], text: "", fontSize: 20, color, strokeWidth: 3 };
+}
+function makeArrow(id, x1, y1, x2, y2, color = "#059669") {
+  return { id, kind: "arrow", x: x1, y: y1, w: 0, h: 0, x2, y2, points: [], text: "", fontSize: 20, color, strokeWidth: 3 };
+}
+function makeStroke(id, points, color = "#1f2937", strokeWidth = 4) {
+  return { id, kind: "stroke", x: 0, y: 0, w: 0, h: 0, x2: 0, y2: 0, points, text: "", fontSize: 20, color, strokeWidth };
+}
+
+const seedWorkflowCanvases = [
+  {
+    projectId: "prj-201",
+    universityName: "Birla Institute of Technology (BIT) Mesra",
+    objects: [
+      makeText("w-201-1", 320, 60, "Fluoride Water Safe-Drink Pipeline", "#0E4B4C", 30),
+      makeRect("w-201-2", 140, 140, 260, 70, "#0E4B4C"),
+      makeText("w-201-3", 165, 164, "Step 1: Baseline water sampling", "#0E4B4C", 16),
+      makeArrow("w-201-4", 400, 175, 590, 175, "#059669"),
+      makeRect("w-201-5", 590, 140, 260, 70, "#0891B2"),
+      makeText("w-201-6", 618, 164, "Step 2: Biochar filter assembly", "#0E4B4C", 16),
+      makeArrow("w-201-7", 850, 175, 1040, 175, "#059669"),
+      makeRect("w-201-8", 1040, 140, 280, 70, "#D97706"),
+      makeText("w-201-9", 1075, 164, "Step 3: IoT telemetry on", "#111827", 16),
+      makeArrow("w-201-10", 1180, 210, 1180, 320, "#059669"),
+      makeEllipse("w-201-11", 1120, 320, 210, 70, "#7C3AED"),
+      makeText("w-201-12", 1145, 346, "Ground deployment + training", "#0E4B4C", 15),
+      makeStroke("w-201-13", [
+        { x: 300, y: 300 }, { x: 330, y: 322 }, { x: 380, y: 306 }, { x: 430, y: 330 },
+        { x: 480, y: 314 }, { x: 530, y: 340 }, { x: 580, y: 322 }, { x: 630, y: 348 },
+        { x: 690, y: 330 }, { x: 720, y: 352 },
+      ], "#1f2937", 4),
+      makeText("w-201-14", 700, 380, "pH trending ↓ after 60-day run", "#6b7280", 14),
+    ],
+    createdAt: new Date(Date.now() - 12 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+  },
+  {
+    projectId: "prj-101",
+    universityName: "Birla Institute of Technology (BIT) Mesra",
+    objects: [
+      makeText("w-101-1", 380, 50, "Drainage Grate Handover Flow", "#0E4B4C", 28),
+      makeRect("w-101-2", 160, 140, 240, 64, "#0E4B4C"),
+      makeText("w-101-3", 190, 164, "Fabricate 4 bypass units", "#0E4B4C", 15),
+      makeArrow("w-101-4", 400, 172, 560, 172, "#059669"),
+      makeRect("w-101-5", 560, 140, 240, 64, "#059669"),
+      makeText("w-101-6", 592, 164, "Civil installation", "#ffffff", 15),
+      makeArrow("w-101-7", 800, 172, 960, 172, "#059669"),
+      makeRect("w-101-8", 960, 140, 250, 64, "#D97706"),
+      makeText("w-101-9", 1005, 164, "RMC handover", "#111827", 15),
+    ],
+    createdAt: new Date(Date.now() - 40 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 25 * 86400000).toISOString(),
+  },
+  {
+    projectId: "prj-103",
+    universityName: "Birla Institute of Technology (BIT) Mesra",
+    objects: [
+      makeText("w-103-1", 420, 60, "Cold Storage Post-Harvest Plan", "#0E4B4C", 28),
+      makeEllipse("w-103-2", 200, 160, 240, 70, "#0891B2"),
+      makeText("w-103-3", 245, 190, "Evaporative chamber", "#0E4B4C", 15),
+      makeArrow("w-103-4", 440, 195, 600, 195, "#059669"),
+      makeEllipse("w-103-5", 600, 160, 240, 70, "#059669"),
+      makeText("w-103-6", 655, 190, "Shelf-life testing", "#ffffff", 15),
+      makeArrow("w-103-7", 840, 195, 1000, 195, "#059669"),
+      makeEllipse("w-103-8", 1000, 160, 250, 70, "#D97706"),
+      makeText("w-103-9", 1055, 190, "FPO farmer training", "#111827", 15),
+    ],
+    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 6 * 86400000).toISOString(),
+  },
+];
+
+const seedWorkflowSuggestions = [
+  {
+    id: "wf-sug-201a",
+    projectId: "prj-201",
+    universityId: null,
+    businessName: "Tata Steel CSR & Sustainability",
+    message:
+      "Please include geo-tagged field progress photos in the next monthly CSR report so the ESG dashboard can log on-ground milestones accurately.",
+    status: "Reviewed",
+    statusUpdatedAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 11 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+  },
+  {
+    id: "wf-sug-201b",
+    projectId: "prj-201",
+    universityId: null,
+    businessName: "Tata Steel CSR & Sustainability",
+    message:
+      "Requesting weekly fluoride telemetry calibration records from the IoT dashboard. Also suggest adding a village health worker operator on the deployment roster.",
+    status: "Pending",
+    statusUpdatedAt: null,
+    createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+  },
+  {
+    id: "wf-sug-101a",
+    projectId: "prj-101",
+    universityId: null,
+    businessName: "Tata Steel CSR & Sustainability",
+    message:
+      "Please share the maintenance SOP as an annexure to the impact certificate file for our compliance audit.",
+    status: "Accepted",
+    statusUpdatedAt: new Date(Date.now() - 22 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 24 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 22 * 86400000).toISOString(),
+  },
+];
+
 let supportTickets = load("sahayog_support_tickets", []);
+let workflowCanvases = load("sahayog_workflow_canvases", seedWorkflowCanvases);
+let workflowSuggestions = load("sahayog_workflow_suggestions", seedWorkflowSuggestions);
 let notifications = load("sahayog_notifications", [
   {
     id: "notif-1",
@@ -81,6 +201,8 @@ function persist() {
   save("sahayog_projects", projects);
   save("sahayog_notifications", notifications);
   save("sahayog_support_tickets", supportTickets);
+  save("sahayog_workflow_canvases", workflowCanvases);
+  save("sahayog_workflow_suggestions", workflowSuggestions);
 }
 
 function tokenFor(user) {
@@ -369,8 +491,8 @@ export async function handleMockRequest(config) {
       category: body.category || aiAnalysis.category,
       status: "New",
       priority: body.priority || aiAnalysis.priority,
-      upvotes: 1,
-      upvoters: [auth.id],
+      upwardsCount: 0,
+      upwardsUsers: [],
       reporterId: auth.id,
       reporterName: auth.name,
       district: body.location?.district || body.district || "Ranchi",
@@ -439,33 +561,66 @@ export async function handleMockRequest(config) {
         (a, b) => Math.hypot(a.lat - la, a.lng - ln) - Math.hypot(b.lat - la, b.lng - ln),
       );
     }
-    return json(config, list);
+    // Enrich with upwardsCount and hasUpwarded
+    const enriched = list.map((i) => ({
+      ...i,
+      upwardsCount: i.upwardsCount || 0,
+      hasUpwarded: auth ? (i.upwardsUsers || []).includes(auth.id) : false,
+    }));
+    return json(config, enriched);
   }
 
   // Issues: Get detail
   if ((m = match(config, "get", "/api/issues/:id"))) {
     const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
     if (!issue) error("Issue not found", 404);
-    return json(config, issue);
+    return json(config, {
+      ...issue,
+      upwardsCount: issue.upwardsCount || 0,
+      hasUpwarded: auth ? (issue.upwardsUsers || []).includes(auth.id) : false,
+    });
   }
 
-  // Issues: Upvote (+1 Me Too)
-  if ((m = match(config, "post", "/api/issues/:id/upvote"))) {
+  // Issues: Upward (POST /api/issues/:id/upward) — idempotent add
+  if ((m = match(config, "post", "/api/issues/:id/upward"))) {
     const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
     if (!issue) error("Issue not found", 404);
     const userId = auth?.id || "anonymous-guest";
-    issue.upvoters = issue.upvoters || [];
-    const hasUpvoted = issue.upvoters.includes(userId);
+    issue.upwardsUsers = issue.upwardsUsers || [];
+    let hasUpwarded = issue.upwardsUsers.includes(userId);
 
-    if (hasUpvoted) {
-      issue.upvoters = issue.upvoters.filter((id) => id !== userId);
-      issue.upvotes = Math.max(0, (issue.upvotes || 1) - 1);
-    } else {
-      issue.upvoters.push(userId);
-      issue.upvotes = (issue.upvotes || 0) + 1;
+    if (!hasUpwarded) {
+      issue.upwardsUsers.push(userId);
+      issue.upwardsCount = (issue.upwardsCount || 0) + 1;
+      hasUpwarded = true;
     }
     persist();
-    return json(config, { success: true, upvotes: issue.upvotes, hasUpvoted: !hasUpvoted, issue });
+    return json(config, { success: true, upwardsCount: issue.upwardsCount, hasUpwarded });
+  }
+
+  // Issues: Remove Upward (DELETE /api/issues/:id/upward) — idempotent remove
+  if ((m = match(config, "delete", "/api/issues/:id/upward"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    const userId = auth?.id || "anonymous-guest";
+    issue.upwardsUsers = issue.upwardsUsers || [];
+    if (issue.upwardsUsers.includes(userId)) {
+      issue.upwardsUsers = issue.upwardsUsers.filter((id) => id !== userId);
+      issue.upwardsCount = Math.max(0, issue.upwardsCount - 1);
+    }
+    persist();
+    return json(config, { success: true, upwardsCount: issue.upwardsCount || 0, hasUpwarded: false });
+  }
+
+  // Issues: Get upwards status (GET /api/issues/:id/upwards)
+  if ((m = match(config, "get", "/api/issues/:id/upwards"))) {
+    const issue = issues.find((i) => i.id === m.params.id || i._id === m.params.id);
+    if (!issue) error("Issue not found", 404);
+    return json(config, {
+      success: true,
+      upwardsCount: issue.upwardsCount || 0,
+      hasUpwarded: auth ? (issue.upwardsUsers || []).includes(auth.id) : false,
+    });
   }
 
   // Issues: Comments (Post & Get)
@@ -936,6 +1091,222 @@ export async function handleMockRequest(config) {
       resolvedIssues: issues.filter((i) => i.status === "Resolved").length,
       pendingAccounts: users.filter((u) => u.status === "pending").length,
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Workflow module
+  // ---------------------------------------------------------------------------
+  const findWorkflowProject = (ref) =>
+    projects.find(
+      (p) =>
+        String(p.id) === String(ref) ||
+        String(p._id) === String(ref) ||
+        String(p.issueId) === String(ref)
+    );
+
+  const workflowAccess = (project, user) => {
+    const access = { canView: false, canEdit: false, canSuggest: false, canManageSuggestions: false };
+    if (!user || !project) return access;
+    if (user.role === "admin") {
+      access.canView = true;
+    } else if (user.role === "university" && project.university === user.org) {
+      access.canView = true;
+      access.canEdit = true;
+      access.canManageSuggestions = true;
+    } else if (user.role === "industry" && project.industry === user.org) {
+      access.canView = true;
+      access.canSuggest = true;
+    }
+    return access;
+  };
+
+  const formatMockCanvas = (wb) => ({
+    objects: (wb?.objects || []).map((o) => ({ ...o })),
+    updatedAt: wb?.updatedAt || null,
+  });
+
+  const formatMockSuggestion = (s) => ({
+    id: s.id,
+    _id: s.id,
+    projectId: s.projectId,
+    universityId: s.universityId || null,
+    businessId: s.businessId || null,
+    businessName: s.businessName || "",
+    message: s.message,
+    status: s.status,
+    statusUpdatedAt: s.statusUpdatedAt || null,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+  });
+
+  // Workflow: List accessible projects
+  if ((m = match(config, "get", "/api/workflow/projects"))) {
+    if (!auth) error("Unauthorized", 401);
+    if (!["university", "industry", "admin"].includes(auth.role)) {
+      error("Workflow is private to universities, industry partners and admin only", 403);
+    }
+    const visible = projects.filter((p) => {
+      if (auth.role === "admin") return true;
+      if (auth.role === "university") return p.university === auth.org;
+      return p.industry === auth.org;
+    });
+    return json(
+      config,
+      visible.map((p) => {
+        const ac = workflowAccess(p, auth);
+        const wb = workflowCanvases.find((c) => c.projectId === p.id);
+        return {
+          id: p.id,
+          _id: p.id,
+          issueId: p.issueId,
+          title: p.title,
+          university: p.university,
+          industry: p.industry,
+          status: p.status,
+          funded: p.funded,
+          fundingAmount: p.fundingAmount,
+          deadline: p.deadline,
+          canvasBuilt: Boolean(wb && (wb.objects || []).length > 0),
+          objectCount: (wb?.objects || []).length,
+          suggestionCount: workflowSuggestions.filter((s) => s.projectId === p.id).length,
+          canEdit: ac.canEdit,
+          canSuggest: ac.canSuggest,
+          canManageSuggestions: ac.canManageSuggestions,
+        };
+      })
+    );
+  }
+
+  // Workflow: Project detail with whiteboard + suggestions
+  if ((m = match(config, "get", "/api/workflow/projects/:projectId"))) {
+    if (!auth) error("Unauthorized", 401);
+    const project = findWorkflowProject(m.params.projectId);
+    if (!project) error("Project not found", 404);
+    const ac = workflowAccess(project, auth);
+    if (!ac.canView) error("You are not authorized to access this workflow", 403);
+
+    const wb = workflowCanvases.find((c) => c.projectId === project.id);
+    const suggestions = workflowSuggestions
+      .filter((s) => s.projectId === project.id)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return json(config, {
+      project: {
+        id: project.id,
+        _id: project.id,
+        issueId: project.issueId,
+        title: project.title,
+        university: project.university,
+        industry: project.industry,
+        status: project.status,
+        funded: project.funded,
+        fundingAmount: project.fundingAmount,
+        deadline: project.deadline,
+      },
+      access: ac,
+      canvas: formatMockCanvas(wb),
+      suggestions: suggestions.map(formatMockSuggestion),
+    });
+  }
+
+  // Workflow: University saves the whole whiteboard
+  if ((m = match(config, "put", "/api/workflow/projects/:projectId/canvas"))) {
+    if (!auth) error("Unauthorized", 401);
+    const project = findWorkflowProject(m.params.projectId);
+    if (!project) error("Project not found", 404);
+    const ac = workflowAccess(project, auth);
+    if (!ac.canEdit) error("Only the owning university can edit the workflow canvas", 403);
+
+    const safe = (obj, fallback) =>
+      obj !== undefined && obj !== null ? obj : fallback;
+    const sanitized = Array.isArray(body.objects)
+      ? body.objects
+          .filter((o) => o && ["stroke", "rect", "ellipse", "arrow", "text"].includes(o.kind))
+          .map((o) => ({
+            id: String(o.id || `obj-${Math.random()}`).slice(0, 80),
+            kind: o.kind,
+            x: Number(safe(o.x, 0)) || 0,
+            y: Number(safe(o.y, 0)) || 0,
+            w: Number(safe(o.w, 0)) || 0,
+            h: Number(safe(o.h, 0)) || 0,
+            x2: Number(safe(o.x2, 0)) || 0,
+            y2: Number(safe(o.y2, 0)) || 0,
+            points: Array.isArray(o.points)
+              ? o.points.slice(0, 4000).map((p) => ({ x: Number(p?.x) || 0, y: Number(p?.y) || 0 }))
+              : [],
+            text: String(o.text || "").slice(0, 500),
+            fontSize: Number(safe(o.fontSize, 20)) || 20,
+            color: /^#[0-9a-fA-F]{6}$/.test(String(o.color)) ? String(o.color) : "#0E4B4C",
+            strokeWidth: Number(safe(o.strokeWidth, 3)) || 3,
+          }))
+      : [];
+
+    let wb = workflowCanvases.find((c) => c.projectId === project.id);
+    if (!wb) {
+      wb = {
+        projectId: project.id,
+        universityName: auth.org || auth.name || "",
+        objects: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      workflowCanvases.push(wb);
+    }
+    wb.objects = sanitized;
+    wb.universityName = auth.org || auth.name || "";
+    wb.updatedAt = new Date().toISOString();
+    persist();
+    return json(config, { success: true, canvas: formatMockCanvas(wb) });
+  }
+
+  // Workflow: Business submits a suggestion on the project
+  if ((m = match(config, "post", "/api/workflow/projects/:projectId/suggestions"))) {
+    if (!auth) error("Unauthorized", 401);
+    const project = findWorkflowProject(m.params.projectId);
+    if (!project) error("Project not found", 404);
+    const ac = workflowAccess(project, auth);
+    if (!ac.canSuggest) error("Only businesses involved in this project can submit suggestions", 403);
+    const message = body.message || body.content;
+    if (!message || !String(message).trim()) error("Suggestion message is required", 400);
+
+    const suggestion = {
+      id: `wf-sug-${Date.now()}`,
+      projectId: project.id,
+      universityId: null,
+      universityName: project.university || "",
+      businessId: auth.id,
+      businessName: auth.org || auth.name || "",
+      message: String(message).trim(),
+      status: "Pending",
+      statusUpdatedAt: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    workflowSuggestions.unshift(suggestion);
+    persist();
+    return json(config, { success: true, suggestion: formatMockSuggestion(suggestion) }, 201);
+  }
+
+  // Workflow: University updates suggestion status
+  if ((m = match(config, "patch", "/api/workflow/suggestions/:suggestionId"))) {
+    if (!auth) error("Unauthorized", 401);
+    const allowed = ["Pending", "Reviewed", "Accepted", "Rejected"];
+    if (!allowed.includes(body.status)) {
+      error(`Invalid status. Allowed: ${allowed.join(", ")}`, 400);
+    }
+    const suggestion = workflowSuggestions.find(
+      (s) => s.id === m.params.suggestionId || s._id === m.params.suggestionId
+    );
+    if (!suggestion) error("Suggestion not found", 404);
+    const project = findWorkflowProject(suggestion.projectId);
+    const ac = workflowAccess(project, auth);
+    if (!ac.canManageSuggestions) error("Only the owning university can manage suggestion status", 403);
+
+    suggestion.status = body.status;
+    suggestion.statusUpdatedAt = new Date().toISOString();
+    suggestion.updatedAt = new Date().toISOString();
+    persist();
+    return json(config, { success: true, suggestion: formatMockSuggestion(suggestion) });
   }
 
   error(`No mock for ${config.method} ${config.url}`, 404);

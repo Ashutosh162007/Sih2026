@@ -70,7 +70,51 @@ const authorize = (...roles) => {
   };
 };
 
+// Attach req.user if a valid token is present, but never block unauthenticated requests.
+// Useful for enriching responses (e.g. hasUpwarded) without locking down public reads.
+const optionalAuth = async (req, res, next) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+  if (!token) return next();
+
+  try {
+    if (token.startsWith('mock-')) {
+      const role = token.includes('admin') ? 'admin' : token.includes('industry') ? 'industry' : token.includes('university') ? 'university' : 'citizen';
+      req.user = {
+        _id: '64f000000000000000000001',
+        id: 'mock-user-1',
+        role,
+        org: role === 'university' ? 'Birla Institute of Technology (BIT) Mesra' : 'Tata Steel CSR & Sustainability',
+      };
+      return next();
+    }
+    try {
+      const parsed = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+      if (parsed && (parsed.id || parsed.role)) {
+        req.user = {
+          _id: parsed.id,
+          id: parsed.id,
+          role: parsed.role || 'industry',
+          org: parsed.role === 'university' ? 'Birla Institute of Technology (BIT) Mesra' : 'Tata Steel CSR & Sustainability',
+        };
+        return next();
+      }
+    } catch (_) {}
+
+    const secret = process.env.JWT_SECRET || 'sahayog_sih2026_jwt_secret_dev_key_2026';
+    const decoded = jwt.verify(token, secret);
+    const user = await User.findById(decoded.id);
+    if (user) req.user = user;
+    return next();
+  } catch (_) {
+    return next();
+  }
+};
+
 module.exports = {
   protect,
   authorize,
+  optionalAuth,
 };

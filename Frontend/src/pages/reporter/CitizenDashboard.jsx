@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Sparkles,
   PlusCircle,
   ClipboardList,
   MapPin,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 import StatCard from "../../components/StatCard";
 import ListItemCard from "../../components/ListItemCard";
+import UpwardButton from "../../components/UpwardButton";
 import axiosClient from "../../api/axiosClient";
 import { useAuthStore } from "../../store/authStore";
 import { useLanguageStore } from "../../store/languageStore";
@@ -63,8 +63,8 @@ export default function CitizenDashboard() {
   const totalReported = myIssues.length;
   const inProgressCount = myIssues.filter((i) => i.status === "In progress" || i.status === "Assigned").length;
   const resolvedCount = myIssues.filter((i) => i.status === "Resolved").length;
-  const totalUpvotes = myIssues.reduce((acc, curr) => acc + (curr.upvotes || 0), 0);
-  const impactScore = Math.min(100, Math.round((resolvedCount * 30) + (totalReported * 10) + (totalUpvotes * 2)));
+  const totalUpwards = myIssues.reduce((acc, curr) => acc + (curr.upwardsCount || 0), 0);
+  const impactScore = Math.min(100, Math.round((resolvedCount * 30) + (totalReported * 10) + (totalUpwards * 2)));
 
   return (
     <div className="pb-16 space-y-8">
@@ -169,7 +169,11 @@ export default function CitizenDashboard() {
                 <p className="mt-1 text-[11px] text-slate-500 line-clamp-1">{issue.description}</p>
                 <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
                   <span>📍 {issue.district}, {issue.block}</span>
-                  <span className="font-semibold text-[#0E4B4C]">👍 {issue.upvotes || 0} Upvotes</span>
+                  <UpwardButton
+                    issueId={issue.id || issue._id}
+                    count={issue.upwardsCount}
+                    hasUpwarded={issue.hasUpwarded}
+                  />
                 </div>
               </div>
             ))}
@@ -212,7 +216,14 @@ export default function CitizenDashboard() {
                 </div>
                 <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
                   <span>📍 {issue.district}, {issue.block}</span>
-                  <span className="font-bold text-teal-800">⭐ {issue.severity?.score || 80}/100 Severity</span>
+                  <span className="font-bold text-teal-800">⭐ {issue.severity?.score || 80}/100</span>
+                </div>
+                <div className="mt-2 flex justify-end">
+                  <UpwardButton
+                    issueId={issue.id || issue._id}
+                    count={issue.upwardsCount}
+                    hasUpwarded={issue.hasUpwarded}
+                  />
                 </div>
               </div>
             ))}
@@ -223,9 +234,6 @@ export default function CitizenDashboard() {
       {/* Citizen Guidance Banner */}
       <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-[#D7F5DE]/50 to-teal-50/40 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E4B4C] text-white shadow-md shadow-[#0E4B4C]/25">
-            <Sparkles size={22} />
-          </div>
           <div>
             <h3 className="font-display font-bold text-slate-900 text-base">How Sahayog Resolves Your Civic Reports</h3>
             <p className="text-xs text-slate-600 mt-0.5 max-w-xl">

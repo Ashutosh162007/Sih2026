@@ -1,0 +1,199 @@
+SAHAYOG — NAVIGATION TYPOGRAPHY (SIDEBAR / LEFT MENU GUIDE)
+Every navigation button (word(s)) on the left-hand sidebar,
+role by role, and what each one does.
+
+-------------------------------------------------------------------
+COMMON NOTE
+-------------------------------------------------------------------
+The left navigation is the vertical menu shown inside the app shell.
+Each role gets its own list of buttons. Some buttons are shared
+across roles (State Map, Showcase, Help, Workflow), some belong to
+a single role.
+
+-------------------------------------------------------------------
+1. CITIZENS (Citizen & Community Reporter)
+-------------------------------------------------------------------
+Both citizen and community_reporter roles use the SAME left menu.
+
+  Dashboard
+    Route: /citizen/dashboard
+    What it does: Personal home screen. Summary of your reported
+    issues, their current status (submitted / in solution / resolved),
+    and recent platform activity relevant to you.
+
+  My Reports
+    Route: /my-issues
+    What it does: The full list of every civic issue you reported,
+    with status badges and details. Open any one of them to follow it.
+
+  Report Issue
+    Route: /report
+    What it does: The issue intake wizard. You describe the problem
+    briefly, attach a photo, pick a location, and the AI formulates the
+    formal problem statement + severity before submission.
+
+  State Map
+    Route: /map
+    What it does: Interactive GIS map of the whole state. Browse
+    reported issues by district/block, view severity and category
+    spread, and see where problems are clustered.
+
+  Showcase
+    Route: /showcase
+    What it does: A public gallery of funded innovations - issues that
+    universities solved with industry funding. Shows the project,
+    the funding partner, and an optional CSR impact certificate.
+
+  Help
+    Route: /help
+    What it does: Frequently asked questions, how-to guides, guidance
+    on using the platform, and a form to submit a support inquiry.
+
+-------------------------------------------------------------------
+2. UNIVERSITIES / HEIs
+-------------------------------------------------------------------
+Universities (role: university) get their own left menu.
+
+  Dashboard
+    Route: /university/dashboard
+    What it does: Home screen for the university account. KPIs for
+    analysed problems, team proposals, and funded projects.
+
+  Local Issues
+    Route: /university/queue
+    What it does: The queue of issues AI-routed to your university
+    based on proximity (haversine) and severity. This is where teams
+    pick problems to work on.
+
+  Projects
+    Route: /university/projects
+    What it does: List of your university's projects. Each project has
+    a proposal wizard link where you can draft and submit a solution
+    proposal for industry funding.
+
+  Workflow
+    Route: /workflow
+    What it does: Per-project Visual Workflow Notes. Your team draws a
+    whiteboard (freehand, shapes, arrows, text) documenting the
+    project, and manages suggestions submitted by the industry partner
+    (Pending -> Reviewed -> Accepted/Rejected).
+
+  State Map
+    Route: /map
+    What it does: Interactive GIS map of the state - browse routed
+    issues and their distribution, useful for choosing what to take up.
+
+  Showcase
+    Route: /showcase
+    What it does: Public gallery of funded innovations - showcases your
+    completed/solved projects to the state network and funders.
+
+  Help
+    Route: /help
+    What it does: Platform FAQs, guides and a support inquiry form.
+
+-------------------------------------------------------------------
+3. BUSINESSES / INDUSTRY PARTNERS
+-------------------------------------------------------------------
+Industry partners (role: industry) get their own left menu.
+
+  CSR Dashboard
+    Route: /industry/dashboard
+    What it does: Home screen for the industry account. CSR/ESG
+    analytics for your involved projects - funded amount, milestones,
+    and social impact tracked.
+
+  Proposals
+    Route: /industry/queue
+    What it does: The proposals submitted by universities awaiting your
+    decision. Review each problem + proposed solution and either fund
+    it (with a deadline & milestones) or reject it.
+
+  Funded
+    Route: /industry/projects
+    What it does: List of the projects your organisation is currently
+    funding, with progress and milestone tracking.
+
+  Workflow
+    Route: /workflow
+    What it does: Per-project Visual Workflow Notes. You can VIEW the
+    university's whiteboard canvas and submit SUGGESTIONS (notes to
+    the university team) but cannot draw on it yourself.
+
+  State Map
+    Route: /map
+    What it does: Interactive GIS map of the state - browse the spread
+    of civic issues to guide CSR priorities.
+
+  Showcase
+    Route: /showcase
+    What it does: Public gallery of funded innovations - includes your
+    funded projects and CSR impact certificates.
+
+  Help
+    Route: /help
+    What it does: Platform FAQs, guides and a support inquiry form.
+
+-------------------------------------------------------------------
+4. ADMIN / GOVT OVERSIGHT
+-------------------------------------------------------------------
+Admins (role: admin) represent government oversight. Their menu is
+focused on monitoring and governance.
+
+  Analytics
+    Route: /admin/dashboard
+    What it does: Government dashboard with KPIs, district filter,
+    reported vs resolved bar chart and category pie chart. Includes
+    CSV export and a printable summary report.
+
+  Approvals
+    Route: /admin/verify-accounts
+    What it does: Approve or reject pending account sign-ups
+    (universities and industry partners) before they can operate
+    on the platform.
+
+  Workflow
+    Route: /workflow
+    What it does: Per-project Visual Workflow Notes - VIEW ONLY.
+    Admin can inspect any project's whiteboard canvas and the
+    suggestions exchange, but cannot draw or manage suggestions.
+
+  State Map
+    Route: /map
+    What it does: Interactive GIS map of the whole state - governance
+    view of issue density, categories and severity across districts.
+
+  Help
+    Route: /help
+    What it does: Platform FAQs, guides and a support inquiry form.
+
+  NOTE: Showcase is intentionally NOT shown to admins.
+
+-------------------------------------------------------------------
+5. COMMON / OUTSIDE THE SIDEBAR
+-------------------------------------------------------------------
+These screens exist outside the left role menus but are part of the
+shell experience:
+
+  Profile (top-right avatar)  Route: /profile
+    Your account details, organisation info, and editable profile.
+  Sign out (top-right)        Returns to the public home page.
+  Workflow                    Appears for university, industry & admin.
+
+-------------------------------------------------------------------
+NAVIGATION WORDS (translated buttons, EN / हिंदी / खोरठा)
+-------------------------------------------------------------------
+  Dashboard             - डैशबोर्ड               - डैशबोर्ड
+  My Reports            - मेरी रिपोर्ट            - हमर रिपोर्ट
+  Report Issue          - समस्या दर्ज करें        - समस्या दर्ज करा
+  State Map             - राज्य नक्शा            - राज्य नक्शा
+  Showcase              - शोकेस                  - शोकेस
+  Help                  - सहायता                 - मदद
+  Local Issues          - स्थानीय समस्याएं       - स्थानीय समस्या
+  Projects              - परियोजनाएं             - प्रोजेक्ट
+  Workflow              - वर्कफ़्लो              - वर्कफ़्लो
+  CSR Dashboard         - CSR डैशबोर्ड           - CSR डैशबोर्ड
+  Proposals             - प्रस्ताव               - प्रस्ताव
+  Funded                - स्वीकृत                - स्वीकृत
+  Analytics             - विश्लेषण               - विश्लेषण
+  Approvals             - अनुमोदन                - अनुमोदन

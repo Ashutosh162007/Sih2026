@@ -1,4 +1,5 @@
 const Issue = require('../models/Issue');
+const IssueUpward = require('../models/IssueUpward');
 const Notification = require('../models/Notification');
 const RoutingAssignment = require('../models/RoutingAssignment');
 const { analyzeProblemWithAI } = require('../services/aiService');
@@ -176,6 +177,8 @@ const createIssue = async (req, res, next) => {
       assignee: issue.assignee,
       timeline: issue.timeline,
       createdAt: issue.createdAt,
+      upwardsCount: issue.upwardsCount || 0,
+      hasUpwarded: false,
     };
 
     res.status(201).json(responseData);
@@ -212,7 +215,7 @@ const getIssues = async (req, res, next) => {
       });
     }
 
-    const formatted = issues.map((i) => ({
+    let formatted = issues.map((i) => ({
       id: i._id,
       _id: i._id,
       title: i.title,
@@ -234,7 +237,14 @@ const getIssues = async (req, res, next) => {
       assignee: i.assignee,
       timeline: i.timeline,
       createdAt: i.createdAt,
+      upwardsCount: i.upwardsCount || 0,
     }));
+
+    // Enrich with hasUpwarded if user is authenticated
+    const userId = req.user?._id;
+    if (userId && formatted.length > 0) {
+      formatted = await enrichIssuesWithUpwards(formatted, userId);
+    }
 
     res.json(formatted);
   } catch (err) {
@@ -252,7 +262,7 @@ const getIssueById = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
-    res.json({
+    let issueObj = {
       id: issue._id,
       _id: issue._id,
       title: issue.title,
@@ -275,7 +285,16 @@ const getIssueById = async (req, res, next) => {
       assignee: issue.assignee,
       timeline: issue.timeline,
       createdAt: issue.createdAt,
-    });
+      upwardsCount: issue.upwardsCount || 0,
+    };
+
+    // Enrich with hasUpwarded if user is authenticated
+    const userId = req.user?._id;
+    if (userId) {
+      issueObj = await enrichIssueWithUpwards(issueObj, userId);
+    }
+
+    res.json(issueObj);
   } catch (err) {
     next(err);
   }
@@ -377,6 +396,141 @@ const submitFeedback = async (req, res, next) => {
   }
 };
 
+// Helper: enrich a single issue object with upwardsCount + hasUpwarded
+async function enrichIssueWithUpwards(issueObj, userId) {
+  const upwardsCount = issueObj.upwardsCount || 0;
+  let hasUpwarded = false;
+  if (userId) {
+    const userUpward = await IssueUpward.findOne({ issueId: issueObj._id, userId });
+    hasUpwarded = !!userUpward;
+  }
+  return { ...issueObj, upwardsCount, hasUpwarded };
+}
+
+// Helper: enrich an array of issue objects
+async function enrichIssuesWithUpwards(issueArray, userId) {
+  if (!userId || issueArray.length === 0) {
+    return issueArray.map((i) => ({ ...i, upwardsCount: i.upwardsCount || 0, hasUpwarded: false }));
+  }
+  const upwardDocs = await IssueUpward.find({
+    issueId: { $in: issueArray.map((i) => i._id) },
+    userId,
+  }).lean();
+  const upwardSet = new Set(upwardDocs.map((d) => String(d.issueId)));
+  return issueArray.map((i) => ({
+    ...i,
+    upwardsCount: i.upwardsCount || 0,
+    hasUpwarded: upwardSet.has(String(i._id)),
+  }));
+}
+
+// @desc    Add an Upward from the current user to an issue
+// @route   POST /api/issues/:id/upward
+// @access  Private
+// Semantics: idempotent add — repeated adds are no-ops (unique index prevents duplicates).
+const addUpward = async (req, res, next) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    const userId = req.user._id;
+
+    // Insert upward; catch duplicate-key races (double-click, parallel requests, retries)
+    try {
+      await IssueUpward.create({ issueId: issue._id, userId });
+    } catch (dupErr) {
+      if (dupErr.code === 11000) {
+        const updatedIssue = await Issue.findById(issue._id);
+        return res.json({
+          success: true,
+          upwardsCount: updatedIssue.upwardsCount || 0,
+          hasUpwarded: true,
+        });
+      }
+      throw dupErr;
+    }
+
+    // Atomic increment only when a new record was actually created
+    await Issue.findByIdAndUpdate(issue._id, { $inc: { upwardsCount: 1 } });
+    const updatedIssue = await Issue.findById(issue._id);
+    return res.json({
+      success: true,
+      upwardsCount: updatedIssue.upwardsCount,
+      hasUpwarded: true,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Remove the current user's Upward from an issue
+// @route   DELETE /api/issues/:id/upward
+// @access  Private
+// Semantics: idempotent remove — repeated removes are no-ops.
+const removeUpward = async (req, res, next) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    const userId = req.user._id;
+    const existing = await IssueUpward.findOne({ issueId: issue._id, userId });
+
+    if (!existing) {
+      // Nothing to remove
+      return res.json({
+        success: true,
+        upwardsCount: issue.upwardsCount || 0,
+        hasUpwarded: false,
+      });
+    }
+
+    await IssueUpward.deleteOne({ _id: existing._id });
+    await Issue.findByIdAndUpdate(
+      issue._id,
+      { $inc: { upwardsCount: -1 } },
+      { runValidators: true }
+    );
+    const updatedIssue = await Issue.findById(issue._id);
+    return res.json({
+      success: true,
+      upwardsCount: Math.max(0, updatedIssue.upwardsCount),
+      hasUpwarded: false,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get upwards status for current user on an issue
+// @route   GET /api/issues/:id/upwards
+// @access  Public (but hasUpwarded only meaningful when authenticated)
+const getUpwards = async (req, res, next) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    let hasUpwarded = false;
+    if (req.user?._id) {
+      const userUpward = await IssueUpward.findOne({ issueId: issue._id, userId: req.user._id });
+      hasUpwarded = !!userUpward;
+    }
+
+    res.json({
+      success: true,
+      upwardsCount: issue.upwardsCount || 0,
+      hasUpwarded,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   previewAI,
   createIssue,
@@ -384,4 +538,7 @@ module.exports = {
   getIssueById,
   updateIssueStatus,
   submitFeedback,
+  addUpward,
+  removeUpward,
+  getUpwards,
 };

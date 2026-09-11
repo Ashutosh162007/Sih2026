@@ -12,6 +12,7 @@ import {
   Award,
   User,
   Compass,
+  Workflow,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS } from "../lib/constants";
 import { useAuthStore } from "../store/authStore";
@@ -45,6 +46,7 @@ export default function Sidebar() {
       { to: "/university/dashboard", label: t("navUniDashboard"), icon: LayoutDashboard },
       { to: "/university/queue", label: t("navCampusQueue"), icon: MapPin },
       { to: "/university/projects", label: t("navProjects"), icon: FolderKanban },
+      { to: "/workflow", label: t("navWorkflow"), icon: Workflow },
       { to: "/map", label: t("navGisMap"), icon: Compass },
       { to: "/showcase", label: t("navShowcase"), icon: Award },
       { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
@@ -53,6 +55,7 @@ export default function Sidebar() {
       { to: "/industry/dashboard", label: t("navCsrDashboard"), icon: LayoutDashboard },
       { to: "/industry/queue", label: t("navCsrQueue"), icon: ClipboardList },
       { to: "/industry/projects", label: t("navFundedProjects"), icon: FolderKanban },
+      { to: "/workflow", label: t("navWorkflow"), icon: Workflow },
       { to: "/map", label: t("navGisMap"), icon: Compass },
       { to: "/showcase", label: t("navShowcase"), icon: Award },
       { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
@@ -60,8 +63,8 @@ export default function Sidebar() {
     [ROLES.ADMIN]: [
       { to: "/admin/dashboard", label: t("navAdminAnalytics"), icon: LayoutDashboard },
       { to: "/admin/verify-accounts", label: t("navVerifyAccounts"), icon: ShieldCheck },
+      { to: "/workflow", label: t("navWorkflow"), icon: Workflow },
       { to: "/map", label: t("navGisMap"), icon: MapPin },
-      { to: "/showcase", label: t("navShowcase"), icon: Award },
       { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
     ],
   };

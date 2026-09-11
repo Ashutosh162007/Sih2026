@@ -19,6 +19,7 @@ import IndustryQueue from "./pages/industry/IndustryQueue";
 import IndustryProjects from "./pages/industry/IndustryProjects";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import VerifyAccounts from "./pages/admin/VerifyAccounts";
+import WorkflowPage from "./pages/workflow/WorkflowPage";
 import StateMapExplorer from "./pages/map/StateMapExplorer";
 import UserProfile from "./pages/profile/UserProfile";
 import InnovationShowcase from "./pages/showcase/InnovationShowcase";
@@ -71,6 +72,15 @@ export default function App() {
             <Route element={<ProtectedRoute roles={[ROLES.ADMIN]} />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/verify-accounts" element={<VerifyAccounts />} />
+            </Route>
+
+            {/* Workflow Routes — universities, industry partners & admin */}
+            <Route
+              element={
+                <ProtectedRoute roles={[ROLES.UNIVERSITY, ROLES.INDUSTRY, ROLES.ADMIN]} />
+              }
+            >
+              <Route path="/workflow" element={<WorkflowPage />} />
             </Route>
           </Route>
         </Route>

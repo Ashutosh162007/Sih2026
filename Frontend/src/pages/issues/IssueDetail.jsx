@@ -7,9 +7,9 @@ import {
   Calendar,
   User,
   ArrowRight,
+  ArrowUp,
   CheckCircle2,
   Award,
-  ThumbsUp,
   MessageSquare,
   Send,
   Edit3,
@@ -46,9 +46,9 @@ export default function IssueDetail() {
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
 
-  // Upvote state
-  const [upvotes, setUpvotes] = useState(0);
-  const [hasUpvoted, setHasUpvoted] = useState(false);
+  // Upwards state
+  const [upwardsCount, setUpwardsCount] = useState(0);
+  const [hasUpwarded, setHasUpwarded] = useState(false);
 
   // Edit / Withdraw / Dispute modals
   const [openEditModal, setOpenEditModal] = useState(false);
@@ -63,8 +63,8 @@ export default function IssueDetail() {
     try {
       const res = await axiosClient.get(`/api/issues/${id}`);
       setIssue(res.data);
-      setUpvotes(res.data.upvotes || 0);
-      setHasUpvoted(res.data.upvoters?.includes(user?.id) || false);
+      setUpwardsCount(res.data.upwardsCount || 0);
+      setHasUpwarded(res.data.hasUpwarded || false);
       setEditTitle(res.data.title || "");
       setEditDesc(res.data.description || "");
       setEditLandmark(res.data.landmark || "");
@@ -91,13 +91,13 @@ export default function IssueDetail() {
     );
   }
 
-  async function handleUpvote() {
+  async function handleUpward() {
     try {
-      const { data } = await axiosClient.post(`/api/issues/${issue.id || issue._id}/upvote`);
-      setUpvotes(data.upvotes);
-      setHasUpvoted(data.hasUpvoted);
+      const { data } = await axiosClient.post(`/api/issues/${issue.id || issue._id}/upward`);
+      setUpwardsCount(data.upwardsCount);
+      setHasUpwarded(data.hasUpwarded);
     } catch (err) {
-      console.warn("Upvote error:", err);
+      console.warn("Upward error:", err);
     }
   }
 
@@ -236,20 +236,20 @@ export default function IssueDetail() {
                 )}
               </div>
 
-              {/* Citizen Upvote Button & Actions */}
+              {/* Citizen Upward Button & Actions */}
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={handleUpvote}
+                  onClick={handleUpward}
                   className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                    hasUpvoted
+                    hasUpwarded
                       ? "border-teal-400 bg-[#D7F5DE] text-[#0E4B4C] shadow-xs"
                       : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
-                  title="Upvote if you are also affected by this issue"
+                  title="Upward if you also support this problem statement"
                 >
-                  <ThumbsUp size={14} className={hasUpvoted ? "fill-[#0E4B4C]" : ""} />
-                  <span>{upvotes} Upvotes</span>
+                  <ArrowUp size={14} className={hasUpwarded ? "fill-[#0E4B4C]" : ""} />
+                  <span>{upwardsCount} {upwardsCount === 1 ? "Upward" : "Upwards"}</span>
                 </button>
 
                 {isFundedOrResolved && (

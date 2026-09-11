@@ -5,7 +5,6 @@ import L from "leaflet";
 import {
   Filter,
   MapPin,
-  Sparkles,
   AlertTriangle,
   CheckCircle2,
   Building2,
@@ -13,6 +12,7 @@ import {
   Search,
 } from "lucide-react";
 import axiosClient from "../../api/axiosClient";
+import UpwardButton from "../../components/UpwardButton";
 import {
   JHARKHAND_DISTRICTS,
   JHARKHAND_DISTRICT_COORDS,
@@ -286,16 +286,24 @@ export default function StateMapExplorer() {
 
                 <div className="mt-2.5 flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-400">
                   <span>📍 {issue.district}, {issue.block}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/issues/${issue.id || issue._id}`);
-                    }}
-                    className="font-bold text-[#0E4B4C] hover:underline"
-                  >
-                    View Details →
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <UpwardButton
+                      issueId={issue.id || issue._id}
+                      count={issue.upwardsCount}
+                      hasUpwarded={issue.hasUpwarded}
+                      size="sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/issues/${issue.id || issue._id}`);
+                      }}
+                      className="font-bold text-[#0E4B4C] hover:underline"
+                    >
+                      View Details →
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
