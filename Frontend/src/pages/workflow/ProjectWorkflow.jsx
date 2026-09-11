@@ -266,16 +266,41 @@ export default function ProjectWorkflow() {
                 key={col.key}
                 className={`flex min-w-[280px] max-w-[320px] flex-1 flex-col rounded-2xl border ${meta.ring} bg-slate-50/70 shadow-sm`}
               >
-                <header className={`flex items-center gap-2 rounded-t-2xl ${meta.header} px-4 py-3`}>
+                <header
+                  onClick={canCreate ? () => setModal({ type: "create", column: col.key }) : undefined}
+                  title={canCreate ? `${t("boardAddNote")} → ${t(`board_${col.key}`)}` : undefined}
+                  className={`flex items-center gap-2 rounded-t-2xl px-4 py-3 ${meta.header} ${
+                    canCreate ? "cursor-pointer transition hover:brightness-[0.96]" : ""
+                  }`}
+                >
                   <span className="text-base">{col.emoji}</span>
                   <h3 className="text-sm font-bold">{t(`board_${col.key}`)}</h3>
                   <span className={`ml-1 h-1.5 w-1.5 rounded-full ${meta.dot}`} />
                   <span className="ml-auto text-[11px] font-semibold opacity-70">{cards.length}</span>
+                  {canCreate && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setModal({ type: "create", column: col.key }); }}
+                      className="flex h-5 w-5 items-center justify-center rounded-md opacity-70 transition hover:bg-white/60 hover:opacity-100 cursor-pointer"
+                      aria-label={`${t("boardAddNote")} - ${t(`board_${col.key}`)}`}
+                    >
+                      <Plus size={14} strokeWidth={2.5} />
+                    </button>
+                  )}
                 </header>
                 <div className="flex flex-col gap-3 p-3 min-h-[120px]">
-                  {cards.length === 0 && (
-                    <p className="px-1 py-3 text-center text-[11px] text-slate-400">{t("boardEmptyHint")}</p>
-                  )}
+                  {cards.length === 0 &&
+                    (canCreate ? (
+                      <button
+                        type="button"
+                        onClick={() => setModal({ type: "create", column: col.key })}
+                        className="px-1 py-3 text-center text-[11px] text-slate-400 transition hover:text-teal-700 cursor-pointer"
+                      >
+                        {t("boardEmptyClickHint")}
+                      </button>
+                    ) : (
+                      <p className="px-1 py-3 text-center text-[11px] text-slate-400">{t("boardEmptyHint")}</p>
+                    ))}
                   {cards.map((note, i) => {
                     const authorBiz = note.authorType === "business";
                     return (
@@ -330,6 +355,15 @@ export default function ProjectWorkflow() {
                       </div>
                     );
                   })}
+                  {canCreate && (
+                    <button
+                      type="button"
+                      onClick={() => setModal({ type: "create", column: col.key })}
+                      className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-white/60 px-3 py-2 text-[11px] font-bold text-slate-500 transition hover:border-teal-400 hover:text-teal-700 hover:bg-[#D7F5DE]/40 cursor-pointer"
+                    >
+                      <Plus size={13} strokeWidth={2.5} /> {isBiz ? t("boardAddGuidance") : t("boardAddNote")}
+                    </button>
+                  )}
                 </div>
               </section>
             );
