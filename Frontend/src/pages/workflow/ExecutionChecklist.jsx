@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   ClipboardList,
   Loader2,
-  PackagePlus,
+  Plus,
   PenLine,
   Trash2,
   X,
@@ -29,7 +29,7 @@ export default function ExecutionChecklist({ projectId, user }) {
   const [busy, setBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null); // item being edited
-  const [form, setForm] = useState({ item: "", why: "" });
+  const [form, setForm] = useState({ item: "" });
 
   const authHeaders = { Authorization: `Bearer ${btoa(JSON.stringify({ id: user.id, role: user.role }))}` };
 
@@ -63,7 +63,7 @@ export default function ExecutionChecklist({ projectId, user }) {
     e.preventDefault();
     if (!form.item.trim() || busy) return;
     setBusy(true);
-    const payload = { item: form.item.trim(), why: form.why.trim() };
+    const payload = { item: form.item.trim() };
     try {
       await axiosClient.post(`/api/workflow/projects/${projectId}/checklist`, payload, { headers: authHeaders });
     } catch (err) {
@@ -72,7 +72,7 @@ export default function ExecutionChecklist({ projectId, user }) {
       } catch (_) {}
     }
     setBusy(false);
-    setForm({ item: "", why: "" });
+    setForm({ item: "" });
     setShowForm(false);
     load();
   }
@@ -82,7 +82,7 @@ export default function ExecutionChecklist({ projectId, user }) {
     if (!form.item.trim() || busy || !editing) return;
     setBusy(true);
     const nid = itemId(editing);
-    const payload = { item: form.item.trim(), why: form.why.trim() };
+    const payload = { item: form.item.trim() };
     try {
       await axiosClient.put(`/api/workflow/checklist/${nid}`, payload, { headers: authHeaders });
     } catch (err) {
@@ -92,7 +92,7 @@ export default function ExecutionChecklist({ projectId, user }) {
     }
     setBusy(false);
     setEditing(null);
-    setForm({ item: "", why: "" });
+    setForm({ item: "" });
     load();
   }
 
@@ -126,13 +126,13 @@ export default function ExecutionChecklist({ projectId, user }) {
 
   function openAdd() {
     setEditing(null);
-    setForm({ item: "", why: "" });
+    setForm({ item: "" });
     setShowForm(true);
   }
 
   function openEdit(item) {
     setEditing(item);
-    setForm({ item: item.item || "", why: item.why || "" });
+    setForm({ item: item.item || "" });
     setShowForm(true);
   }
 
@@ -156,9 +156,10 @@ export default function ExecutionChecklist({ projectId, user }) {
           <button
             type="button"
             onClick={openAdd}
-            className="flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-3.5 py-2 text-xs font-bold text-teal-800 hover:bg-teal-100 cursor-pointer"
+            aria-label={t("execChecklistAdd")}
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-teal-400 hover:text-[#0E4B4C]"
           >
-            <PackagePlus size={15} /> {t("execChecklistAdd")}
+            <Plus size={18} />
           </button>
         )}
       </div>
@@ -188,12 +189,24 @@ export default function ExecutionChecklist({ projectId, user }) {
           <Loader2 className="animate-spin text-[#0E4B4C]" size={22} />
         </div>
       ) : total === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 pb-6 pt-12 text-center shadow-sm">
           <ClipboardList className="mx-auto mb-3 h-8 w-8 text-slate-300" />
           <p className="text-sm font-bold text-slate-600">{t("execChecklistEmpty")}</p>
           <p className="mx-auto mt-1 max-w-md text-xs text-slate-400">
             {isUni ? t("execChecklistEmptyUni") : t("execChecklistEmptyBiz")}
           </p>
+          {isUni && (
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={openAdd}
+                aria-label={t("execChecklistAdd")}
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-dashed border-slate-300 bg-white text-slate-400 shadow-sm transition hover:border-teal-400 hover:text-[#0E4B4C]"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <ol className="space-y-3">
@@ -280,10 +293,10 @@ export default function ExecutionChecklist({ projectId, user }) {
       {showForm && (
         <form
           onSubmit={editing ? editItem : createItem}
-          className="mt-4 rounded-2xl border-2 border-dashed border-teal-200 bg-teal-50/40 p-4"
+          className="mt-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
         >
-          <div className="mb-3 flex items-center justify-between">
-            <h4 className="text-sm font-bold text-slate-800">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-bold text-slate-500">
               {editing ? t("execChecklistEditTitle") : t("execChecklistAddTitle")}
             </h4>
             <button
@@ -295,38 +308,24 @@ export default function ExecutionChecklist({ projectId, user }) {
               <X size={16} />
             </button>
           </div>
-          <input
-            type="text"
-            value={form.item}
-            onChange={(e) => setForm((f) => ({ ...f, item: e.target.value }))}
-            placeholder={t("execChecklistItemPh")}
-            maxLength={200}
-            required
-            autoFocus
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm placeholder:text-slate-300 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 outline-none mb-3"
-          />
-          <textarea
-            value={form.why}
-            onChange={(e) => setForm((f) => ({ ...f, why: e.target.value }))}
-            placeholder={t("execChecklistWhyPh")}
-            rows={3}
-            maxLength={1000}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm placeholder:text-slate-300 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 outline-none resize-none mb-3"
-          />
           <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={form.item}
+              onChange={(e) => setForm((f) => ({ ...f, item: e.target.value }))}
+              placeholder={t("execChecklistItemPh")}
+              maxLength={200}
+              required
+              autoFocus
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm placeholder:text-slate-300 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 outline-none"
+            />
             <button
               type="submit"
               disabled={busy || !form.item.trim()}
-              className="flex items-center gap-1.5 rounded-xl bg-[#0E4B4C] px-4 py-2 text-xs font-bold text-white hover:bg-[#0b3b3c] disabled:opacity-50 cursor-pointer"
+              aria-label={editing ? t("execChecklistSave") : t("execChecklistAddItem")}
+              className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-[#0E4B4C] text-white shadow-sm hover:bg-[#0b3b3c] disabled:opacity-40"
             >
-              <PackagePlus size={14} /> {busy ? t("execChecklistSaving") : editing ? t("execChecklistSave") : t("execChecklistAddItem")}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowForm(false); setEditing(null); }}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
-            >
-              {t("execChecklistCancel")}
+              {busy ? <Loader2 size={16} className="animate-spin" /> : <Plus size={18} />}
             </button>
           </div>
         </form>
