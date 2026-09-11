@@ -1,7 +1,5 @@
 from dotenv import load_dotenv
 load_dotenv()
-from langchain_groq import ChatGroq
-from langchain_mistralai import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage
 import sys
@@ -490,9 +488,4 @@ def restructure_complaint(data):
 
     result =  response.content
     return result
-    # print(result)
-    
-    # basic display of how our chatbot will store history so that in further prompts it knows the context 
-
-    # message.append({complaint["user_name"], complaint["complaint_query"]})
 
