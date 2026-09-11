@@ -60,6 +60,8 @@ let workflowNotes = load("sahayog_workflow_notes", [
     id: "wn-1",
     title: "Water Filtration Unit Design",
     content: "Initial design for a low-cost community water filtration system using locally available materials. The prototype uses layered sand, charcoal, and gravel filtration with a capacity of 500L/day. Field testing planned for next week in Tamar block.",
+    column: "ideate",
+    authorType: "university",
     projectId: "prj-201",
     universityId: "u-university",
     universityName: "BIT Mesra",
@@ -72,6 +74,8 @@ let workflowNotes = load("sahayog_workflow_notes", [
     id: "wn-2",
     title: "Community Engagement & Awareness Plan",
     content: "Strategy for engaging local communities in water quality monitoring. Includes training SHG members to use portable testing kits and a WhatsApp-based reporting system for contamination alerts. Partnership with Jharkhand Jal Board pending.",
+    column: "empathize",
+    authorType: "university",
     projectId: "prj-201",
     universityId: "u-university",
     universityName: "BIT Mesra",
@@ -84,6 +88,8 @@ let workflowNotes = load("sahayog_workflow_notes", [
     id: "wn-3",
     title: "Hydraulic Grate Load Testing Results",
     content: "Full load testing completed for modular steel grates. Each unit sustained 60 tonne axle loading with zero permanent deflection. Vortex silt trap efficiency measured at 82%. Ready for civil installation across Kanke police station drain network.",
+    column: "test",
+    authorType: "university",
     projectId: "prj-101",
     universityId: "u-university",
     universityName: "BIT Mesra",
@@ -91,6 +97,34 @@ let workflowNotes = load("sahayog_workflow_notes", [
     createdByName: "Dr. Anita Verma",
     createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
     updatedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+  },
+  {
+    id: "wn-4",
+    title: "Guidance: Geo-tagged progress for ESG reporting",
+    content: "Please include geo-tagged field progress photos in the next monthly CSR report so the ESG dashboard can log on-ground milestones accurately.",
+    column: "ideate",
+    authorType: "business",
+    projectId: "prj-201",
+    universityId: "u-university",
+    universityName: "BIT Mesra",
+    createdBy: "u-industry",
+    createdByName: "Tata Steel CSR & Sustainability",
+    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+  },
+  {
+    id: "wn-5",
+    title: "Guidance: Request weekly telemetry calibration records",
+    content: "Requesting weekly fluoride telemetry calibration records from the IoT dashboard. Also suggest adding a village health worker operator on the deployment roster.",
+    column: "prototype",
+    authorType: "business",
+    projectId: "prj-201",
+    universityId: "u-university",
+    universityName: "BIT Mesra",
+    createdBy: "u-industry",
+    createdByName: "Tata Steel CSR & Sustainability",
+    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
   },
 ]);
 let workflowSuggestions = load("sahayog_workflow_suggestions", [
@@ -1046,17 +1080,18 @@ export async function handleMockRequest(config) {
     });
   }
 
-  // ──────── Workflow Notes ────────
+  // ──────── Workflow Notes (Design Thinking board) ────────
+  const WORKFLOW_COLUMNS = ["empathize", "define", "ideate", "prototype", "test"];
+
   if ((m = match(config, "get", "/api/workflow/notes"))) {
+    if (!auth || auth.role === "admin" || auth.role === "citizen") error("Access denied", 403);
     const projectId = m.query.projectId;
-    let list = workflowNotes.filter((n) => n.projectId === projectId);
-    if (auth?.role === "university") {
-      list = list.filter((n) => n.universityId === auth.id || n.universityId === "u-university");
-    }
+    const list = workflowNotes.filter((n) => n.projectId === projectId);
     return json(config, list);
   }
 
   if ((m = match(config, "get", "/api/workflow/notes/:id"))) {
+    if (!auth || auth.role === "admin" || auth.role === "citizen") error("Access denied", 403);
     const note = workflowNotes.find((n) => n.id === m.params.id || n._id === m.params.id);
     if (!note) error("Note not found", 404);
     return json(config, note);
@@ -1064,10 +1099,15 @@ export async function handleMockRequest(config) {
 
   if ((m = match(config, "post", "/api/workflow/notes"))) {
     if (!auth) error("Unauthorized", 401);
+    if (auth.role === "admin" || auth.role === "citizen") {
+      error("Only universities and businesses can create notes", 403);
+    }
     const note = {
       id: `wn-${Date.now()}`,
       title: body.title,
       content: body.content,
+      column: WORKFLOW_COLUMNS.includes(body.column) ? body.column : "ideate",
+      authorType: auth.role === "industry" ? "business" : "university",
       projectId: body.projectId,
       universityId: auth.id || "u-university",
       universityName: auth.org || "University",
@@ -1082,16 +1122,19 @@ export async function handleMockRequest(config) {
   }
 
   if ((m = match(config, "put", "/api/workflow/notes/:id"))) {
+    if (!auth || auth.role !== "university") error("Only university users can edit notes", 403);
     const note = workflowNotes.find((n) => n.id === m.params.id || n._id === m.params.id);
     if (!note) error("Note not found", 404);
     if (body.title !== undefined) note.title = body.title;
     if (body.content !== undefined) note.content = body.content;
+    if (body.column !== undefined && WORKFLOW_COLUMNS.includes(body.column)) note.column = body.column;
     note.updatedAt = new Date().toISOString();
     persist();
     return json(config, note);
   }
 
   if ((m = match(config, "delete", "/api/workflow/notes/:id"))) {
+    if (!auth || auth.role !== "university") error("Only university users can delete notes", 403);
     const idx = workflowNotes.findIndex((n) => n.id === m.params.id || n._id === m.params.id);
     if (idx === -1) error("Note not found", 404);
     workflowNotes.splice(idx, 1);
@@ -1101,6 +1144,7 @@ export async function handleMockRequest(config) {
 
   // ──────── Workflow Suggestions (note-based) ────────
   if ((m = match(config, "get", "/api/workflow/suggestions"))) {
+    if (!auth || auth.role === "admin" || auth.role === "citizen") error("Access denied", 403);
     let list = [...workflowSuggestions];
     if (m.query.noteId) list = list.filter((s) => s.noteId === m.query.noteId);
     if (m.query.projectId) list = list.filter((s) => s.projectId === m.query.projectId);
@@ -1112,7 +1156,7 @@ export async function handleMockRequest(config) {
   }
 
   if ((m = match(config, "post", "/api/workflow/suggestions"))) {
-    if (!auth) error("Unauthorized", 401);
+    if (!auth || auth.role !== "industry") error("Only industry users can submit suggestions", 403);
     const note = workflowNotes.find((n) => n.id === body.noteId || n._id === body.noteId);
     if (!note) error("Note not found", 404);
     const suggestion = {
@@ -1133,6 +1177,7 @@ export async function handleMockRequest(config) {
   }
 
   if ((m = match(config, "patch", "/api/workflow/suggestions/:id/status"))) {
+    if (!auth || auth.role !== "university") error("Only university users can update suggestion status", 403);
     const suggestion = workflowSuggestions.find((s) => s.id === m.params.id || s._id === m.params.id);
     if (!suggestion) error("Suggestion not found", 404);
     suggestion.status = body.status;

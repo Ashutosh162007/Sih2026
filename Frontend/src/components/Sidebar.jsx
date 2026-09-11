@@ -63,7 +63,6 @@ export default function Sidebar() {
     [ROLES.ADMIN]: [
       { to: "/admin/dashboard", label: t("navAdminAnalytics"), icon: LayoutDashboard },
       { to: "/admin/verify-accounts", label: t("navVerifyAccounts"), icon: ShieldCheck },
-      { to: "/workflow", label: t("navWorkflow"), icon: Workflow },
       { to: "/map", label: t("navGisMap"), icon: MapPin },
       { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
     ],

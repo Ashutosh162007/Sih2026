@@ -45,7 +45,7 @@ export default function ListItemCard({
             {category && <StatusBadge variant="category" label={category} />}
           </div>
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${stage === 5 ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-slate-100 text-slate-600"}`}>
-            {stage === 5 ? "✅ Resolved & Verified" : `Stage ${stage} of 5 · ${stageLabel}`}
+            {stage === 5 ? "✅ Resolved & Verified" : `Stage ${stage} · ${stageLabel}`}
           </span>
         </div>
 

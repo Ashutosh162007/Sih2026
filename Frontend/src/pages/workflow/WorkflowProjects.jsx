@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderKanban, ArrowRight, ClipboardList } from "lucide-react";
+import { FolderKanban, ArrowRight, ClipboardList, Lock } from "lucide-react";
 import axiosClient from "../../api/axiosClient";
 import { useLanguageStore } from "../../store/languageStore";
 import { useAuthStore } from "../../store/authStore";
@@ -14,6 +14,10 @@ export default function WorkflowProjects() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (user?.role === "admin" || user?.role === "citizen") {
+      setLoading(false);
+      return;
+    }
     async function load() {
       setLoading(true);
       try {
@@ -22,8 +26,6 @@ export default function WorkflowProjects() {
           res = await axiosClient.get("/api/university/projects");
         } else if (user?.role === "industry") {
           res = await axiosClient.get("/api/industry/proposals");
-        } else if (user?.role === "admin") {
-          res = await axiosClient.get("/api/university/projects");
         } else {
           res = { data: [] };
         }
@@ -46,6 +48,19 @@ export default function WorkflowProjects() {
     }
     load();
   }, [user?.role]);
+
+  if (user?.role === "admin" || user?.role === "citizen") {
+    return (
+      <div className="pb-16">
+        <h1 className="font-display text-3xl font-bold text-slate-900">{t("navWorkflow")}</h1>
+        <div className="mt-12 flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <Lock size={32} className="mb-3 text-red-400" />
+          <p className="font-semibold text-slate-800">{t("workflowAccessDenied")}</p>
+          <p className="mt-1 text-xs text-slate-400">{t("boardDeniedHint")}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-16">

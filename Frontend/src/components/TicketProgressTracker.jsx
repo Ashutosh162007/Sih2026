@@ -135,7 +135,7 @@ export default function TicketProgressTracker({ issue, project }) {
                 </span>
               ) : (
                 <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200 animate-pulse">
-                  {language === "hi" ? `चरण ${currentStage} / 5` : `Stage ${currentStage} of 5`}
+                  {language === "hi" ? `चरण ${currentStage}` : `Stage ${currentStage}`}
                 </span>
               )}
             </div>
@@ -159,11 +159,13 @@ export default function TicketProgressTracker({ issue, project }) {
           {/* Background Connecting Line */}
           <div className="absolute top-5 left-6 right-6 h-1.5 bg-slate-100 -z-0 rounded-full" />
           
-          {/* Active Filled Progress Line */}
+          {/* Active Filled Progress Line (animated grow + live shimmer) */}
           <div
-            className={`absolute top-5 left-6 h-1.5 rounded-full transition-all duration-700 -z-0 ${isResolved ? "bg-emerald-600" : "bg-gradient-to-r from-[#0E4B4C] via-teal-600 to-emerald-500"}`}
+            className={`progress-grow absolute top-5 left-6 h-1.5 rounded-full overflow-hidden -z-0 ${isResolved ? "bg-emerald-600" : "bg-gradient-to-r from-[#0E4B4C] via-teal-600 to-emerald-500"}`}
             style={{ width: isResolved ? "100%" : `${Math.min(100, Math.max(0, ((currentStage - 1) / 4) * 100))}%` }}
-          />
+          >
+            <div className="progress-shimmer absolute inset-y-0 left-0 w-1/3 rounded-full bg-white/40" />
+          </div>
 
           {/* Step Nodes */}
           <div className="relative z-10 grid grid-cols-5 gap-1 text-center">
@@ -182,7 +184,7 @@ export default function TicketProgressTracker({ issue, project }) {
                       isCompleted
                         ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
                         : isCurrent
-                        ? "bg-amber-500 text-white ring-4 ring-amber-100 shadow-lg shadow-amber-500/30 scale-110"
+                        ? "bg-amber-500 text-white ring-4 ring-amber-100 shadow-lg shadow-amber-500/30 scale-110 animate-pulse"
                         : "bg-white border-2 border-slate-200 text-slate-400"
                     }`}
                   >

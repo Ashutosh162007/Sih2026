@@ -63,8 +63,8 @@ export default function App() {
               <Route path="/university/projects/:id/proposal" element={<ProposalWizard />} />
             </Route>
 
-            {/* Workflow Routes (university, industry, admin) */}
-            <Route element={<ProtectedRoute roles={[ROLES.UNIVERSITY, ROLES.INDUSTRY, ROLES.ADMIN]} />}>
+            {/* Workflow Board (university + industry only) */}
+            <Route element={<ProtectedRoute roles={[ROLES.UNIVERSITY, ROLES.INDUSTRY]} />}>
               <Route path="/workflow" element={<WorkflowProjects />} />
               <Route path="/workflow/:id" element={<ProjectWorkflow />} />
             </Route>
@@ -82,13 +82,13 @@ export default function App() {
               <Route path="/admin/verify-accounts" element={<VerifyAccounts />} />
             </Route>
 
-            {/* Workflow Routes — universities, industry partners & admin */}
+            {/* Workflow canvas (university + industry only) */}
             <Route
               element={
-                <ProtectedRoute roles={[ROLES.UNIVERSITY, ROLES.INDUSTRY, ROLES.ADMIN]} />
+                <ProtectedRoute roles={[ROLES.UNIVERSITY, ROLES.INDUSTRY]} />
               }
             >
-              <Route path="/workflow" element={<WorkflowPage />} />
+              <Route path="/workflow/canvas" element={<WorkflowPage />} />
             </Route>
           </Route>
         </Route>

@@ -287,6 +287,26 @@ html.dark textarea.wb-inline-text {
   to   { opacity: 1; transform: scaleY(1); }
 }
 
+/* Live status progress bar: grows from left on mount */
+@keyframes progress-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.progress-grow {
+  transform-origin: left center;
+  animation: progress-grow 1s cubic-bezier(0.4, 0, 0.2, 1) 0.15s both;
+}
+
+/* Live status progress bar: shimmer sweep across the filled track */
+@keyframes progress-shimmer {
+  0%   { transform: translateX(-150%); }
+  60%  { transform: translateX(450%); }
+  100% { transform: translateX(450%); }
+}
+.progress-shimmer {
+  animation: progress-shimmer 2.2s ease-in-out infinite;
+}
+
 /* Tables */
 html.dark table thead {
   background-color: #0d151c !important;

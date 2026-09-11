@@ -2,21 +2,37 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  FileText,
   Plus,
   Pencil,
   Trash2,
-  MessageSquare,
-  Send,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Eye,
+  X,
+  StickyNote,
+  Lock,
 } from "lucide-react";
 import axiosClient from "../../api/axiosClient";
 import { useAuthStore } from "../../store/authStore";
 import { useLanguageStore } from "../../store/languageStore";
 import { handleMockRequest } from "../../api/mockAdapter";
+
+const COLUMNS = [
+  { key: "empathize", emoji: "🧠" },
+  { key: "define", emoji: "🎯" },
+  { key: "ideate", emoji: "💡" },
+  { key: "prototype", emoji: "🛠️" },
+  { key: "test", emoji: "🧪" },
+];
+
+const META = {
+  empathize: { header: "bg-violet-100 text-violet-800", dot: "bg-violet-500", ring: "border-violet-200" },
+  define: { header: "bg-sky-100 text-sky-800", dot: "bg-sky-500", ring: "border-sky-200" },
+  ideate: { header: "bg-amber-100 text-amber-800", dot: "bg-amber-400", ring: "border-amber-200" },
+  prototype: { header: "bg-orange-100 text-orange-800", dot: "bg-orange-500", ring: "border-orange-200" },
+  test: { header: "bg-emerald-100 text-emerald-800", dot: "bg-emerald-500", ring: "border-emerald-200" },
+};
+
+function noteId(note) {
+  return note?._id || note?.id;
+}
 
 export default function ProjectWorkflow() {
   const { id: projectId } = useParams();
@@ -24,22 +40,18 @@ export default function ProjectWorkflow() {
   const user = useAuthStore((s) => s.user);
   const { t } = useLanguageStore();
 
+  const role = user?.role;
+  const denied = role === "admin" || role === "citizen" || !user;
+  const isUni = role === "university";
+  const isBiz = role === "industry";
+  const canCreate = isUni || isBiz;
+  const canEdit = isUni;
+
   const [notes, setNotes] = useState([]);
-  const [suggestions, setSuggestions] = useState([]);
+  const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedNote, setSelectedNote] = useState(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingNote, setEditingNote] = useState(null);
-  const [showSuggestionForm, setShowSuggestionForm] = useState(null);
-
-  const [noteTitle, setNoteTitle] = useState("");
-  const [noteContent, setNoteContent] = useState("");
-  const [suggestionMsg, setSuggestionMsg] = useState("");
+  const [modal, setModal] = useState(null); // {type:"chooser"} | {type:"create",column} | {type:"edit",note} | {type:"view",note}
   const [submitting, setSubmitting] = useState(false);
-
-  const canEdit = user?.role === "university" || user?.role === "admin";
-  const canSuggest = user?.role === "industry";
-  const canViewSuggestions = user?.role === "university" || user?.role === "admin";
 
   useEffect(() => {
     async function load() {
@@ -48,6 +60,7 @@ export default function ProjectWorkflow() {
         const res = await axiosClient.get(`/api/workflow/notes?projectId=${projectId}`);
         if (Array.isArray(res.data)) {
           setNotes(res.data);
+          await loadProject();
           setLoading(false);
           return;
         }
@@ -61,426 +74,522 @@ export default function ProjectWorkflow() {
         if (Array.isArray(mockRes?.data)) setNotes(mockRes.data);
       } catch (_) {}
 
+      await loadProject();
       setLoading(false);
     }
     load();
-  }, [projectId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, role]);
 
-  useEffect(() => {
-    if (!selectedNote || !canViewSuggestions) return;
-    async function loadSuggestions() {
-      try {
-        const res = await axiosClient.get(`/api/workflow/suggestions?noteId=${selectedNote._id || selectedNote.id}`);
-        if (Array.isArray(res.data)) setSuggestions(res.data);
-      } catch (e) {
-        try {
-          const mockRes = await handleMockRequest({
-            method: "get",
-            url: `/api/workflow/suggestions?noteId=${selectedNote._id || selectedNote.id}`,
-          });
-          if (Array.isArray(mockRes?.data)) setSuggestions(mockRes.data);
-        } catch (_) {}
-      }
-    }
-    loadSuggestions();
-  }, [selectedNote, canViewSuggestions]);
-
-  async function handleCreateNote(e) {
-    e.preventDefault();
-    setSubmitting(true);
+  async function loadProject() {
     try {
-      await axiosClient.post("/api/workflow/notes", {
-        title: noteTitle,
-        content: noteContent,
-        projectId,
+      const res = await axiosClient.get(`/api/workflow/projects/${projectId}`);
+      if (res.data?.project) {
+        setProject(res.data.project);
+        return;
+      }
+    } catch (e) {}
+    try {
+      const mockRes = await handleMockRequest({
+        method: "get",
+        url: `/api/workflow/projects/${projectId}`,
+        headers: { Authorization: `Bearer ${btoa(JSON.stringify({ id: user.id, role: user.role }))}` },
       });
+      if (mockRes?.data?.project) setProject(mockRes.data.project);
+    } catch (_) {}
+  }
+
+  async function reloadNotes() {
+    try {
+      const res = await axiosClient.get(`/api/workflow/notes?projectId=${projectId}`);
+      if (Array.isArray(res.data)) {
+        setNotes(res.data);
+        return;
+      }
+    } catch (e) {}
+    try {
+      const mockRes = await handleMockRequest({
+        method: "get",
+        url: `/api/workflow/notes?projectId=${projectId}`,
+      });
+      if (Array.isArray(mockRes?.data)) setNotes(mockRes.data);
+    } catch (_) {}
+  }
+
+  async function createNote(column, title, content) {
+    setSubmitting(true);
+    const payload = { title: title || content.trim().slice(0, 60), content: content.trim(), column, projectId };
+    try {
+      await axiosClient.post("/api/workflow/notes", payload);
     } catch (e) {
       try {
         await handleMockRequest({
           method: "post",
           url: "/api/workflow/notes",
-          data: { title: noteTitle, content: noteContent, projectId },
+          data: payload,
           headers: { Authorization: `Bearer ${btoa(JSON.stringify({ id: user.id, role: user.role }))}` },
         });
       } catch (_) {}
     }
-    setNoteTitle("");
-    setNoteContent("");
-    setShowCreateForm(false);
     setSubmitting(false);
+    setModal(null);
     reloadNotes();
   }
 
-  async function handleUpdateNote(e) {
-    e.preventDefault();
+  async function updateNote(note, title, content, column) {
     setSubmitting(true);
+    const nid = noteId(note);
+    const payload = { title, content, column };
     try {
-      await axiosClient.put(`/api/workflow/notes/${editingNote._id || editingNote.id}`, {
-        title: noteTitle,
-        content: noteContent,
-      });
+      await axiosClient.put(`/api/workflow/notes/${nid}`, payload);
     } catch (e) {
       try {
         await handleMockRequest({
           method: "put",
-          url: `/api/workflow/notes/${editingNote._id || editingNote.id}`,
-          data: { title: noteTitle, content: noteContent },
+          url: `/api/workflow/notes/${nid}`,
+          data: payload,
           headers: { Authorization: `Bearer ${btoa(JSON.stringify({ id: user.id, role: user.role }))}` },
         });
       } catch (_) {}
     }
-    setNoteTitle("");
-    setNoteContent("");
-    setEditingNote(null);
     setSubmitting(false);
+    setModal(null);
     reloadNotes();
   }
 
-  async function handleDeleteNote(noteId) {
-    if (!confirm("Delete this note?")) return;
+  async function deleteNote(note) {
+    if (!confirm(t("boardDeleteConfirm"))) return;
+    const nid = noteId(note);
     try {
-      await axiosClient.delete(`/api/workflow/notes/${noteId}`);
+      await axiosClient.delete(`/api/workflow/notes/${nid}`);
     } catch (e) {
       try {
         await handleMockRequest({
           method: "delete",
-          url: `/api/workflow/notes/${noteId}`,
+          url: `/api/workflow/notes/${nid}`,
           headers: { Authorization: `Bearer ${btoa(JSON.stringify({ id: user.id, role: user.role }))}` },
         });
       } catch (_) {}
     }
-    if (selectedNote && (selectedNote._id === noteId || selectedNote.id === noteId)) {
-      setSelectedNote(null);
-    }
+    setModal(null);
     reloadNotes();
-  }
-
-  async function handleCreateSuggestion(e) {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await axiosClient.post("/api/workflow/suggestions", {
-        noteId: selectedNote._id || selectedNote.id,
-        message: suggestionMsg,
-      });
-    } catch (e) {
-      try {
-        await handleMockRequest({
-          method: "post",
-          url: "/api/workflow/suggestions",
-          data: { noteId: selectedNote._id || selectedNote.id, message: suggestionMsg },
-          headers: { Authorization: `Bearer ${btoa(JSON.stringify({ id: user.id, role: user.role }))}` },
-        });
-      } catch (_) {}
-    }
-    setSuggestionMsg("");
-    setShowSuggestionForm(null);
-    setSubmitting(false);
-  }
-
-  async function handleSuggestionStatus(suggestionId, status) {
-    try {
-      await axiosClient.patch(`/api/workflow/suggestions/${suggestionId}/status`, { status });
-    } catch (e) {
-      try {
-        await handleMockRequest({
-          method: "patch",
-          url: `/api/workflow/suggestions/${suggestionId}/status`,
-          data: { status },
-          headers: { Authorization: `Bearer ${btoa(JSON.stringify({ id: user.id, role: user.role }))}` },
-        });
-      } catch (_) {}
-    }
-    setSuggestions((prev) =>
-      prev.map((s) => (s._id === suggestionId || s.id === suggestionId ? { ...s, status } : s))
-    );
-  }
-
-  function reloadNotes() {
-    async function load() {
-      try {
-        const res = await axiosClient.get(`/api/workflow/notes?projectId=${projectId}`);
-        if (Array.isArray(res.data)) setNotes(res.data);
-      } catch (e) {
-        try {
-          const mockRes = await handleMockRequest({
-            method: "get",
-            url: `/api/workflow/notes?projectId=${projectId}`,
-          });
-          if (Array.isArray(mockRes?.data)) setNotes(mockRes.data);
-        } catch (_) {}
-      }
-    }
-    load();
-  }
-
-  function startEdit(note) {
-    setEditingNote(note);
-    setNoteTitle(note.title);
-    setNoteContent(note.content);
-    setShowCreateForm(false);
   }
 
   function formatDate(d) {
     if (!d) return "";
-    return new Date(d).toLocaleDateString("en-IN", {
+    return new Date(d).toLocaleString("en-IN", {
       day: "numeric",
       month: "short",
-      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
   }
 
-  const statusColor = {
-    Pending: "bg-amber-50 text-amber-700 border-amber-200",
-    Reviewed: "bg-blue-50 text-blue-700 border-blue-200",
-    Accepted: "bg-green-50 text-green-700 border-green-200",
-    Rejected: "bg-red-50 text-red-700 border-red-200",
-  };
+  if (denied) {
+    return (
+      <div className="pb-16">
+        <div className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-teal-700 transition mb-4">
+          <button type="button" onClick={() => navigate("/workflow")} className="flex items-center gap-2 cursor-pointer">
+            <ArrowLeft size={16} /> {t("boardBack")}
+          </button>
+        </div>
+        <div className="mt-16 flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <Lock size={32} className="mb-3 text-red-400" />
+          <h2 className="font-display text-lg font-bold text-slate-900">{t("workflowAccessDenied")}</h2>
+          <p className="mt-1 max-w-md text-xs text-slate-400">{t("boardDeniedHint")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const grouped = Object.fromEntries(COLUMNS.map((c) => [c.key, []]));
+  notes.forEach((n) => {
+    const key = COLUMNS.some((c) => c.key === n.column) ? n.column : "ideate";
+    grouped[key].push(n);
+  });
 
   return (
     <div className="pb-16">
-      <button
-        type="button"
-        onClick={() => navigate("/workflow")}
-        className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-teal-700 transition mb-4 cursor-pointer"
-      >
-        <ArrowLeft size={16} /> Back to Projects
-      </button>
+      <div className="flex items-center justify-between mb-4">
+        <button
+          type="button"
+          onClick={() => navigate("/workflow")}
+          className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-teal-700 transition cursor-pointer"
+        >
+          <ArrowLeft size={16} /> {t("boardBack")}
+        </button>
+      </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-2xl font-bold text-slate-900">{t("workflowNotes")}</h1>
-        {canEdit && (
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold text-slate-900 truncate">
+            {project?.title || t("boardTitle")}
+          </h1>
+          {(project?.university || project?.industry) && (
+            <p className="mt-1 text-xs text-slate-500">
+              {project?.university && <span className="font-semibold text-teal-700">{project.university}</span>}
+              {project?.university && project?.industry && <span className="mx-2 text-slate-300">&middot;</span>}
+              {project?.industry && <span className="font-semibold text-amber-700">{project.industry}</span>}
+            </p>
+          )}
+        </div>
+
+        {canCreate && (
           <button
             type="button"
-            onClick={() => { setShowCreateForm(true); setEditingNote(null); setNoteTitle(""); setNoteContent(""); }}
+            onClick={() => setModal({ type: "chooser" })}
             className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-[#0E4B4C]/20 hover:bg-[#0b3b3c] cursor-pointer"
           >
-            <Plus size={15} /> {t("workflowCreateNote")}
+            <Plus size={15} /> {isBiz ? t("boardAddGuidance") : t("boardNewNote")}
           </button>
         )}
       </div>
 
-      {loading && (
-        <div className="flex items-center justify-center py-12">
+      {isBiz && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+          <Lock size={14} className="mt-0.5 shrink-0" />
+          <p>{t("boardViewOnlyBiz")}</p>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-200 border-t-teal-600" />
         </div>
-      )}
-
-      {!loading && notes.length === 0 && !showCreateForm && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500 shadow-sm">
-          <FileText size={32} className="mx-auto mb-3 text-teal-600" />
-          <p className="font-semibold text-slate-800">{t("workflowNoNotes")}</p>
-          <p className="mt-1 text-xs text-slate-400">{t("workflowNoNotesHint")}</p>
-        </div>
-      )}
-
-      {(showCreateForm || editingNote) && (
-        <form
-          onSubmit={editingNote ? handleUpdateNote : handleCreateNote}
-          className="mb-6 rounded-2xl border border-teal-200 bg-white p-5 shadow-sm"
-        >
-          <h3 className="text-sm font-bold text-slate-900 mb-3">
-            {editingNote ? t("workflowEditNote") : t("workflowCreateNote")}
-          </h3>
-          <input
-            type="text"
-            value={noteTitle}
-            onChange={(e) => setNoteTitle(e.target.value)}
-            placeholder={t("workflowNoteTitle")}
-            required
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-teal-400 focus:ring-1 focus:ring-teal-400 outline-none mb-3"
-          />
-          <textarea
-            value={noteContent}
-            onChange={(e) => setNoteContent(e.target.value)}
-            placeholder={t("workflowNoteContent")}
-            required
-            rows={6}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-teal-400 focus:ring-1 focus:ring-teal-400 outline-none resize-none mb-3"
-          />
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-xl bg-[#0E4B4C] px-4 py-2 text-xs font-bold text-white hover:bg-[#0b3b3c] disabled:opacity-50 cursor-pointer"
-            >
-              {submitting ? "Saving..." : editingNote ? t("workflowSave") : t("workflowCreate")}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowCreateForm(false); setEditingNote(null); setNoteTitle(""); setNoteContent(""); }}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
-            >
-              {t("workflowCancel")}
-            </button>
-          </div>
-        </form>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Notes List */}
-        <div className="lg:col-span-1 space-y-2">
-          {notes.map((note) => (
-            <div
-              key={note._id || note.id}
-              onClick={() => setSelectedNote(note)}
-              className={`rounded-xl border p-4 cursor-pointer transition ${
-                selectedNote && (selectedNote._id === note._id || selectedNote.id === note.id)
-                  ? "border-teal-400 bg-teal-50 shadow-sm"
-                  : "border-slate-200 bg-white hover:border-teal-300 hover:shadow-sm"
-              }`}
-            >
-              <h4 className="text-sm font-bold text-slate-900 truncate">{note.title}</h4>
-              <p className="mt-1 text-xs text-slate-500 line-clamp-2">{note.content}</p>
-              <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
-                <span>{note.universityId?.name || note.createdByName || "University"}</span>
-                <span>{formatDate(note.createdAt)}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Note Detail */}
-        <div className="lg:col-span-2">
-          {!selectedNote && notes.length > 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-400">
-              <Eye size={28} className="mx-auto mb-2" />
-              <p>{t("workflowSelectNote")}</p>
-            </div>
-          )}
-
-          {selectedNote && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">{selectedNote.title}</h2>
-                  <p className="mt-1 text-xs text-slate-400">
-                    by {selectedNote.universityId?.name || selectedNote.createdByName || "University"} &middot; {formatDate(selectedNote.createdAt)}
-                  </p>
-                </div>
-                {canEdit && (
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(selectedNote)}
-                      className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50 cursor-pointer"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteNote(selectedNote._id || selectedNote.id)}
-                      className="rounded-lg border border-red-200 p-2 text-red-500 hover:bg-red-50 cursor-pointer"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="mt-4 whitespace-pre-wrap text-sm text-slate-700 leading-relaxed">
-                {selectedNote.content}
-              </div>
-
-              {/* Business Suggest Change */}
-              {canSuggest && (
-                <div className="mt-6 border-t border-slate-100 pt-4">
-                  {showSuggestionForm === (selectedNote._id || selectedNote.id) ? (
-                    <form onSubmit={handleCreateSuggestion} className="space-y-3">
-                      <p className="text-xs font-semibold text-slate-700">{t("workflowSuggestChange")}</p>
-                      <textarea
-                        value={suggestionMsg}
-                        onChange={(e) => setSuggestionMsg(e.target.value)}
-                        placeholder={t("workflowSuggestPlaceholder")}
-                        required
-                        rows={3}
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none resize-none"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          type="submit"
-                          disabled={submitting}
-                          className="flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white hover:bg-amber-600 disabled:opacity-50 cursor-pointer"
-                        >
-                          <Send size={13} /> {t("workflowSubmitSuggestion")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => { setShowSuggestionForm(null); setSuggestionMsg(""); }}
-                          className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
-                        >
-                          {t("workflowCancel")}
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowSuggestionForm(selectedNote._id || selectedNote.id)}
-                      className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-100 cursor-pointer"
-                    >
-                      <MessageSquare size={14} /> {t("workflowSuggestChange")}
-                    </button>
+      ) : (
+        <div className="flex items-start gap-4 overflow-x-auto pb-6 pt-1">
+          {COLUMNS.map((col, ci) => {
+            const meta = META[col.key];
+            const cards = grouped[col.key] || [];
+            return (
+              <section
+                key={col.key}
+                className={`flex min-w-[280px] max-w-[320px] flex-1 flex-col rounded-2xl border ${meta.ring} bg-slate-50/70 shadow-sm`}
+              >
+                <header className={`flex items-center gap-2 rounded-t-2xl ${meta.header} px-4 py-3`}>
+                  <span className="text-base">{col.emoji}</span>
+                  <h3 className="text-sm font-bold">{t(`board_${col.key}`)}</h3>
+                  <span className={`ml-1 h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+                  <span className="ml-auto text-[11px] font-semibold opacity-70">{cards.length}</span>
+                </header>
+                <div className="flex flex-col gap-3 p-3 min-h-[120px]">
+                  {cards.length === 0 && (
+                    <p className="px-1 py-3 text-center text-[11px] text-slate-400">{t("boardEmptyHint")}</p>
                   )}
-                </div>
-              )}
-
-              {/* Suggestions (for university/admin) */}
-              {canViewSuggestions && suggestions.length > 0 && (
-                <div className="mt-6 border-t border-slate-100 pt-4">
-                  <h4 className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-                    <MessageSquare size={13} /> {t("workflowSuggestions")} ({suggestions.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {suggestions.map((s) => (
-                      <div key={s._id || s.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-slate-800">
-                              {s.businessName || s.businessId?.name || "Industry Partner"}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-600">{s.message}</p>
-                            <p className="mt-1 text-[11px] text-slate-400">{formatDate(s.createdAt)}</p>
-                          </div>
-                          <span className={`shrink-0 ml-2 rounded-lg border px-2 py-0.5 text-[11px] font-semibold ${statusColor[s.status] || "bg-slate-100 text-slate-600"}`}>
-                            {s.status}
-                          </span>
-                        </div>
-                        {(s.status === "Pending" || s.status === "Reviewed") && canEdit && (
-                          <div className="mt-2 flex gap-1.5">
+                  {cards.map((note, i) => {
+                    const authorBiz = note.authorType === "business";
+                    return (
+                      <div
+                        key={noteId(note)}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setModal(canEdit ? { type: "edit", note } : { type: "view", note })}
+                        onKeyDown={(e) => e.key === "Enter" && setModal(canEdit ? { type: "edit", note } : { type: "view", note })}
+                        className={`group relative w-full cursor-pointer rounded-md bg-gradient-to-br from-[#FFF7CF] to-[#FDEFB2] p-3 text-left shadow-sm ring-1 ring-yellow-300/50 transition hover:-translate-y-0.5 hover:shadow-md ${
+                          i % 2 ? "rotate-[0.8deg]" : "rotate-[-0.9deg]"
+                        }`}
+                      >
+                        {canEdit && (
+                          <div className="absolute -top-2 -right-2 flex gap-1 z-10">
                             <button
                               type="button"
-                              onClick={() => handleSuggestionStatus(s._id || s.id, "Accepted")}
-                              className="flex items-center gap-1 rounded-lg bg-green-50 border border-green-200 px-2.5 py-1 text-[11px] font-semibold text-green-700 hover:bg-green-100 cursor-pointer"
+                              onClick={(e) => { e.stopPropagation(); setModal({ type: "edit", note }); }}
+                              className="rounded-md border border-slate-200 bg-white p-1.5 text-slate-500 shadow-sm hover:bg-slate-50 cursor-pointer"
+                              aria-label={t("boardEdit")}
                             >
-                              <CheckCircle size={11} /> Accept
+                              <Pencil size={12} />
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleSuggestionStatus(s._id || s.id, "Rejected")}
-                              className="flex items-center gap-1 rounded-lg bg-red-50 border border-red-200 px-2.5 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 cursor-pointer"
+                              onClick={(e) => { e.stopPropagation(); deleteNote(note); }}
+                              className="rounded-md border border-red-200 bg-white p-1.5 text-red-500 shadow-sm hover:bg-red-50 cursor-pointer"
+                              aria-label={t("boardDelete")}
                             >
-                              <XCircle size={11} /> Reject
+                              <Trash2 size={12} />
                             </button>
-                            {s.status === "Pending" && (
-                              <button
-                                type="button"
-                                onClick={() => handleSuggestionStatus(s._id || s.id, "Reviewed")}
-                                className="flex items-center gap-1 rounded-lg bg-blue-50 border border-blue-200 px-2.5 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 cursor-pointer"
-                              >
-                                <Clock size={11} /> Mark Reviewed
-                              </button>
-                            )}
                           </div>
                         )}
+                        {note.title && note.title !== note.content && (
+                          <p className="mb-1 pr-6 text-xs font-bold text-slate-800">{note.title}</p>
+                        )}
+                        <p className="text-[13px] leading-snug text-slate-700 whitespace-pre-wrap break-words">
+                          {note.content}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              authorBiz
+                                ? "bg-amber-500/15 text-amber-700 ring-1 ring-amber-300/60"
+                                : "bg-teal-500/15 text-teal-700 ring-1 ring-teal-300/60"
+                            }`}
+                          >
+                            {authorBiz ? "🏭" : "🎓"} {authorBiz ? t("boardAuthorBiz") : t("boardAuthorUni")}
+                          </span>
+                          <span className="text-[10px] text-slate-500">{formatDate(note.createdAt)}</span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              )}
+              </section>
+            );
+          })}
+        </div>
+      )}
+
+      {modal?.type === "chooser" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-slate-900">{t("boardPickColumn")}</h3>
+              <button type="button" onClick={() => setModal(null)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer" aria-label="Close">
+                <X size={16} />
+              </button>
             </div>
-          )}
+            <div className="space-y-2">
+              {COLUMNS.map((col) => {
+                const meta = META[col.key];
+                return (
+                  <button
+                    key={col.key}
+                    type="button"
+                    onClick={() => setModal({ type: "create", column: col.key })}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-teal-400 hover:bg-teal-50/40 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{col.emoji}</span>
+                      <div className="flex-1">
+                        <p className="text-xs font-bold text-slate-800">{t(`board_${col.key}`)}</p>
+                        <p className="text-[11px] text-slate-400">{t(`board_${col.key}_hint`)}</p>
+                      </div>
+                      <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+                    </div>
+                  </button>
+                );
+              })}
+              <p className="pt-1 text-[11px] text-slate-400">
+                {isBiz ? t("boardPickHintBiz") : t("boardPickHintUni")}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modal?.type === "create" && <CreateModal column={modal.column} submitting={submitting} isBiz={isBiz} onClose={() => setModal(null)} onSubmit={(title, content) => createNote(modal.column, title, content)} />}
+
+      {modal?.type === "edit" && (
+        <EditModal
+          note={modal.note}
+          submitting={submitting}
+          onClose={() => setModal(null)}
+          onSave={(title, content, column) => updateNote(modal.note, title, content, column)}
+          onDelete={() => deleteNote(modal.note)}
+        />
+      )}
+
+      {modal?.type === "view" && <ViewModal note={modal.note} onClose={() => setModal(null)} />}
+    </div>
+  );
+}
+
+function CreateModal({ column, submitting, isBiz, onClose, onSubmit }) {
+  const { t } = useLanguageStore();
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const colMeta = META[column];
+  const colObj = COLUMNS.find((c) => c.key === column);
+
+  function submit(e) {
+    e.preventDefault();
+    if (!content.trim()) return;
+    onSubmit(title, content);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true">
+      <form onSubmit={submit} className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">
+              {isBiz ? t("boardAddGuidance") : t("boardNewNote")}
+            </h3>
+            <p className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+              <span className={`rounded-md px-2 py-0.5 ${colMeta.header}`}>
+                {colObj.emoji} {t(`board_${column}`)}
+              </span>
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer">
+            <X size={16} />
+          </button>
+        </div>
+
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={t("boardNoteTitle")}
+          maxLength={100}
+          className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-teal-400 focus:ring-1 focus:ring-teal-400 outline-none mb-3"
+        />
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder={isBiz ? t("boardGuidancePlaceholder") : t("boardNoteContent")}
+          required
+          rows={5}
+          className="w-full rounded-xl border border-amber-200 bg-[#FFFDF0] px-3 py-2.5 text-sm focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none resize-none mb-3"
+        />
+        {isBiz && (
+          <p className="mb-3 text-[11px] text-slate-400">{t("boardCreateBizHint")}</p>
+        )}
+
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex items-center gap-1.5 rounded-xl bg-[#0E4B4C] px-4 py-2 text-xs font-bold text-white hover:bg-[#0b3b3c] disabled:opacity-50 cursor-pointer"
+          >
+            <StickyNote size={13} /> {submitting ? t("boardSaving") : t("boardAddNote")}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
+          >
+            {t("boardCancel")}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function EditModal({ note, submitting, onClose, onSave, onDelete }) {
+  const { t } = useLanguageStore();
+  const [title, setTitle] = useState(note.title || "");
+  const [content, setContent] = useState(note.content || "");
+  const [column, setColumn] = useState(COLUMNS.some((c) => c.key === note.column) ? note.column : "ideate");
+
+  function submit(e) {
+    e.preventDefault();
+    if (!content.trim()) return;
+    onSave(title, content, column);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true">
+      <form onSubmit={submit} className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-bold text-slate-900">{t("boardEditTitle")}</h3>
+          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer">
+            <X size={16} />
+          </button>
+        </div>
+
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">{t("boardEditColumn")}</p>
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {COLUMNS.map((col) => {
+            const meta = META[col.key];
+            const active = column === col.key;
+            return (
+              <button
+                key={col.key}
+                type="button"
+                onClick={() => setColumn(col.key)}
+                className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition cursor-pointer ${
+                  active
+                    ? `${meta.header} border-transparent shadow-sm`
+                    : "border-slate-200 text-slate-500 hover:bg-slate-50"
+                }`}
+              >
+                {col.emoji} {t(`board_${col.key}`)}
+              </button>
+            );
+          })}
+        </div>
+
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={t("boardNoteTitle")}
+          maxLength={100}
+          className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:border-teal-400 focus:ring-1 focus:ring-teal-400 outline-none mb-3"
+        />
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          required
+          rows={5}
+          className="w-full rounded-xl border border-amber-200 bg-[#FFFDF0] px-3 py-2.5 text-sm focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none resize-none mb-3"
+        />
+
+        <div className="flex items-center gap-2">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex items-center gap-1.5 rounded-xl bg-[#0E4B4C] px-4 py-2 text-xs font-bold text-white hover:bg-[#0b3b3c] disabled:opacity-50 cursor-pointer"
+          >
+            {submitting ? t("boardSaving") : t("boardSave")}
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="ml-auto flex items-center gap-1.5 rounded-xl border border-red-200 px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 cursor-pointer"
+          >
+            <Trash2 size={13} /> {t("boardDelete")}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
+          >
+            {t("boardCancel")}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function ViewModal({ note, onClose }) {
+  const { t } = useLanguageStore();
+  const authorBiz = note.authorType === "business";
+  const colObj = COLUMNS.find((c) => c.key === note.column);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true">
+      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            {colObj && (
+              <span className="text-[11px] font-bold text-slate-400">
+                {colObj.emoji} {t(`board_${colObj.key}`)}
+              </span>
+            )}
+            {note.title && <h3 className="mt-1 text-sm font-bold text-slate-900">{note.title}</h3>}
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="rounded-xl bg-[#FFFDF0] p-4 min-h-[120px] whitespace-pre-wrap break-words text-sm text-slate-700 leading-relaxed">
+          {note.content}
+        </div>
+        <div className="mt-3 flex items-center justify-between">
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+              authorBiz
+                ? "bg-amber-500/15 text-amber-700 ring-1 ring-amber-300/60"
+                : "bg-teal-500/15 text-teal-700 ring-1 ring-teal-300/60"
+            }`}
+          >
+            {authorBiz ? "🏭" : "🎓"} {authorBiz ? t("boardAuthorBiz") : t("boardAuthorUni")}
+          </span>
+          <span className="text-[11px] text-slate-400">{note.createdByName || ""}</span>
+        </div>
+        <div className="mt-2 text-[11px] text-slate-400">
+          {t("boardCreated")} {note.createdAt ? new Date(note.createdAt).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
         </div>
       </div>
     </div>

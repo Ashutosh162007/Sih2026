@@ -31,7 +31,7 @@ const getNotes = async (req, res, next) => {
     const user = req.user;
     const role = user.role;
 
-    if (role === 'citizen') {
+    if (role === 'citizen' || role === 'admin') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
     if (role === 'university' && !isProjectOwner(project, user)) {
@@ -66,7 +66,7 @@ const getNoteById = async (req, res, next) => {
     const user = req.user;
     const role = user.role;
 
-    if (role === 'citizen') {
+    if (role === 'citizen' || role === 'admin') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
     if (role === 'university' && !isProjectOwner(project, user)) {
@@ -84,11 +84,11 @@ const getNoteById = async (req, res, next) => {
 
 const createNote = async (req, res, next) => {
   try {
-    const { title, content, projectId } = req.body;
+    const { title, content, projectId, column } = req.body;
     const user = req.user;
 
-    if (user.role !== 'university' && user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Only university users can create notes' });
+    if (user.role === 'citizen' || user.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Only universities and businesses can create notes' });
     }
 
     const project = await Project.findById(projectId);
@@ -99,10 +99,18 @@ const createNote = async (req, res, next) => {
     if (user.role === 'university' && !isProjectOwner(project, user)) {
       return res.status(403).json({ success: false, message: 'You can only create notes for your own projects' });
     }
+    if (user.role === 'industry' && !isProjectBusiness(project, user)) {
+      return res.status(403).json({ success: false, message: 'You can only add guidance to projects you sponsor' });
+    }
+
+    const allowedColumns = ['empathize', 'define', 'ideate', 'prototype', 'test'];
+    const noteColumn = allowedColumns.includes(column) ? column : 'ideate';
 
     const note = await WorkflowNote.create({
       title,
       content,
+      column: noteColumn,
+      authorType: user.role === 'industry' ? 'business' : 'university',
       projectId,
       universityId: project.universityId,
       createdBy: user._id,
@@ -117,10 +125,10 @@ const createNote = async (req, res, next) => {
 
 const updateNote = async (req, res, next) => {
   try {
-    const { title, content } = req.body;
+    const { title, content, column } = req.body;
     const user = req.user;
 
-    if (user.role !== 'university' && user.role !== 'admin') {
+    if (user.role !== 'university') {
       return res.status(403).json({ success: false, message: 'Only university users can edit notes' });
     }
 
@@ -130,12 +138,16 @@ const updateNote = async (req, res, next) => {
     }
 
     const project = await Project.findById(note.projectId);
-    if (user.role === 'university' && !isProjectOwner(project, user)) {
+    if (!isProjectOwner(project, user)) {
       return res.status(403).json({ success: false, message: 'You can only edit notes for your own projects' });
     }
 
     if (title !== undefined) note.title = title;
     if (content !== undefined) note.content = content;
+    if (column !== undefined) {
+      const allowedColumns = ['empathize', 'define', 'ideate', 'prototype', 'test'];
+      if (allowedColumns.includes(column)) note.column = column;
+    }
     await note.save();
 
     res.json(note);
@@ -148,7 +160,7 @@ const deleteNote = async (req, res, next) => {
   try {
     const user = req.user;
 
-    if (user.role !== 'university' && user.role !== 'admin') {
+    if (user.role !== 'university') {
       return res.status(403).json({ success: false, message: 'Only university users can delete notes' });
     }
 
@@ -158,7 +170,7 @@ const deleteNote = async (req, res, next) => {
     }
 
     const project = await Project.findById(note.projectId);
-    if (user.role === 'university' && !isProjectOwner(project, user)) {
+    if (!isProjectOwner(project, user)) {
       return res.status(403).json({ success: false, message: 'You can only delete notes for your own projects' });
     }
 
@@ -178,7 +190,7 @@ const getSuggestions = async (req, res, next) => {
     const { projectId, noteId } = req.query;
     const user = req.user;
 
-    if (user.role === 'citizen') {
+    if (user.role === 'citizen' || user.role === 'admin') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
@@ -247,7 +259,7 @@ const updateSuggestionStatus = async (req, res, next) => {
     const { status } = req.body;
     const user = req.user;
 
-    if (user.role !== 'university' && user.role !== 'admin') {
+    if (user.role !== 'university') {
       return res.status(403).json({ success: false, message: 'Only university users can update suggestion status' });
     }
 
@@ -261,7 +273,7 @@ const updateSuggestionStatus = async (req, res, next) => {
     }
 
     const project = await Project.findById(suggestion.projectId);
-    if (user.role === 'university' && !isProjectOwner(project, user)) {
+    if (!isProjectOwner(project, user)) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
