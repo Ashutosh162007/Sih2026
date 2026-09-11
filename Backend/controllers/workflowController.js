@@ -485,7 +485,64 @@ const provideChecklistItem = async (req, res, next) => {
   }
 };
 
+// ─────────────────────── PROJECTS (list) ───────────────────────
+
+// Returns projects the requesting university/industry/admin can see in workflow.
+// Mirrors the mock `/api/workflow/projects` semantics: scope by the user's
+// association with the project (id and/or org name) instead of funding status,
+// so partners can still reach funded / in-progress collaboration projects.
+const getWorkflowProjects = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const role = user.role;
+
+    if (role === 'citizen') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const uid = user._id || user.id;
+    let filter = {};
+
+    if (role === 'university') {
+      const ors = [];
+      if (uid) ors.push({ universityId: uid });
+      if (user.org) ors.push({ university: user.org });
+      if (ors.length) filter = { $or: ors };
+    } else if (role === 'industry') {
+      const ors = [];
+      if (uid) ors.push({ industryId: uid });
+      if (user.org) ors.push({ industry: user.org });
+      if (ors.length) filter = { $or: ors };
+    }
+    // admin (or unknown role): all projects
+
+    const projects = await Project.find(filter).sort({ updatedAt: -1 });
+    const formatted = projects.map((p) => ({
+      id: p._id,
+      _id: p._id,
+      issueId: p.issueId,
+      title: p.title,
+      university: p.university,
+      industry: p.industry,
+      status: p.status,
+      funded: p.funded,
+      fundingAmount: p.fundingAmount,
+      fundingDate: p.fundingDate,
+      deadline: p.deadline,
+      team: p.team,
+      proposal: p.proposal,
+      milestones: p.milestones,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    }));
+    res.json(formatted);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
+  getWorkflowProjects,
   getNotes,
   getNoteById,
   createNote,

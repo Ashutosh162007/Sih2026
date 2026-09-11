@@ -299,6 +299,8 @@ export default function ProjectWorkflow() {
         </div>
       )}
 
+      {!loading && isBiz && <ExecutionChecklist projectId={projectId} user={user} />}
+
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-200 border-t-teal-600" />
@@ -411,7 +413,7 @@ export default function ProjectWorkflow() {
       )}
 
       {/* ================= Execution Checklist (Resource Requisition Canvas) ================= */}
-      {!loading && <ExecutionChecklist projectId={projectId} user={user} />}
+      {!loading && !isBiz && <ExecutionChecklist projectId={projectId} user={user} />}
 
       {modal?.type === "chooser" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true">

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const {
+  getWorkflowProjects,
   getNotes,
   getNoteById,
   createNote,
@@ -24,6 +25,8 @@ router.get('/notes/:id', protect, getNoteById);
 router.post('/notes', protect, createNote);
 router.put('/notes/:id', protect, updateNote);
 router.delete('/notes/:id', protect, deleteNote);
+
+router.get('/projects', protect, getWorkflowProjects);
 
 router.get('/suggestions', protect, getSuggestions);
 router.post('/suggestions', protect, createSuggestion);

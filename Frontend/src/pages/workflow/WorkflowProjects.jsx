@@ -20,15 +20,9 @@ export default function WorkflowProjects() {
     }
     async function load() {
       setLoading(true);
+      const authHeaders = { Authorization: `Bearer ${btoa(JSON.stringify({ id: user.id, role: user.role }))}` };
       try {
-        let res;
-        if (user?.role === "university") {
-          res = await axiosClient.get("/api/university/projects");
-        } else if (user?.role === "industry") {
-          res = await axiosClient.get("/api/industry/proposals");
-        } else {
-          res = { data: [] };
-        }
+        const res = await axiosClient.get("/api/workflow/projects", { headers: authHeaders });
         if (Array.isArray(res.data) && res.data.length > 0) {
           setProjects(res.data);
           setLoading(false);
@@ -39,7 +33,8 @@ export default function WorkflowProjects() {
       try {
         const mockRes = await handleMockRequest({
           method: "get",
-          url: user?.role === "industry" ? "/api/industry/proposals" : "/api/university/projects",
+          url: "/api/workflow/projects",
+          headers: authHeaders,
         });
         if (Array.isArray(mockRes?.data)) setProjects(mockRes.data);
       } catch (_) {}
