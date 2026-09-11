@@ -8,11 +8,14 @@ import {
   X,
   StickyNote,
   Lock,
+  PenTool,
+  Loader2,
 } from "lucide-react";
 import axiosClient from "../../api/axiosClient";
 import { useAuthStore } from "../../store/authStore";
 import { useLanguageStore } from "../../store/languageStore";
 import { handleMockRequest } from "../../api/mockAdapter";
+import WhiteboardCanvas from "./WhiteboardCanvas";
 
 const COLUMNS = [
   { key: "empathize", emoji: "🧠" },
@@ -52,6 +55,10 @@ export default function ProjectWorkflow() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null); // {type:"chooser"} | {type:"create",column} | {type:"edit",note} | {type:"view",note}
   const [submitting, setSubmitting] = useState(false);
+  const [canvasObjects, setCanvasObjects] = useState([]);
+  const [canvasLoading, setCanvasLoading] = useState(true);
+
+  const authHeaders = { Authorization: `Bearer ${btoa(JSON.stringify({ id: user.id, role: user.role }))}` };
 
   useEffect(() => {
     async function load() {
@@ -60,7 +67,7 @@ export default function ProjectWorkflow() {
         const res = await axiosClient.get(`/api/workflow/notes?projectId=${projectId}`);
         if (Array.isArray(res.data)) {
           setNotes(res.data);
-          await loadProject();
+          await Promise.all([loadProject(), loadCanvas()]);
           setLoading(false);
           return;
         }
@@ -74,12 +81,51 @@ export default function ProjectWorkflow() {
         if (Array.isArray(mockRes?.data)) setNotes(mockRes.data);
       } catch (_) {}
 
-      await loadProject();
+      await Promise.all([loadProject(), loadCanvas()]);
       setLoading(false);
     }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, role]);
+
+  async function loadCanvas() {
+    try {
+      const res = await axiosClient.get(`/api/workflow/projects/${projectId}/canvas`);
+      if (Array.isArray(res.data?.canvas?.objects)) {
+        setCanvasObjects(res.data.canvas.objects);
+        setCanvasLoading(false);
+        return;
+      }
+    } catch (e) {}
+    try {
+      const mockRes = await handleMockRequest({
+        method: "get",
+        url: `/api/workflow/projects/${projectId}/canvas`,
+        headers: authHeaders,
+      });
+      if (Array.isArray(mockRes?.data?.canvas?.objects)) setCanvasObjects(mockRes.data.canvas.objects);
+    } catch (_) {}
+    setCanvasLoading(false);
+  }
+
+  async function saveCanvas(objects) {
+    try {
+      const res = await axiosClient.put(`/api/workflow/projects/${projectId}/canvas`, { objects });
+      if (Array.isArray(res.data?.canvas?.objects)) {
+        setCanvasObjects(res.data.canvas.objects);
+        return;
+      }
+    } catch (e) {}
+    try {
+      const mockRes = await handleMockRequest({
+        method: "put",
+        url: `/api/workflow/projects/${projectId}/canvas`,
+        data: { objects },
+        headers: authHeaders,
+      });
+      if (Array.isArray(mockRes?.data?.canvas?.objects)) setCanvasObjects(mockRes.data.canvas.objects);
+    } catch (_) {}
+  }
 
   async function loadProject() {
     try {
@@ -276,11 +322,6 @@ export default function ProjectWorkflow() {
                   onClick={canCreate ? () => setModal({ type: "create", column: col.key }) : undefined}
                   className={`flex flex-col gap-3 p-3 min-h-[120px] ${canCreate ? "cursor-pointer" : ""}`}
                 >
-                  {cards.length === 0 && (
-                    <p className={`px-1 py-3 text-center text-[11px] ${canCreate ? "text-teal-600" : "text-slate-400"}`}>
-                      {canCreate ? t("boardEmptyClickHint") : t("boardEmptyHint")}
-                    </p>
-                  )}
                   {cards.map((note, i) => {
                     const authorBiz = note.authorType === "business";
                     return (
@@ -340,6 +381,32 @@ export default function ProjectWorkflow() {
             );
           })}
         </div>
+      )}
+
+      {/* ================= Execution Workflow (shared whiteboard) ================= */}
+      {!loading && (
+        <section className="mt-10">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display text-xl font-bold text-slate-900">{t("execWorkflowTitle")}</h3>
+              <p className="mt-1 max-w-2xl text-xs text-slate-500">{t("execWorkflowSubtitle")}</p>
+            </div>
+            {canCreate && (
+              <span className="flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-bold text-teal-700">
+                <PenTool size={13} /> {t("execWorkflowEditable")}
+              </span>
+            )}
+          </div>
+          {canvasLoading ? (
+            <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-24 shadow-sm">
+              <Loader2 className="animate-spin text-[#0E4B4C]" size={24} />
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              <WhiteboardCanvas objects={canvasObjects} editable={canCreate} onSave={saveCanvas} suggested={0} />
+            </div>
+          )}
+        </section>
       )}
 
       {modal?.type === "chooser" && (

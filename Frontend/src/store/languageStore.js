@@ -140,6 +140,9 @@ export const TRANSLATIONS = {
     // Design Thinking Board
     boardTitle: "Collaboration Board",
     boardBack: "Back to projects",
+    execWorkflowTitle: "Execution Workflow",
+    execWorkflowSubtitle: "Shared whiteboard — sketch implementation plans, timelines and responsibilities. Both the university and the business can draw and edit.",
+    execWorkflowEditable: "Editable by both parties",
     boardDeniedHint: "The workflow board is private to the owning university team and their industry partners.",
     boardNewNote: "New Note",
     boardAddGuidance: "Add Guidance",
@@ -601,6 +604,9 @@ export const TRANSLATIONS = {
     // Design Thinking Board
     boardTitle: "सहयोग बोर्ड",
     boardBack: "परियोजनाओं पर वापस",
+    execWorkflowTitle: "कार्यान्वयन कार्यप्रवाह",
+    execWorkflowSubtitle: "साझा व्हाइटबोर्ड — कार्यान्वयन योजनाएं, समयरेखा और ज़िम्मेदारियां बनाएं। विश्वविद्यालय और व्यवसाय दोनों लिख और संपादित कर सकते हैं।",
+    execWorkflowEditable: "दोनों पक्षों के लिए संपादन योग्य",
     boardDeniedHint: "वर्कफ़्लो बोर्ड केवल संबंधित विश्वविद्यालय टीम और उनके उद्योग भागीदारों के लिए निजी है।",
     boardNewNote: "नया नोट",
     boardAddGuidance: "मार्गदर्शन जोड़ें",
@@ -1056,6 +1062,9 @@ export const TRANSLATIONS = {
     // Design Thinking Board
     boardTitle: "सहयोग बोर्ड",
     boardBack: "परियोजना पर वापस",
+    execWorkflowTitle: "कार्यान्वनिस कार्यप्रवाह",
+    execWorkflowSubtitle: "साझा व्हाइटबोर्ड — कार्यान्वनिस योजना, समयसारणी अने ज़िम्मेदारी बना। यूनिवर्सिटी अने बिज़नेस दुनों लिख अने संपादित कर सकत हें।",
+    execWorkflowEditable: "दुनों पक्ष संगे संपादन योग्य",
     boardDeniedHint: "वर्कफ़्लो बोर्ड सिर्फ मालिक यूनिवर्सिटी टीम आरू उनकर उद्योग साथी लेल निजी हे।",
     boardNewNote: "नया नोट",
     boardAddGuidance: "मार्गदर्शन जोड़ा",

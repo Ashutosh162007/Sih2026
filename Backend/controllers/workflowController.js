@@ -1,5 +1,6 @@
 const WorkflowNote = require('../models/WorkflowNote');
 const WorkflowSuggestion = require('../models/WorkflowSuggestion');
+const WorkflowWhiteboard = require('../models/WorkflowWhiteboard');
 const Project = require('../models/Project');
 
 function isProjectOwner(project, user) {
@@ -286,6 +287,51 @@ const updateSuggestionStatus = async (req, res, next) => {
   }
 };
 
+// ─────────────────────── CANVAS (EXECUTION WORKFLOW) ───────────────────────
+
+const getCanvas = async (req, res, next) => {
+  try {
+    const projectId = req.params.id;
+    const user = req.user;
+    if (user.role === 'citizen' || user.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const wb = await WorkflowWhiteboard.findOne({ projectId });
+    res.json({ canvas: wb ? { objects: wb.objects, updatedAt: wb.updatedAt } : { objects: [], updatedAt: null } });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const saveCanvas = async (req, res, next) => {
+  try {
+    const projectId = req.params.id;
+    const { objects } = req.body;
+    const user = req.user;
+    if (user.role === 'citizen' || user.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const wb = await WorkflowWhiteboard.findOneAndUpdate(
+      { projectId },
+      {
+        $set: {
+          projectId,
+          objects: Array.isArray(objects) ? objects : [],
+          university: user._id || user.id,
+          universityName: user.org || '',
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    res.json({ canvas: { objects: wb.objects, updatedAt: wb.updatedAt } });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getNotes,
   getNoteById,
@@ -295,4 +341,6 @@ module.exports = {
   getSuggestions,
   createSuggestion,
   updateSuggestionStatus,
+  getCanvas,
+  saveCanvas,
 };

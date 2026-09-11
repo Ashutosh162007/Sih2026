@@ -1142,6 +1142,32 @@ export async function handleMockRequest(config) {
     return json(config, { success: true, message: "Note deleted" });
   }
 
+  // ──────── Workflow Canvas (Execution Workflow whiteboard) ────────
+  if ((m = match(config, "get", "/api/workflow/projects/:id/canvas"))) {
+    if (!auth || auth.role === "admin" || auth.role === "citizen") error("Access denied", 403);
+    const rec = workflowCanvases.find((c) => c.projectId === m.params.id);
+    return json(config, {
+      canvas: rec
+        ? { objects: rec.objects || [], updatedAt: rec.updatedAt || null }
+        : { objects: [], updatedAt: null },
+    });
+  }
+
+  if ((m = match(config, "put", "/api/workflow/projects/:id/canvas"))) {
+    if (!auth || auth.role === "admin" || auth.role === "citizen") error("Access denied", 403);
+    const idx = workflowCanvases.findIndex((c) => c.projectId === m.params.id);
+    const record = {
+      projectId: m.params.id,
+      universityName: auth.org || "University",
+      objects: Array.isArray(body.objects) ? body.objects : [],
+      updatedAt: new Date().toISOString(),
+    };
+    if (idx >= 0) workflowCanvases[idx] = { ...workflowCanvases[idx], ...record };
+    else workflowCanvases.unshift({ ...record, createdAt: new Date().toISOString() });
+    persist();
+    return json(config, { canvas: record });
+  }
+
   // ──────── Workflow Suggestions (note-based) ────────
   if ((m = match(config, "get", "/api/workflow/suggestions"))) {
     if (!auth || auth.role === "admin" || auth.role === "citizen") error("Access denied", 403);
