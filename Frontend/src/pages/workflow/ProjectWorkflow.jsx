@@ -16,6 +16,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useLanguageStore } from "../../store/languageStore";
 import { handleMockRequest } from "../../api/mockAdapter";
 import WhiteboardCanvas from "./WhiteboardCanvas";
+import ExecutionChecklist from "./ExecutionChecklist";
 
 const COLUMNS = [
   { key: "empathize", emoji: "🧠" },
@@ -408,6 +409,9 @@ export default function ProjectWorkflow() {
           )}
         </section>
       )}
+
+      {/* ================= Execution Checklist (Resource Requisition Canvas) ================= */}
+      {!loading && <ExecutionChecklist projectId={projectId} user={user} />}
 
       {modal?.type === "chooser" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true">

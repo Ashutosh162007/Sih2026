@@ -1,6 +1,7 @@
 const WorkflowNote = require('../models/WorkflowNote');
 const WorkflowSuggestion = require('../models/WorkflowSuggestion');
 const WorkflowWhiteboard = require('../models/WorkflowWhiteboard');
+const WorkflowChecklistItem = require('../models/WorkflowChecklist');
 const Project = require('../models/Project');
 
 function isProjectOwner(project, user) {
@@ -332,6 +333,158 @@ const saveCanvas = async (req, res, next) => {
   }
 };
 
+// ─────────────────────── EXECUTION CHECKLIST (RESOURCE REQUISITION) ───────────────────────
+
+const getChecklist = async (req, res, next) => {
+  try {
+    const projectId = req.params.id;
+    const user = req.user;
+
+    if (user.role === 'citizen' || user.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+    if (user.role === 'university' && !isProjectOwner(project, user)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    if (user.role === 'industry' && !isProjectBusiness(project, user)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const items = await WorkflowChecklistItem.find({ projectId })
+      .sort({ createdAt: 1 })
+      .populate('universityId', 'name org')
+      .populate('providedBy', 'name org');
+
+    res.json({ items });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const createChecklistItem = async (req, res, next) => {
+  try {
+    const { item, why } = req.body;
+    const user = req.user;
+
+    if (user.role !== 'university') {
+      return res.status(403).json({ success: false, message: 'Only universities can request resources' });
+    }
+
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+    if (!isProjectOwner(project, user)) {
+      return res.status(403).json({ success: false, message: 'You can only request resources for your own projects' });
+    }
+
+    const entry = await WorkflowChecklistItem.create({
+      item: String(item || '').trim(),
+      why: String(why || '').trim(),
+      projectId: project._id,
+      universityId: project.universityId,
+      requestedByName: user.name || user.org || '',
+    });
+
+    res.status(201).json(entry);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const updateChecklistItem = async (req, res, next) => {
+  try {
+    const { item, why } = req.body;
+    const user = req.user;
+
+    if (user.role !== 'university') {
+      return res.status(403).json({ success: false, message: 'Only universities can edit requisitions' });
+    }
+
+    const entry = await WorkflowChecklistItem.findById(req.params.id);
+    if (!entry) {
+      return res.status(404).json({ success: false, message: 'Checklist item not found' });
+    }
+
+    const project = await Project.findById(entry.projectId);
+    if (!isProjectOwner(project, user)) {
+      return res.status(403).json({ success: false, message: 'You can only edit requisitions for your own projects' });
+    }
+
+    if (item !== undefined) entry.item = String(item).trim();
+    if (why !== undefined) entry.why = String(why).trim();
+    await entry.save();
+
+    res.json(entry);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteChecklistItem = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    if (user.role !== 'university') {
+      return res.status(403).json({ success: false, message: 'Only universities can remove requisitions' });
+    }
+
+    const entry = await WorkflowChecklistItem.findById(req.params.id);
+    if (!entry) {
+      return res.status(404).json({ success: false, message: 'Checklist item not found' });
+    }
+
+    const project = await Project.findById(entry.projectId);
+    if (!isProjectOwner(project, user)) {
+      return res.status(403).json({ success: false, message: 'You can only remove requisitions for your own projects' });
+    }
+
+    await WorkflowChecklistItem.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Checklist item removed' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const provideChecklistItem = async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    if (user.role !== 'industry') {
+      return res.status(403).json({ success: false, message: 'Only businesses can provide resources' });
+    }
+
+    const entry = await WorkflowChecklistItem.findById(req.params.id);
+    if (!entry) {
+      return res.status(404).json({ success: false, message: 'Checklist item not found' });
+    }
+
+    const project = await Project.findById(entry.projectId);
+    if (!project || !isProjectBusiness(project, user)) {
+      return res.status(403).json({ success: false, message: 'You can only provide resources for projects you sponsor' });
+    }
+
+    if (entry.status === 'provided') {
+      return res.status(400).json({ success: false, message: 'This resource is already provided' });
+    }
+
+    entry.status = 'provided';
+    entry.providedBy = user._id || user.id;
+    entry.providedByName = user.name || user.org || '';
+    entry.providedAt = new Date();
+    await entry.save();
+
+    res.json(entry);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getNotes,
   getNoteById,
@@ -343,4 +496,9 @@ module.exports = {
   updateSuggestionStatus,
   getCanvas,
   saveCanvas,
+  getChecklist,
+  createChecklistItem,
+  updateChecklistItem,
+  deleteChecklistItem,
+  provideChecklistItem,
 };

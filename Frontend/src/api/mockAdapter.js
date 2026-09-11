@@ -162,6 +162,50 @@ let workflowCanvases = load("sahayog_workflow_canvases", [
     updatedAt: new Date(Date.now() - 25 * 86400000).toISOString(),
   },
 ]);
+let workflowChecklist = load("sahayog_workflow_checklist", [
+  {
+    id: "wc-1",
+    projectId: "prj-201",
+    item: "5000 L/day community water filtration unit",
+    why: "Fluoride removal pilot needs a fixed-capacity filtration unit deployed in Tamar village to validate our lab results at community scale.",
+    status: "pending",
+    universityId: "u-university",
+    requestedByName: "Dr. Priya Sharma",
+    providedBy: null,
+    providedByName: "",
+    providedAt: null,
+    createdAt: new Date(Date.now() - 6 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 6 * 86400000).toISOString(),
+  },
+  {
+    id: "wc-2",
+    projectId: "prj-201",
+    item: "Portable water testing kits (20 units)",
+    why: "Weekly fluoride and TDS sampling by trained SHG members requires field test kits for community-level reporting.",
+    status: "provided",
+    universityId: "u-university",
+    requestedByName: "Prof. Rajesh Kumar",
+    providedBy: "u-industry",
+    providedByName: "Tata Steel CSR",
+    providedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 9 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+  },
+  {
+    id: "wc-3",
+    projectId: "prj-101",
+    item: "Mobile welding & fabrication support",
+    why: "On-site fabrication of galvanized steel grates at the Kanke police station drainage network requires welding equipment and skilled labour.",
+    status: "pending",
+    universityId: "u-university",
+    requestedByName: "Dr. Priya Sharma",
+    providedBy: null,
+    providedByName: "",
+    providedAt: null,
+    createdAt: new Date(Date.now() - 4 * 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 4 * 86400000).toISOString(),
+  },
+]);
 let notifications = load("sahayog_notifications", [
   {
     id: "notif-1",
@@ -190,6 +234,7 @@ function persist() {
   save("sahayog_workflow_notes", workflowNotes);
   save("sahayog_workflow_canvases", workflowCanvases);
   save("sahayog_workflow_suggestions", workflowSuggestions);
+  save("sahayog_workflow_checklist", workflowChecklist);
 }
 
 function tokenFor(user) {
@@ -1166,6 +1211,69 @@ export async function handleMockRequest(config) {
     else workflowCanvases.unshift({ ...record, createdAt: new Date().toISOString() });
     persist();
     return json(config, { canvas: record });
+  }
+
+  // ──────── Execution Checklist (Resource Requisition) ────────
+  if ((m = match(config, "get", "/api/workflow/projects/:id/checklist"))) {
+    if (!auth || auth.role === "admin" || auth.role === "citizen") error("Access denied", 403);
+    const list = workflowChecklist.filter((c) => c.projectId === m.params.id);
+    return json(config, { items: list });
+  }
+
+  if ((m = match(config, "post", "/api/workflow/projects/:id/checklist"))) {
+    if (!auth || auth.role !== "university") error("Only universities can request resources", 403);
+    const entry = {
+      id: `wc-${Date.now()}`,
+      projectId: m.params.id,
+      item: String(body.item || "").trim(),
+      why: String(body.why || "").trim(),
+      status: "pending",
+      universityId: auth.id,
+      requestedByName: auth.org || auth.name || "",
+      providedBy: null,
+      providedByName: "",
+      providedAt: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    if (!entry.item) error("Resource description is required", 400);
+    workflowChecklist.push(entry);
+    persist();
+    return json(config, entry, 201);
+  }
+
+  if ((m = match(config, "put", "/api/workflow/checklist/:id"))) {
+    if (!auth || auth.role !== "university") error("Only universities can edit requisitions", 403);
+    const entry = workflowChecklist.find((c) => c.id === m.params.id || c._id === m.params.id);
+    if (!entry) error("Checklist item not found", 404);
+    if (body.item !== undefined) entry.item = String(body.item).trim();
+    if (body.why !== undefined) entry.why = String(body.why).trim();
+    entry.updatedAt = new Date().toISOString();
+    persist();
+    return json(config, entry);
+  }
+
+  if ((m = match(config, "delete", "/api/workflow/checklist/:id"))) {
+    if (!auth || auth.role !== "university") error("Only universities can remove requisitions", 403);
+    const idx = workflowChecklist.findIndex((c) => c.id === m.params.id || c._id === m.params.id);
+    if (idx < 0) error("Checklist item not found", 404);
+    workflowChecklist.splice(idx, 1);
+    persist();
+    return json(config, { success: true, message: "Checklist item removed" });
+  }
+
+  if ((m = match(config, "patch", "/api/workflow/checklist/:id/provide"))) {
+    if (!auth || auth.role !== "industry") error("Only businesses can provide resources", 403);
+    const entry = workflowChecklist.find((c) => c.id === m.params.id || c._id === m.params.id);
+    if (!entry) error("Checklist item not found", 404);
+    if (entry.status === "provided") error("Already provided", 400);
+    entry.status = "provided";
+    entry.providedBy = auth.id;
+    entry.providedByName = auth.org || auth.name || "";
+    entry.providedAt = new Date().toISOString();
+    entry.updatedAt = new Date().toISOString();
+    persist();
+    return json(config, entry);
   }
 
   // ──────── Workflow Suggestions (note-based) ────────

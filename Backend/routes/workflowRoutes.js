@@ -12,6 +12,11 @@ const {
   updateSuggestionStatus,
   getCanvas,
   saveCanvas,
+  getChecklist,
+  createChecklistItem,
+  updateChecklistItem,
+  deleteChecklistItem,
+  provideChecklistItem,
 } = require('../controllers/workflowController');
 
 router.get('/notes', protect, getNotes);
@@ -26,5 +31,11 @@ router.patch('/suggestions/:id/status', protect, updateSuggestionStatus);
 
 router.get('/projects/:id/canvas', protect, getCanvas);
 router.put('/projects/:id/canvas', protect, saveCanvas);
+
+router.get('/projects/:id/checklist', protect, getChecklist);
+router.post('/projects/:id/checklist', protect, createChecklistItem);
+router.put('/checklist/:id', protect, updateChecklistItem);
+router.delete('/checklist/:id', protect, deleteChecklistItem);
+router.patch('/checklist/:id/provide', protect, provideChecklistItem);
 
 module.exports = router;
