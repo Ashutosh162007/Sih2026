@@ -301,25 +301,43 @@ function match(config, method, pattern) {
 function computeAIAnalysis({ title = "", description = "", category = "", district = "", block = "" }) {
   const fullText = `${title} ${description}`.trim().toLowerCase();
   
-  // 1. Unintelligible text / keyboard mash check
-  const words = fullText.replace(/[^a-zA-Z\s]/g, "").split(/\s+/).filter(Boolean);
-  const isGibberish = words.some((w) => {
-    if (w.length >= 6) {
-      const unique = new Set(w.split("")).size;
-      const vowels = (w.match(/[aeiou]/gi) || []).length;
-      if (unique <= 3 || vowels === 0) return true;
-      if (w.length >= 8 && unique <= 4) return true;
-      if (w.length >= 8 && vowels / w.length < 0.15) return true;
-      if (/(?:as|df|sd|fa|ds|fd|jk|kj|hl|lh|gh|hg|ad|da|sa){3,}/i.test(w)) return true;
+  // 1. Multilingual Unintelligible text / keyboard mash check
+  const hasIndicScript = /[\u0900-\u097F\u0980-\u09FF\u1C50-\u1C7F\u0B00-\u0B7F]/.test(fullText);
+  let isGibberish = false;
+
+  if (hasIndicScript) {
+    // Valid Indian regional language text in Devanagari / Bengali / Ol Chiki script
+    const indicWords = fullText.split(/\s+/).filter(Boolean);
+    if (indicWords.length < 1 && fullText.length < 4) {
+      isGibberish = true;
     }
-    return false;
-  });
+  } else {
+    // Latin / Roman alphabet checks
+    const latinWords = fullText.replace(/[^a-zA-Z\s]/g, "").split(/\s+/).filter(Boolean);
+    if (latinWords.length === 0 && fullText.length < 4) {
+      isGibberish = true;
+    } else {
+      isGibberish = latinWords.some((w) => {
+        if (w.length >= 6) {
+          const unique = new Set(w.split("")).size;
+          const vowels = (w.match(/[aeiou]/gi) || []).length;
+          if (unique <= 3 || vowels === 0) return true;
+          if (w.length >= 8 && unique <= 4) return true;
+          if (w.length >= 8 && vowels / w.length < 0.12) return true;
+          if (/(?:as|df|sd|fa|ds|fd|jk|kj|hl|lh|gh|hg|ad|da|sa){3,}/i.test(w)) return true;
+          if (/(?:qw|we|er|rt|ty|yu|ui|io|op|zx|xc|cv|vb|bn|nm){3,}/i.test(w)) return true;
+        }
+        return false;
+      });
 
-  const totalLetters = words.join("").length;
-  const totalVowels = (words.join("").match(/[aeiou]/gi) || []).length;
-  const abnormalVowelRatio = totalLetters >= 8 && (totalVowels / totalLetters < 0.15 || totalVowels / totalLetters > 0.85);
+      const totalLetters = latinWords.join("").length;
+      const totalVowels = (latinWords.join("").match(/[aeiou]/gi) || []).length;
+      const abnormalVowelRatio = totalLetters >= 8 && (totalVowels / totalLetters < 0.12 || totalVowels / totalLetters > 0.88);
+      if (abnormalVowelRatio) isGibberish = true;
+    }
+  }
 
-  if (isGibberish || abnormalVowelRatio || fullText.length < 8) {
+  if (isGibberish || fullText.length < 5) {
     return {
       isLegitimate: false,
       rejectionReason: "The AI model evaluated the submission and rejected it as unintelligible or random keyboard text. Please provide clear details about an actual community challenge.",
@@ -329,7 +347,8 @@ function computeAIAnalysis({ title = "", description = "", category = "", distri
   // 2. Very small / trivial issue filter
   const trivialTerms = [
     "pen is lost", "lost my pen", "shoe dirty", "leaf fell", "dropped pencil", "pencil broke",
-    "my dog barked", "cat meowed", "homework hard", "video game lag", "shirt stained", "food cold"
+    "my dog barked", "cat meowed", "homework hard", "video game lag", "shirt stained", "food cold",
+    "पेन खो गया", "कलम गिर गया", "जूता गंदा", "कुत्ता भौंका"
   ];
   if (trivialTerms.some((t) => fullText.includes(t))) {
     return {
@@ -338,39 +357,60 @@ function computeAIAnalysis({ title = "", description = "", category = "", distri
     };
   }
 
-  let urgency = 50;
-  let publicRisk = 45;
+  // 3. Category matching with Indic keywords
+  let detectedCategory = category;
+  if (!detectedCategory || detectedCategory === "Infrastructure") {
+    if (/(?:पानी|जल|चापाकल|कुआँ|बोरवेल|सीवेज|टैंकर|नल|water|drain|borewell|pipeline|leakage)/i.test(fullText)) {
+      detectedCategory = /(?:बिजली|ट्रांसफार्मर|वोल्टेज|मोटर|power|electricity)/i.test(fullText) ? "Infrastructure" : "Water & Sanitation";
+    } else if (/(?:बिजली|ट्रांसफार्मर|सड़क|पुल|खंभा|वोल्टेज|road|bridge|pothole|transformer|voltage)/i.test(fullText)) {
+      detectedCategory = "Infrastructure";
+    } else if (/(?:खेती|किसान|फसल|पटवन|सिंचाई|crop|farmer|irrigation|harvest)/i.test(fullText)) {
+      detectedCategory = "Agriculture";
+    } else if (/(?:अस्पताल|दवा|डॉक्टर|स्वास्थ्य|बीमारी|hospital|clinic|doctor|medicine|health)/i.test(fullText)) {
+      detectedCategory = "Healthcare";
+    } else if (/(?:कचरा|कूड़ा|गंदगी|waste|garbage|dump|trash|plastic)/i.test(fullText)) {
+      detectedCategory = "Waste Management";
+    } else if (/(?:सुरक्षा|अंधेरा|दुर्घटना|खतरा|dark|light|accident|safety)/i.test(fullText)) {
+      detectedCategory = "Public Safety";
+    }
+  }
+  detectedCategory = detectedCategory || "Infrastructure";
+
+  let urgency = 55;
+  let publicRisk = 50;
   let flooding = 35;
 
-  if (fullText.includes("accident") || fullText.includes("fatal") || fullText.includes("urgent") || fullText.includes("toxic") || fullText.includes("death")) {
+  if (/(?:accident|fatal|urgent|toxic|death|दुर्घटना|मौत|खतरा|गंभीर|आपातकाल|किल्लत|सूख|परेशान)/i.test(fullText)) {
     urgency += 25;
+    publicRisk += 25;
+  }
+  if (/(?:flood|water|drain|leakage|contamination|पानी|जल|चापाकल|कुआँ|सीवेज|बाढ़)/i.test(fullText)) {
+    flooding += 40;
+    urgency += 10;
+  }
+  if (/(?:dark|light|women|school|children|बिजली|ट्रांसफार्मर|अंधेरा|महिला|बच्चा|स्कूल)/i.test(fullText)) {
     publicRisk += 30;
-  }
-  if (fullText.includes("flood") || fullText.includes("water") || fullText.includes("drain") || fullText.includes("leakage") || fullText.includes("contamination")) {
-    flooding += 45;
-  }
-  if (fullText.includes("dark") || fullText.includes("light") || fullText.includes("women") || fullText.includes("school") || fullText.includes("children")) {
-    publicRisk += 35;
-    urgency += 20;
+    urgency += 15;
   }
 
-  urgency = Math.min(96, Math.max(20, urgency));
-  publicRisk = Math.min(96, Math.max(20, publicRisk));
+  urgency = Math.min(96, Math.max(25, urgency));
+  publicRisk = Math.min(96, Math.max(25, publicRisk));
   flooding = Math.min(96, Math.max(15, flooding));
   const score = Math.round((urgency * 0.4) + (publicRisk * 0.4) + (flooding * 0.2));
 
   const priority = score >= 75 ? "High" : score >= 50 ? "Medium" : "Low";
 
   const aiProblemStatement = `**Structured Problem Formulation:**\n\n` +
-    `**Context & Location:** Reported in ${block || "Block"}, ${district || "District"} regarding **${category || "Civic Challenge"}**.\n\n` +
-    `**Core Challenge:** ${description || title}. The issue directly impairs community welfare, public infrastructure resilience, and daily mobility.\n\n` +
-    `**AI Severity Assessment (${priority} Priority - Score ${score}/100):** Public Risk: ${publicRisk}%, Urgency: ${urgency}%, Environmental/Physical Hazard: ${flooding}%.\n\n` +
-    `**Recommended Innovation Objective:** Formulate multidisciplinary student & faculty technical interventions for durable grassroots deployment.`;
+    `**Context & Location:** Reported in ${block || "Block"}, ${district || "District"} regarding **${detectedCategory}**.\n\n` +
+    `**Core Challenge:** ${description || title}. The issue directly impairs community welfare, public utility access, and regional infrastructure resilience.\n\n` +
+    `**AI Severity Assessment (${priority} Priority - Score ${score}/100):** Public Risk: ${publicRisk}%, Urgency for Intervention: ${urgency}%, Environmental/Hazard Factor: ${flooding}%.\n\n` +
+    `**Recommended Innovation Objective:** Formulate multidisciplinary student & faculty technical interventions and engineering prototypes for durable grassroots deployment.`;
 
   return {
     isLegitimate: true,
-    category: category || "Infrastructure",
+    category: detectedCategory,
     aiProblemStatement,
+    aiSummary: `AI analyzed ${priority.toLowerCase()} priority ${detectedCategory.toLowerCase()} challenge in ${block || "Block"}, ${district || "District"} with ${score}% severity.`,
     severity: { flooding, publicRisk, urgency, score },
     priority,
   };

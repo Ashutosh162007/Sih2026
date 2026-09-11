@@ -45,50 +45,54 @@ def get_nvidia_llm():
             return None
 
 
-SYSTEM_PROMPT = """SOCIETAL CHALLENGE EVALUATION & STRUCTURING ENGINE
+SYSTEM_PROMPT = """SOCIETAL CHALLENGE EVALUATION & STRUCTURING ENGINE (JHARKHAND, INDIA)
 You are the AI Societal Challenge Evaluation and Structuring Assistant for the Sahayog civic platform.
 
-Your primary responsibilities:
-1. EVALUATION & FILTERING:
-   - REJECT if the input is unintelligible, random keyboard mashing (e.g. "adfdsafsfasf", "afdafadafdasfdgadsg", "djjnadlfkldfjslf"), gibberish, abusive, obscene, or fraudulent.
-   - REJECT if the issue is TRIVIAL or VERY SMALL (e.g. a minor personal inconvenience, lost personal item, domestic chore, or petty matter that does not qualify as a societal/civic/infrastructure challenge).
-   - If REJECTED, return ONLY:
-     {
-       "isLegitimate": false,
-       "rejectionReason": "Constructive, clear explanation of why this reported issue is invalid, unintelligible, or too trivial for community/institutional intervention."
-     }
+MULTILINGUAL & REGIONAL LANGUAGE INSTRUCTIONS:
+1. SUPPORT REGIONAL INDIAN LANGUAGES: Submissions can be in English, Hindi, Khortha (खोरठा), Santhali (संथाली / Ol Chiki), Bengali (বাংলা), Nagpuri, Magahi, Bhojpuri, Mundari, Ho, Kurukh, or mixed/Romanized Indian scripts (e.g. "hameen chas prakhand ke bhandra gaon... bijli aaru paani ke killat").
+2. NEVER reject a submission merely because it is written in Hindi, Khortha, or any Indian regional language.
+3. Understand regional terms (e.g., "हमीन" = we/our, "चास/भंडरा" = Chas block/Bhandra village, "किल्लत" = scarcity, "मेहरारू" = women, "पटवन" = irrigation/watering crops, "चापाकल" = handpump, "निहोरा" = humble petition/request, "बिजली/पानी" = electricity/water).
 
-2. STRUCTURED FORMULATION (For Accepted Issues):
-   - If ACCEPTED, convert it into a standardized, structured JSON response for university researchers and CSR sponsors:
-     {
-       "isLegitimate": true,
-       "primary_category": "Infrastructure | Water & Sanitation | Waste Management | Public Safety | Environment | Agriculture | Healthcare | Education | Rural Livelihoods | Mobility",
-       "secondary_category": null,
-       "priority": "High | Medium | Low",
-       "severity": {
-           "score": 85,
-           "publicRisk": 80,
-           "urgency": 90,
-           "flooding": 60,
-           "factors": ["Critical risk description 1", "Risk factor 2"]
-       },
-       "structured_complaint": "A concise, formal, professional 2-3 sentence problem formulation.",
-       "aiProblemStatement": "**Structured Problem Formulation:**\\n\\n**Context & Location:** Locality and District.\\n\\n**Core Challenge:** Comprehensive formal description.\\n\\n**Severity Assessment:** Urgency and Public Risk evaluation.\\n\\n**Recommended Innovation Objective:** Actionable engineering/scientific objective for university teams.",
-       "aiSummary": "1-sentence executive summary with priority and location.",
-       "routing": {
-           "recipient_type": "UNIVERSITY",
-           "recommended_department": "Civil Engineering / Environmental Science / etc."
-       },
-       "location": {
-           "district": null,
-           "block": null,
-           "landmark": null
-       }
+EVALUATION & FILTERING:
+1. REJECT ONLY if the input is unintelligible, random keyboard mashing (e.g. "adfdsafsfasf", "afdafadafdasfdgadsg", "djjnadlfkldfjslf"), gibberish, abusive, obscene, or fraudulent.
+2. REJECT if the issue is TRIVIAL or VERY SMALL (e.g. a minor personal inconvenience, lost personal item, domestic chore, or petty matter that does not qualify as a societal/civic/infrastructure challenge).
+3. If REJECTED, return ONLY:
+   {
+     "isLegitimate": false,
+     "rejectionReason": "Constructive, clear explanation in English of why this reported issue is invalid, unintelligible, or too trivial for community/institutional intervention."
+   }
+
+STRUCTURED FORMULATION (For Accepted Issues):
+- If ACCEPTED, translate the context and convert it into a formal, structured English JSON response for university researchers and CSR sponsors:
+   {
+     "isLegitimate": true,
+     "primary_category": "Infrastructure | Water & Sanitation | Waste Management | Public Safety | Environment | Agriculture | Healthcare | Education | Rural Livelihoods | Mobility",
+     "secondary_category": null,
+     "priority": "High | Medium | Low",
+     "severity": {
+         "score": 85,
+         "publicRisk": 80,
+         "urgency": 90,
+         "flooding": 60,
+         "factors": ["Critical risk description 1", "Risk factor 2"]
+     },
+     "structured_complaint": "A concise, formal, professional 2-3 sentence problem formulation in English.",
+     "aiProblemStatement": "**Structured Problem Formulation:**\\n\\n**Context & Location:** Locality and District.\\n\\n**Core Challenge:** Comprehensive formal description translated into English.\\n\\n**Severity Assessment:** Urgency and Public Risk evaluation.\\n\\n**Recommended Innovation Objective:** Actionable engineering/scientific objective for university teams.",
+     "aiSummary": "1-sentence executive English summary with priority and location.",
+     "routing": {
+         "recipient_type": "UNIVERSITY",
+         "recommended_department": "Civil Engineering / Environmental Science / etc."
+     },
+     "location": {
+         "district": null,
+         "block": null,
+         "landmark": null
      }
+   }
 
 STRICT RULES:
 1. Always return strictly valid JSON without markdown outside fences.
-2. Evaluate scale realistically: avoid very small/petty personal matters.
+2. Formulate all output fields in formal English while capturing the true meaning of regional inputs.
 """
 
 
@@ -97,16 +101,16 @@ def _fallback_restructure(complaint_text: str, user_name: str = "", district: st
     text = complaint_text.lower()
     
     category_map = {
-        "Water & Sanitation": ["water", "drain", "borewell", "fluoride", "contamination", "pipeline", "leakage", "sewage", "drinking"],
-        "Waste Management": ["garbage", "dump", "trash", "plastic", "waste", "landfill", "litter", "compost"],
-        "Infrastructure": ["road", "bridge", "pothole", "culvert", "crack", "collapse", "footpath", "pavement", "drainage"],
-        "Public Safety": ["light", "dark", "accident", "women", "school", "hazard", "cctv", "danger", "electrocution", "safety"],
-        "Agriculture": ["crop", "farmer", "storage", "harvest", "spoilage", "irrigation", "soil", "pest", "mandi"],
-        "Healthcare": ["hospital", "clinic", "medicine", "doctor", "disease", "malaria", "dengue", "fluorosis", "health"],
-        "Environment": ["pollution", "dust", "smoke", "flyash", "air", "mining", "forest", "wildlife", "tree"],
-        "Rural Livelihoods": ["artisan", "tribal", "weaving", "handicraft", "employment", "shg", "self help"],
-        "Education": ["school", "college", "hostel", "teacher", "classroom", "books", "student"],
-        "Mobility": ["bus", "transport", "traffic", "auto", "roadway"],
+        "Water & Sanitation": ["water", "drain", "borewell", "fluoride", "contamination", "pipeline", "leakage", "sewage", "drinking", "पानी", "जल", "चापाकल", "कुआँ", "नल", "बोरवेल", "सीवेज", "टैंकर", "नाली"],
+        "Waste Management": ["garbage", "dump", "trash", "plastic", "waste", "landfill", "litter", "compost", "कचरा", "कूड़ा", "गंदगी", "प्लास्टिक"],
+        "Infrastructure": ["road", "bridge", "pothole", "culvert", "crack", "collapse", "footpath", "pavement", "drainage", "power", "electricity", "transformer", "voltage", "सड़क", "बिजली", "ट्रांसफार्मर", "पुल", "नाली", "वोल्टेज"],
+        "Public Safety": ["light", "dark", "accident", "women", "school", "hazard", "cctv", "danger", "electrocution", "safety", "सुरक्षा", "अंधेरा", "लाइट", "दुर्घटना", "खतरा", "महिला"],
+        "Agriculture": ["crop", "farmer", "storage", "harvest", "spoilage", "irrigation", "soil", "pest", "mandi", "खेती", "किसान", "फसल", "पटवन", "सिंचाई"],
+        "Healthcare": ["hospital", "clinic", "medicine", "doctor", "disease", "malaria", "dengue", "fluorosis", "health", "अस्पताल", "दवा", "डॉक्टर", "स्वास्थ्य", "बीमारी"],
+        "Environment": ["pollution", "dust", "smoke", "flyash", "air", "mining", "forest", "wildlife", "tree", "प्रदूषण", "धूल", "धुआं", "जंगल", "नदी"],
+        "Rural Livelihoods": ["artisan", "tribal", "weaving", "handicraft", "employment", "shg", "self help", "रोजगार", "आजीविका", "कारीगर"],
+        "Education": ["school", "college", "hostel", "teacher", "classroom", "books", "student", "स्कूल", "विद्यालय", "छात्र", "शिक्षक"],
+        "Mobility": ["bus", "transport", "traffic", "auto", "roadway", "बस", "गाड़ी", "यातायात"],
     }
     
     matched_cat = "Infrastructure"

@@ -9,22 +9,53 @@
 const https = require('https');
 
 const CATEGORY_KEYWORDS = {
-  'Water & Sanitation': ['water', 'drain', 'sewage', 'borewell', 'pipeline', 'leakage', 'contamination', 'drinking water', 'tap', 'well', 'sanitation', 'turbidity', 'tanker'],
-  'Waste Management': ['waste', 'garbage', 'dump', 'trash', 'leachate', 'plastic', 'landfill', 'litter', 'compost', 'odour', 'rubbish', 'refuse'],
-  'Infrastructure': ['road', 'bridge', 'pothole', 'street', 'culvert', 'building', 'flyover', 'crack', 'drainage', 'footpath', 'pavement', 'collapse'],
-  'Public Safety': ['streetlight', 'dark', 'light', 'accident', 'crime', 'hazard', 'cctv', 'junction', 'signal', 'danger', 'wiring', 'electrocution', 'safety'],
-  'Agriculture': ['crop', 'farmer', 'soil', 'irrigation', 'fertilizer', 'pest', 'monsoon', 'drought', 'mandi', 'harvest', 'seeds', 'livestock', 'spoilage'],
-  'Healthcare': ['hospital', 'clinic', 'phc', 'doctor', 'medicine', 'disease', 'dengue', 'malaria', 'ambulance', 'health', 'fever', 'vaccine', 'fluorosis'],
-  'Environment': ['pollution', 'tree', 'forest', 'air', 'smoke', 'river', 'mining', 'dust', 'emission', 'wildlife', 'conservation', 'erosion'],
-  'Rural Livelihoods': ['handicraft', 'tribal', 'artisan', 'weaving', 'forest produce', 'employment', 'self help group', 'shg', 'skill', 'income'],
-  'Education': ['school', 'classroom', 'teacher', 'bench', 'blackboard', 'books', 'midday meal', 'laboratory', 'student', 'college', 'dropout'],
-  'Mobility': ['bus', 'auto', 'transport', 'connectivity', 'traffic', 'rickshaw', 'route', 'congestion', 'station', 'stop'],
+  'Water & Sanitation': [
+    'water', 'drain', 'sewage', 'borewell', 'pipeline', 'leakage', 'contamination', 'drinking water', 'tap', 'well', 'sanitation', 'turbidity', 'tanker',
+    'पानी', 'जल', 'चापाकल', 'कुआँ', 'कुंआ', 'नल', 'बोरवेल', 'सीवेज', 'टैंकर', 'नाली', 'सफाई', 'पेयजल', 'ड्रेनेज', 'kiilkat', 'paani', 'chapakal', 'kua'
+  ],
+  'Waste Management': [
+    'waste', 'garbage', 'dump', 'trash', 'leachate', 'plastic', 'landfill', 'litter', 'compost', 'odour', 'rubbish', 'refuse',
+    'कचरा', 'कूड़ा', 'गंदगी', 'प्लास्टिक', 'डंप', 'कचराघर', 'सफाई', 'दुर्गंध', 'kachra', 'kuda', 'gandagi'
+  ],
+  'Infrastructure': [
+    'road', 'bridge', 'pothole', 'street', 'culvert', 'building', 'flyover', 'crack', 'drainage', 'footpath', 'pavement', 'collapse', 'electricity', 'power', 'transformer', 'voltage',
+    'सड़क', 'बिजली', 'ट्रांसफार्मर', 'पुल', 'नाली', 'वोल्टेज', 'तार', 'खंभा', 'गड्ढा', 'अंधेरा', 'करंट', 'पुलिया', 'bijli', 'sadak', 'transformer', 'voltage', 'pul'
+  ],
+  'Public Safety': [
+    'streetlight', 'dark', 'light', 'accident', 'crime', 'hazard', 'cctv', 'junction', 'signal', 'danger', 'wiring', 'electrocution', 'safety',
+    'सुरक्षा', 'अंधेरा', 'लाइट', 'दुर्घटना', 'खतरा', 'महिला', 'अपराध', 'सीसीटीवी', 'खंभा', 'andhera', 'suraksha', 'khatra'
+  ],
+  'Agriculture': [
+    'crop', 'farmer', 'soil', 'irrigation', 'fertilizer', 'pest', 'monsoon', 'drought', 'mandi', 'harvest', 'seeds', 'livestock', 'spoilage',
+    'खेती', 'किसान', 'फसल', 'पटवन', 'सिंचाई', 'खाद', 'सूखा', 'मंडी', 'बीज', 'कीट', 'गोदाम', 'kheti', 'kisan', 'fasal', 'patwan', 'sinchai'
+  ],
+  'Healthcare': [
+    'hospital', 'clinic', 'phc', 'doctor', 'medicine', 'disease', 'dengue', 'malaria', 'ambulance', 'health', 'fever', 'vaccine', 'fluorosis',
+    'अस्पताल', 'दवा', 'डॉक्टर', 'स्वास्थ्य', 'बीमारी', 'टीका', 'इलाज', 'एंबुलेंस', 'मलेरिया', 'डेंगू', 'स्वास्थ्य केंद्र', 'aspatal', 'dawa', 'doctor', 'swasthya'
+  ],
+  'Environment': [
+    'pollution', 'tree', 'forest', 'air', 'smoke', 'river', 'mining', 'dust', 'emission', 'wildlife', 'conservation', 'erosion',
+    'प्रदूषण', 'धूल', 'धुआं', 'जंगल', 'नदी', 'खनन', 'पर्यावरण', 'पेड़', 'हवा', 'pradushan', 'dhul', 'dhuan', 'jungle', 'nadi'
+  ],
+  'Rural Livelihoods': [
+    'handicraft', 'tribal', 'artisan', 'weaving', 'forest produce', 'employment', 'self help group', 'shg', 'skill', 'income',
+    'रोजगार', 'आजीविका', 'कारीगर', 'हस्तशिल्प', 'स्वयं सहायता', 'लघु उद्योग', 'rojgar', 'aajeevika', 'karigar'
+  ],
+  'Education': [
+    'school', 'classroom', 'teacher', 'bench', 'blackboard', 'books', 'midday meal', 'laboratory', 'student', 'college', 'dropout',
+    'स्कूल', 'विद्यालय', 'छात्र', 'बच्चा', 'शिक्षक', 'पढ़ाई', 'किताब', 'मिड डे मील', 'school', 'vidyalaya', 'chhatra', 'shikshak'
+  ],
+  'Mobility': [
+    'bus', 'auto', 'transport', 'connectivity', 'traffic', 'rickshaw', 'route', 'congestion', 'station', 'stop',
+    'बस', 'गाड़ी', 'यातायात', 'सड़क', 'सवारी', 'स्टॉप', 'रूट', 'जाम', 'bus', 'gaadi', 'yatayat', 'auto'
+  ],
 };
 
 const HIGH_SEVERITY_TRIGGERS = [
   'accident', 'death', 'casualty', 'danger', 'fatal', 'urgent', 'severe', 'immediate',
   'flood', 'outbreak', 'poison', 'electrocution', 'collapse', 'epidemic', 'blocked',
-  'hospital', 'school children', 'infant', 'senior citizen', 'critical'
+  'hospital', 'school children', 'infant', 'senior citizen', 'critical',
+  'दुर्घटना', 'मौत', 'खतरा', 'गंभीर', 'आपातकाल', 'बाढ़', 'जहर', 'करंट', 'बीमारी', 'सूख', 'किल्लत', 'परेशान'
 ];
 
 /**
@@ -37,18 +68,24 @@ async function callNvidiaAPI({ title, description, category, location }) {
   const model = process.env.NVIDIA_MODEL || 'meta/llama-3.2-11b-vision-instruct';
   const locationStr = [location?.block, location?.district, location?.landmark].filter(Boolean).join(', ') || 'Ranchi, Jharkhand';
 
-  const prompt = `You are the Sahayog AI Societal Challenge Evaluation Engine.
-Your task is to analyze the reported issue and decide whether it is a genuine, appropriate, and significant civic/societal issue.
+  const prompt = `You are the Sahayog AI Societal Challenge Evaluation Engine for Jharkhand, India.
+Your task is to analyze the reported citizen or local body issue and formulate it into a structured academic research problem statement for universities and CSR partners.
 
-EVALUATION CRITERIA:
-1. REJECT if the input is unintelligible, random keyboard mashing (e.g. "adfdsafsfasf", "afdafadafdasfdgadsg", "djjnadlfkldfjslf", "adsdsgdsagdsgsdagsdg", "adsdsfsda"), gibberish, spam, offensive/abusive, or fraudulent.
-2. REJECT if the issue is TRIVIAL or VERY SMALL (e.g. personal minor inconvenience, lost personal item, domestic triviality, or minor non-civic matters that do not warrant municipal, institutional, or university research attention).
-3. ACCEPT if it describes a genuine societal/civic/community challenge (e.g., water supply, sanitation, roads, bridges, public lighting, safety hazards, environmental pollution, waste management, rural livelihoods, public health, agriculture, school infrastructure).
+CRITICAL MULTILINGUAL INSTRUCTIONS:
+1. SUPPORT REGIONAL INDIAN LANGUAGES: Submissions can be written in English, Hindi, Khortha (खोरठा), Santhali (संथाली / Ol Chiki), Bengali (বাংলা), Nagpuri, Magahi, Bhojpuri, Mundari, Ho, Kurukh, or mixed regional languages / Romanized Indian scripts (e.g. "hameen chas prakhand ke bhandra gaon... bijli aaru paani ke killat").
+2. NEVER reject a submission merely because it is in Hindi, Khortha, or any Indian regional language.
+3. Understand regional terms (e.g., "हमीन" = we/our, "चास/भंडरा" = Chas block/Bhandra village, "किल्लत" = scarcity, "मेहरारू" = women, "पटवन" = irrigation/watering crops, "चापाकल" = handpump, "निहोरा" = humble petition/request, "बिजली/पानी" = electricity/water).
+4. EVALUATION CRITERIA:
+   - REJECT ONLY if the text is pure unintelligible keyboard mashing (e.g. "adfdsafsfasf", "djjnadlfkldfjslf", "asdfghjkl"), offensive abusive spam, or devoid of any actual topic.
+   - REJECT if the issue is purely a minor personal inconvenience (e.g., lost pencil, video game lag, personal argument).
+   - ACCEPT if it describes ANY genuine community, civic, municipal, public health, agricultural, electrical, infrastructure, educational, or environmental issue.
+5. TRANSLATION & FORMULATION:
+   - For all accepted submissions (regardless of input language), generate the "aiProblemStatement" and "aiSummary" in clear, formal, professional English.
 
 If REJECTED, return ONLY this JSON:
 {
   "isLegitimate": false,
-  "rejectionReason": "Clear, constructive explanation stating why this reported issue cannot be accepted (e.g. contains unintelligible text, or is a minor personal issue rather than a community civic challenge)."
+  "rejectionReason": "Clear, constructive explanation in English stating why this submission was rejected (e.g. random keyboard text or personal triviality)."
 }
 
 If ACCEPTED, return ONLY this JSON:
@@ -63,8 +100,8 @@ If ACCEPTED, return ONLY this JSON:
     "flooding": 60,
     "factors": ["Risk description 1", "Risk factor 2"]
   },
-  "aiProblemStatement": "**Structured Problem Formulation:**\\n\\n**Context & Location:** Locality and District.\\n\\n**Core Challenge:** Formal comprehensive problem description.\\n\\n**Severity Assessment:** Urgency and Public Risk evaluation.\\n\\n**Recommended Innovation Objective:** Actionable engineering/scientific objective for university teams.",
-  "aiSummary": "1-sentence executive summary with priority and location."
+  "aiProblemStatement": "**Structured Problem Formulation:**\\n\\n**Context & Location:** Locality and District.\\n\\n**Core Challenge:** Comprehensive formal description of the issue translated into English.\\n\\n**Severity Assessment:** Urgency and Public Risk evaluation.\\n\\n**Recommended Innovation Objective:** Actionable engineering/scientific objective for university teams.",
+  "aiSummary": "1-sentence executive English summary with priority and location."
 }
 
 Citizen Submission Details:
@@ -77,7 +114,7 @@ Location: ${locationStr}`;
     const data = JSON.stringify({
       model: model,
       messages: [
-        { role: 'system', content: 'You are the Sahayog AI Civic Challenge Evaluation and Structuring Engine. You strictly evaluate whether a reported issue is genuine, appropriate, and of meaningful civic scale before formulating it into an academic research statement. Output strictly valid JSON.' },
+        { role: 'system', content: 'You are the Sahayog AI Civic Challenge Evaluation and Structuring Engine for Jharkhand. You evaluate grassroots societal challenges in all Indian languages and dialects (Hindi, Khortha, Bengali, Santhali, etc.) and formulate formal English research statements. Output strictly valid JSON.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.1,
@@ -94,7 +131,7 @@ Location: ${locationStr}`;
         'Authorization': `Bearer ${apiKey}`,
         'Content-Length': Buffer.byteLength(data),
       },
-      timeout: 8000,
+      timeout: 9000,
     }, (res) => {
       let body = '';
       res.on('data', (chunk) => body += chunk);
@@ -200,27 +237,43 @@ async function callPythonAIService({ title, description, category, location }) {
  * Helper to detect keyboard mashing and unintelligible text
  */
 function isGibberishText(text) {
-  if (!text || text.trim().length < 5) return true;
-  const words = text.toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(Boolean);
-  if (words.length === 0) return true;
+  if (!text || text.trim().length < 4) return true;
 
-  const hasKeyboardMash = words.some((w) => {
+  // If text contains Indic / Devanagari / Bengali / Ol Chiki / Odia Unicode scripts:
+  const hasIndicScript = /[\u0900-\u097F\u0980-\u09FF\u1C50-\u1C7F\u0B00-\u0B7F]/.test(text);
+  if (hasIndicScript) {
+    const indicWords = text.trim().split(/\s+/).filter(Boolean);
+    // Meaningful regional language input in Indic script
+    if (indicWords.length >= 2 || text.trim().length >= 6) {
+      return false;
+    }
+  }
+
+  // For Latin / Roman alphabet text
+  const latinWords = text.toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(Boolean);
+  if (latinWords.length === 0) {
+    return !hasIndicScript;
+  }
+
+  // Detect pure keyboard mashing in Latin words (e.g. 'adfdsafsfasf', 'djjnadlfkldfjslf', 'asdfghjkl')
+  const hasKeyboardMash = latinWords.some((w) => {
     if (w.length >= 6) {
       const uniqueChars = new Set(w.split('')).size;
       const vowels = (w.match(/[aeiou]/g) || []).length;
       if (uniqueChars <= 3 || vowels === 0) return true;
       if (w.length >= 8 && uniqueChars <= 4) return true;
-      if (w.length >= 8 && vowels / w.length < 0.15) return true;
+      if (w.length >= 8 && vowels / w.length < 0.12) return true;
       if (/(?:as|df|sd|fa|ds|fd|jk|kj|hl|lh|gh|hg|ad|da|sa){3,}/i.test(w)) return true;
+      if (/(?:qw|we|er|rt|ty|yu|ui|io|op|zx|xc|cv|vb|bn|nm){3,}/i.test(w)) return true;
     }
     return false;
   });
 
   if (hasKeyboardMash) return true;
 
-  const totalLetters = words.join('').length;
-  const totalVowels = (words.join('').match(/[aeiou]/g) || []).length;
-  if (totalLetters >= 8 && (totalVowels / totalLetters < 0.15 || totalVowels / totalLetters > 0.85)) {
+  const totalLetters = latinWords.join('').length;
+  const totalVowels = (latinWords.join('').match(/[aeiou]/g) || []).length;
+  if (totalLetters >= 8 && !hasIndicScript && (totalVowels / totalLetters < 0.12 || totalVowels / totalLetters > 0.88)) {
     return true;
   }
 
