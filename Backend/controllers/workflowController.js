@@ -313,6 +313,9 @@ const saveCanvas = async (req, res, next) => {
     if (user.role === 'citizen' || user.role === 'admin') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
+    if (user.role === 'industry') {
+      return res.status(403).json({ success: false, message: 'The business partner has view-only access to the whiteboard' });
+    }
 
     const wb = await WorkflowWhiteboard.findOneAndUpdate(
       { projectId },

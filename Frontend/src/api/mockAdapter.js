@@ -1200,6 +1200,7 @@ export async function handleMockRequest(config) {
 
   if ((m = match(config, "put", "/api/workflow/projects/:id/canvas"))) {
     if (!auth || auth.role === "admin" || auth.role === "citizen") error("Access denied", 403);
+    if (auth.role === "industry") error("The business partner has view-only access to the whiteboard", 403);
     const idx = workflowCanvases.findIndex((c) => c.projectId === m.params.id);
     const record = {
       projectId: m.params.id,
