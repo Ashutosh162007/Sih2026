@@ -23,6 +23,8 @@ import StateMapExplorer from "./pages/map/StateMapExplorer";
 import UserProfile from "./pages/profile/UserProfile";
 import InnovationShowcase from "./pages/showcase/InnovationShowcase";
 import HelpFaq from "./pages/help/HelpFaq";
+import WorkflowProjects from "./pages/workflow/WorkflowProjects";
+import ProjectWorkflow from "./pages/workflow/ProjectWorkflow";
 import NotFound from "./pages/NotFound";
 
 export default function App() {
@@ -58,6 +60,12 @@ export default function App() {
               <Route path="/university/queue" element={<UniversityQueue />} />
               <Route path="/university/projects" element={<UniversityProjects />} />
               <Route path="/university/projects/:id/proposal" element={<ProposalWizard />} />
+            </Route>
+
+            {/* Workflow Routes (university, industry, admin) */}
+            <Route element={<ProtectedRoute roles={[ROLES.UNIVERSITY, ROLES.INDUSTRY, ROLES.ADMIN]} />}>
+              <Route path="/workflow" element={<WorkflowProjects />} />
+              <Route path="/workflow/:id" element={<ProjectWorkflow />} />
             </Route>
 
             {/* Industry Routes */}

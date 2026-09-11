@@ -55,6 +55,58 @@ seedProjects.forEach((sp) => {
     projects.push(sp);
   }
 });
+let workflowNotes = load("sahayog_workflow_notes", [
+  {
+    id: "wn-1",
+    title: "Water Filtration Unit Design",
+    content: "Initial design for a low-cost community water filtration system using locally available materials. The prototype uses layered sand, charcoal, and gravel filtration with a capacity of 500L/day. Field testing planned for next week in Tamar block.",
+    projectId: "prj-201",
+    universityId: "u-university",
+    universityName: "BIT Mesra",
+    createdBy: "u-university",
+    createdByName: "Dr. Priya Sharma",
+    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+  },
+  {
+    id: "wn-2",
+    title: "Community Engagement & Awareness Plan",
+    content: "Strategy for engaging local communities in water quality monitoring. Includes training SHG members to use portable testing kits and a WhatsApp-based reporting system for contamination alerts. Partnership with Jharkhand Jal Board pending.",
+    projectId: "prj-201",
+    universityId: "u-university",
+    universityName: "BIT Mesra",
+    createdBy: "u-university",
+    createdByName: "Prof. Rajesh Kumar",
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+  },
+  {
+    id: "wn-3",
+    title: "Hydraulic Grate Load Testing Results",
+    content: "Full load testing completed for modular steel grates. Each unit sustained 60 tonne axle loading with zero permanent deflection. Vortex silt trap efficiency measured at 82%. Ready for civil installation across Kanke police station drain network.",
+    projectId: "prj-101",
+    universityId: "u-university",
+    universityName: "BIT Mesra",
+    createdBy: "u-university",
+    createdByName: "Dr. Anita Verma",
+    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+  },
+]);
+let workflowSuggestions = load("sahayog_workflow_suggestions", [
+  {
+    id: "ws-1",
+    projectId: "prj-201",
+    noteId: "wn-1",
+    universityId: "u-university",
+    businessId: "u-industry",
+    businessName: "Tata Steel CSR",
+    message: "Can we explore using recycled industrial slag as a filtration medium? Our R&D team has shown promising results in heavy metal absorption.",
+    status: "Pending",
+    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+  },
+]);
 let supportTickets = load("sahayog_support_tickets", []);
 let notifications = load("sahayog_notifications", [
   {
@@ -81,6 +133,8 @@ function persist() {
   save("sahayog_projects", projects);
   save("sahayog_notifications", notifications);
   save("sahayog_support_tickets", supportTickets);
+  save("sahayog_workflow_notes", workflowNotes);
+  save("sahayog_workflow_suggestions", workflowSuggestions);
 }
 
 function tokenFor(user) {
@@ -936,6 +990,105 @@ export async function handleMockRequest(config) {
       resolvedIssues: issues.filter((i) => i.status === "Resolved").length,
       pendingAccounts: users.filter((u) => u.status === "pending").length,
     });
+  }
+
+  // ──────── Workflow Notes ────────
+  if ((m = match(config, "get", "/api/workflow/notes"))) {
+    const projectId = m.query.projectId;
+    let list = workflowNotes.filter((n) => n.projectId === projectId);
+    if (auth?.role === "university") {
+      list = list.filter((n) => n.universityId === auth.id || n.universityId === "u-university");
+    }
+    if (auth?.role === "industry") {
+      // Industry can view notes for projects they're involved in
+    }
+    return json(config, list);
+  }
+
+  if ((m = match(config, "get", "/api/workflow/notes/:id"))) {
+    const note = workflowNotes.find((n) => n.id === m.params.id || n._id === m.params.id);
+    if (!note) error("Note not found", 404);
+    return json(config, note);
+  }
+
+  if ((m = match(config, "post", "/api/workflow/notes"))) {
+    if (!auth) error("Unauthorized", 401);
+    const note = {
+      id: `wn-${Date.now()}`,
+      title: body.title,
+      content: body.content,
+      projectId: body.projectId,
+      universityId: auth.id || "u-university",
+      universityName: auth.org || "University",
+      createdBy: auth.id,
+      createdByName: auth.name || "",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    workflowNotes.unshift(note);
+    persist();
+    return json(config, note, 201);
+  }
+
+  if ((m = match(config, "put", "/api/workflow/notes/:id"))) {
+    const note = workflowNotes.find((n) => n.id === m.params.id || n._id === m.params.id);
+    if (!note) error("Note not found", 404);
+    if (body.title !== undefined) note.title = body.title;
+    if (body.content !== undefined) note.content = body.content;
+    note.updatedAt = new Date().toISOString();
+    persist();
+    return json(config, note);
+  }
+
+  if ((m = match(config, "delete", "/api/workflow/notes/:id"))) {
+    const idx = workflowNotes.findIndex((n) => n.id === m.params.id || n._id === m.params.id);
+    if (idx === -1) error("Note not found", 404);
+    workflowNotes.splice(idx, 1);
+    workflowSuggestions = workflowSuggestions.filter((s) => s.noteId !== m.params.id);
+    persist();
+    return json(config, { success: true, message: "Note deleted" });
+  }
+
+  // ──────── Workflow Suggestions ────────
+  if ((m = match(config, "get", "/api/workflow/suggestions"))) {
+    let list = [...workflowSuggestions];
+    if (m.query.noteId) list = list.filter((s) => s.noteId === m.query.noteId);
+    if (m.query.projectId) list = list.filter((s) => s.projectId === m.query.projectId);
+    if (auth?.role === "industry") list = list.filter((s) => s.businessId === auth.id);
+    if (auth?.role === "university") {
+      list = list.filter((s) => s.universityId === auth.id || s.universityId === "u-university");
+    }
+    return json(config, list);
+  }
+
+  if ((m = match(config, "post", "/api/workflow/suggestions"))) {
+    if (!auth) error("Unauthorized", 401);
+    const note = workflowNotes.find((n) => n.id === body.noteId || n._id === body.noteId);
+    if (!note) error("Note not found", 404);
+    const suggestion = {
+      id: `ws-${Date.now()}`,
+      projectId: note.projectId,
+      noteId: body.noteId,
+      universityId: note.universityId,
+      businessId: auth.id,
+      businessName: auth.org || auth.name || "",
+      message: body.message,
+      status: "Pending",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    workflowSuggestions.unshift(suggestion);
+    persist();
+    return json(config, suggestion, 201);
+  }
+
+  if ((m = match(config, "patch", "/api/workflow/suggestions/:id/status"))) {
+    const suggestion = workflowSuggestions.find((s) => s.id === m.params.id || s._id === m.params.id);
+    if (!suggestion) error("Suggestion not found", 404);
+    suggestion.status = body.status;
+    suggestion.updatedAt = new Date().toISOString();
+    persist();
+    return json(config, suggestion);
   }
 
   error(`No mock for ${config.method} ${config.url}`, 404);

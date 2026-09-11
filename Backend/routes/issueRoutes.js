@@ -9,6 +9,7 @@ const {
   getIssueById,
   updateIssueStatus,
   submitFeedback,
+  toggleUpvote,
 } = require('../controllers/issueController');
 
 router.post('/ai-preview', previewAI);
@@ -19,6 +20,7 @@ router.route('/')
 router.route('/:id')
   .get(getIssueById);
 
+router.post('/:id/upvote', toggleUpvote);
 router.patch('/:id/status', protect, updateIssueStatus);
 router.post('/:id/feedback', submitFeedback);
 

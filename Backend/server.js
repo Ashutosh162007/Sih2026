@@ -57,6 +57,7 @@ app.use('/api/projects', require('./routes/projectRoutes'));
 app.use('/api/industry', require('./routes/industryRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/workflow', require('./routes/workflowRoutes'));
 
 // Centralized error handling
 app.use(errorHandler);

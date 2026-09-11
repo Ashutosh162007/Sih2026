@@ -121,6 +121,15 @@ const IssueSchema = new mongoose.Schema(
         role: { type: String },
       },
     ],
+    upvotes: {
+      type: Number,
+      default: 0,
+    },
+    upvoters: [
+      {
+        type: String,
+      },
+    ],
     feedback: {
       rating: { type: Number, min: 1, max: 5 },
       comment: { type: String, default: '' },

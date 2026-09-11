@@ -174,6 +174,8 @@ const createIssue = async (req, res, next) => {
       images: issue.images,
       nearestUniversities: issue.nearestUniversities,
       assignee: issue.assignee,
+      upvotes: issue.upvotes,
+      upvoters: issue.upvoters,
       timeline: issue.timeline,
       createdAt: issue.createdAt,
     };
@@ -232,6 +234,8 @@ const getIssues = async (req, res, next) => {
       images: i.images,
       nearestUniversities: i.nearestUniversities,
       assignee: i.assignee,
+      upvotes: i.upvotes,
+      upvoters: i.upvoters,
       timeline: i.timeline,
       createdAt: i.createdAt,
     }));
@@ -273,6 +277,8 @@ const getIssueById = async (req, res, next) => {
       images: issue.images,
       nearestUniversities: issue.nearestUniversities,
       assignee: issue.assignee,
+      upvotes: issue.upvotes,
+      upvoters: issue.upvoters,
       timeline: issue.timeline,
       createdAt: issue.createdAt,
     });
@@ -377,6 +383,41 @@ const submitFeedback = async (req, res, next) => {
   }
 };
 
+// @desc    Toggle upvote on an issue
+// @route   POST /api/issues/:id/upvote
+// @access  Public / Private
+const toggleUpvote = async (req, res, next) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    const userId = req.user?.id || req.user?._id || req.body.userId || 'anonymous-guest';
+
+    issue.upvoters = issue.upvoters || [];
+    const hasUpvoted = issue.upvoters.includes(String(userId));
+
+    if (hasUpvoted) {
+      issue.upvoters = issue.upvoters.filter((id) => id !== String(userId));
+      issue.upvotes = Math.max(0, (issue.upvotes || 1) - 1);
+    } else {
+      issue.upvoters.push(String(userId));
+      issue.upvotes = (issue.upvotes || 0) + 1;
+    }
+
+    await issue.save();
+
+    res.json({
+      success: true,
+      upvotes: issue.upvotes,
+      hasUpvoted: !hasUpvoted,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   previewAI,
   createIssue,
@@ -384,4 +425,5 @@ module.exports = {
   getIssueById,
   updateIssueStatus,
   submitFeedback,
+  toggleUpvote,
 };
