@@ -394,9 +394,14 @@ export default function ProjectWorkflow() {
               <h3 className="font-display text-xl font-bold text-slate-900">{t("execWorkflowTitle")}</h3>
               <p className="mt-1 max-w-2xl text-xs text-slate-500">{t("execWorkflowSubtitle")}</p>
             </div>
-            {canCreate && (
+            {isUni && (
               <span className="flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-bold text-teal-700">
                 <PenTool size={13} /> {t("execWorkflowEditable")}
+              </span>
+            )}
+            {isBiz && (
+              <span className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-500">
+                <Lock size={13} /> {t("execWorkflowReadOnly")}
               </span>
             )}
           </div>
@@ -406,7 +411,7 @@ export default function ProjectWorkflow() {
             </div>
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-              <WhiteboardCanvas objects={canvasObjects} editable={canCreate} onSave={saveCanvas} suggested={0} />
+              <WhiteboardCanvas objects={canvasObjects} editable={isUni} onSave={saveCanvas} suggested={0} />
             </div>
           )}
         </section>
