@@ -345,7 +345,13 @@ export default function WhiteboardCanvas({ objects, editable, onSave, suggested 
       const hit = rev.find((o) => hitTest(o, x, y, canvasRef.current.getContext("2d")));
       if (hit) {
         setSelected(hit.id);
-        drawingRef.current = { mode: "move", id: hit.id, start: { x, y }, moved: 0 };
+        drawingRef.current = {
+          mode: "move",
+          id: hit.id,
+          start: { x, y },
+          moved: 0,
+          before: JSON.parse(JSON.stringify(hit)),
+        };
       }
       return;
     }
@@ -393,18 +399,13 @@ export default function WhiteboardCanvas({ objects, editable, onSave, suggested 
     const d = drawingRef.current;
     if (!d) return;
     const { x, y } = logicalPos(e);
-    if (d.mode === "draw") {
-      const last = d.obj.points[d.obj.points.length - 1];
-      if (last && Math.hypot(x - last.x, y - last.y) < 2.5) return;
-      d.obj.points = [...d.obj.points, { x, y }];
-      const list = [...(objectsRef.current || [])];
-      const idx = list.findIndex((o) => o.id === d.obj.id);
-      if (idx >= 0) list[idx] = d.obj;
-      else list.push(d.obj);
-      objectsRef.current = list;
-      pendingRef.current = null;
-      draw();
-    } else if (d.mode === "shape") {
+if (d.mode === "draw") {
+        const last = d.obj.points[d.obj.points.length - 1];
+        if (last && Math.hypot(x - last.x, y - last.y) < 2.5) return;
+        d.obj.points = [...d.obj.points, { x, y }];
+        pendingRef.current = d.obj;
+        draw();
+      } else if (d.mode === "shape") {
       d.obj.w = x - d.start.x;
       d.obj.h = y - d.start.y;
       if (d.kind === "arrow") { d.obj.x2 = x; d.obj.y2 = y; d.obj.w = 0; d.obj.h = 0; }
@@ -486,6 +487,7 @@ export default function WhiteboardCanvas({ objects, editable, onSave, suggested 
     if (d.mode === "draw") {
       const pts = d.obj.points || [];
       if (pts.length > 1) {
+        pendingRef.current = null;
         pushHistory();
         objectsRef.current = [...(objectsRef.current || []), d.obj];
         setSelected(d.obj.id);
@@ -521,11 +523,17 @@ export default function WhiteboardCanvas({ objects, editable, onSave, suggested 
       draw();
     } else if (d.mode === "move") {
       if ((d.moved || 0) >= 6) {
-        pushHistory();
+        const idx = (objectsRef.current || []).findIndex((o) => o.id === d.id);
+        if (idx >= 0 && d.before) {
+          const list = [...(objectsRef.current || [])];
+          list[idx] = JSON.parse(JSON.stringify(d.before));
+          historyRef.current.push(list);
+          if (historyRef.current.length > 60) historyRef.current.shift();
+        }
         markDirty();
       }
     }
-  }, [markDirty, pushHistory, draw, openTextEditor, clampRound]);
+  }, [markDirty, draw, openTextEditor, clampRound]);
 
   const finishTextEdit = useCallback((cancel) => {
     const te = textEditRef.current;
