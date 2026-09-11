@@ -66,6 +66,14 @@ const IssueSchema = new mongoose.Schema(
       type: String,
       default: 'Citizen Reporter',
     },
+    reporterRole: {
+      type: String,
+      default: 'citizen',
+    },
+    reporterOrg: {
+      type: String,
+      default: '',
+    },
     district: {
       type: String,
       required: [true, 'District is required'],

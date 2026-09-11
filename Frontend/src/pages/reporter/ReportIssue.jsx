@@ -37,10 +37,16 @@ export default function ReportIssue() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (step === 4 && !aiPreviewData && !error && !aiGenerating) {
+      generateAIProblemStatement();
+    }
+  }, [step]);
+
   function canNext() {
-    if (step === 0) return data.title && data.category;
-    if (step === 1) return data.description && data.description.length >= 10;
-    if (step === 3) return data.district && data.block;
+    if (step === 0) return Boolean(data.title?.trim() && data.category);
+    if (step === 1) return Boolean(data.description?.trim() && data.description.trim().length >= 3);
+    if (step === 3) return Boolean(data.district && data.block?.trim());
     return true;
   }
 
@@ -48,6 +54,7 @@ export default function ReportIssue() {
     setAiGenerating(true);
     setError("");
     try {
+      // Send all user-filled text to the AI model to evaluate validity, scale, and problem formulation
       const { data: res } = await axiosClient.post("/api/issues/ai-preview", {
         title: data.title,
         description: data.description,
@@ -57,24 +64,31 @@ export default function ReportIssue() {
         landmark: data.landmark || "",
       });
 
+      if (res && res.isLegitimate === false) {
+        setError(res.rejectionReason || "The AI model determined that this submission is invalid, unintelligible, or too trivial for a societal civic challenge.");
+        setAiPreviewData(null);
+        update({ aiProblemStatement: null, severity: null });
+        return;
+      }
+
       setAiPreviewData(res);
       update({
         aiProblemStatement: res.aiProblemStatement,
         severity: res.severity,
       });
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to generate AI problem statement. Please check your inputs.");
+      setAiPreviewData(null);
+      update({ aiProblemStatement: null, severity: null });
+      setError(err?.response?.data?.message || err?.message || "The AI model could not validate this issue. Please ensure the issue is clear and non-trivial.");
     } finally {
       setAiGenerating(false);
     }
   }
 
   const handleStepChange = async (nextStep) => {
-    if (nextStep === 4 && (!data.aiProblemStatement || !aiPreviewData)) {
-      setStep(nextStep);
+    setStep(nextStep);
+    if (nextStep === 4) {
       await generateAIProblemStatement();
-    } else {
-      setStep(nextStep);
     }
   };
 
@@ -88,11 +102,12 @@ export default function ReportIssue() {
         category: data.category,
         location: {
           district: data.district || "Ranchi",
-          block: data.block,
-          landmark: data.landmark,
+          block: data.block || "Kanke",
+          landmark: data.landmark || "",
           lat: data.lat || DEFAULT_JHARKHAND_COORDS.lat,
           lng: data.lng || DEFAULT_JHARKHAND_COORDS.lng,
         },
+        evidence: data.evidence || [],
         aiProblemStatement: data.aiProblemStatement || aiPreviewData?.aiProblemStatement,
         severity: data.severity || aiPreviewData?.severity || { score: 80, publicRisk: 75, urgency: 85 },
       };
@@ -295,6 +310,19 @@ export default function ReportIssue() {
                     </div>
                   </div>
                 </div>
+              ) : error ? (
+                <div className="py-6 px-4 text-center rounded-xl bg-rose-50 border border-rose-200 mt-4">
+                  <ShieldAlert size={28} className="mx-auto mb-2 text-rose-600" />
+                  <h4 className="text-sm font-bold text-rose-900">Content Validation Alert</h4>
+                  <p className="mt-1 text-xs text-rose-700 max-w-md mx-auto">{error}</p>
+                  <button
+                    type="button"
+                    onClick={() => setStep(0)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 transition"
+                  >
+                    Edit Issue Details
+                  </button>
+                </div>
               ) : (
                 <div className="py-6 text-center text-sm text-slate-500">
                   <Sparkles size={24} className="mx-auto mb-2 text-[#0E4B4C] animate-pulse" />
@@ -327,7 +355,7 @@ export default function ReportIssue() {
           </div>
         )}
 
-        {error && <p className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-600 font-medium">{error}</p>}
+        {error && step !== 4 && <p className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-600 font-medium">{error}</p>}
 
         {/* Buttons */}
         <div className="mt-8 flex justify-between items-center border-t border-slate-100 pt-5">
@@ -353,8 +381,8 @@ export default function ReportIssue() {
             <button
               type="button"
               onClick={submit}
-              disabled={submitting}
-              className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c] transition"
+              disabled={submitting || aiGenerating || (!aiPreviewData?.aiProblemStatement && !data.aiProblemStatement) || !!error}
+              className="flex items-center gap-2 rounded-xl bg-[#0E4B4C] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-[#0E4B4C]/25 hover:bg-[#0b3b3c] transition disabled:opacity-40"
             >
               {submitting ? t("submittingBtn") : t("submitBtn")}
             </button>

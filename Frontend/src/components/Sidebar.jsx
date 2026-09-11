@@ -33,6 +33,14 @@ export default function Sidebar() {
       { to: "/showcase", label: t("navShowcase"), icon: Award },
       { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
     ],
+    govt_org: [
+      { to: "/citizen/dashboard", label: t("navCitizenDashboard"), icon: LayoutDashboard },
+      { to: "/my-issues", label: t("navMyIssues"), icon: ClipboardList },
+      { to: "/report", label: t("navReportIssue"), icon: PlusCircle },
+      { to: "/map", label: t("navGisMap"), icon: MapPin },
+      { to: "/showcase", label: t("navShowcase"), icon: Award },
+      { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
+    ],
     community_reporter: [
       { to: "/citizen/dashboard", label: t("navCitizenDashboard"), icon: LayoutDashboard },
       { to: "/my-issues", label: t("navMyIssues"), icon: ClipboardList },
@@ -60,15 +68,16 @@ export default function Sidebar() {
     [ROLES.ADMIN]: [
       { to: "/admin/dashboard", label: t("navAdminAnalytics"), icon: LayoutDashboard },
       { to: "/admin/verify-accounts", label: t("navVerifyAccounts"), icon: ShieldCheck },
+      { to: "/admin/issues", label: t("navAdminIssues") || "Master Issue Console", icon: ClipboardList },
+      { to: "/admin/audit-logs", label: t("navAdminAudit") || "System Audit Logs", icon: Bell },
       { to: "/map", label: t("navGisMap"), icon: MapPin },
-      { to: "/showcase", label: t("navShowcase"), icon: Award },
       { to: "/help", label: t("navHelpFaq"), icon: HelpCircle },
     ],
   };
 
   const items = NAV[user?.role] || NAV.citizen || [];
   const cta =
-    user?.role === "citizen" || user?.role === "community_reporter" || user?.role === ROLES.REPORTER
+    user?.role === "citizen" || user?.role === "community_reporter" || user?.role === ROLES.REPORTER || user?.role === "govt_org"
       ? { to: "/report", label: t("ctaReportCivic") }
       : user?.role === ROLES.UNIVERSITY
         ? { to: "/university/queue", label: t("ctaExploreQueue") }
