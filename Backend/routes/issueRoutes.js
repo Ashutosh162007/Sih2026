@@ -4,6 +4,7 @@ const upload = require('../middleware/upload');
 const { protect, optionalAuth } = require('../middleware/auth');
 const {
   previewAI,
+  clubIssues,
   createIssue,
   getIssues,
   getIssueById,
@@ -16,6 +17,7 @@ const {
 } = require('../controllers/issueController');
 
 router.post('/ai-preview', previewAI);
+router.post('/club', protect, clubIssues);
 router.route('/')
   .get(optionalAuth, getIssues)
   .post(protect, upload.single('image'), createIssue);

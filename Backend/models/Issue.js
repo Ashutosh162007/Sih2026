@@ -149,6 +149,11 @@ const IssueSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    clubId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Issue',
+      default: null,
+    },
   },
   {
     timestamps: true,

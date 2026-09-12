@@ -3,6 +3,7 @@ const IssueUpward = require('../models/IssueUpward');
 const Notification = require('../models/Notification');
 const RoutingAssignment = require('../models/RoutingAssignment');
 const { analyzeProblemWithAI } = require('../services/aiService');
+const { extractClubs, autoAttachToClub } = require('../services/clubbingService');
 const { rankUniversitiesForIssue } = require('../services/routingService');
 const { uploadToCloudinary, uploadDataUriToCloudinary } = require('../services/cloudinaryService');
 
@@ -30,6 +31,37 @@ const previewAI = async (req, res, next) => {
     }
 
     res.json({ success: true, ...aiResult });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Club related civic issues into one unified problem statement
+// @route   POST /api/issues/club
+// @access  Private
+const clubIssues = async (req, res, next) => {
+  try {
+    const {
+      issueIds,
+      district,
+      block,
+      category,
+      similarityThreshold,
+      minClubSize,
+      maxDistanceKm,
+    } = req.body;
+
+    const clubs = await extractClubs({
+      issueIds,
+      district,
+      block,
+      category,
+      similarityThreshold,
+      minClubSize,
+      maxDistanceKm,
+    });
+
+    res.json({ success: true, count: clubs.length, clubs });
   } catch (err) {
     next(err);
   }
@@ -152,7 +184,10 @@ const createIssue = async (req, res, next) => {
       status: 'queued',
     });
 
-    // 6. Notify Universities & Citizen Reporter
+    // 6. Auto-club repeat reports of the same problem (same user or otherwise)
+    await autoAttachToClub(issue);
+
+    // 7. Notify Universities & Citizen Reporter
     await Notification.create({
       recipientRole: 'university',
       issueId: String(issue._id),
@@ -200,6 +235,7 @@ const createIssue = async (req, res, next) => {
       createdAt: issue.createdAt,
       upwardsCount: issue.upwardsCount || 0,
       hasUpwarded: false,
+      clubId: issue.clubId || null,
     };
 
     res.status(201).json(responseData);
@@ -261,6 +297,7 @@ const getIssues = async (req, res, next) => {
       timeline: i.timeline,
       createdAt: i.createdAt,
       upwardsCount: i.upwardsCount || 0,
+      clubId: i.clubId || null,
     }));
 
     // Enrich with hasUpwarded if user is authenticated
@@ -311,6 +348,7 @@ const getIssueById = async (req, res, next) => {
       timeline: issue.timeline,
       createdAt: issue.createdAt,
       upwardsCount: issue.upwardsCount || 0,
+      clubId: issue.clubId || null,
     };
 
     // Enrich with hasUpwarded if user is authenticated
@@ -591,6 +629,7 @@ const getUpwards = async (req, res, next) => {
 
 module.exports = {
   previewAI,
+  clubIssues,
   createIssue,
   getIssues,
   getIssueById,
