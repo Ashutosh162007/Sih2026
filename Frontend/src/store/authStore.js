@@ -110,6 +110,8 @@ export const useAuthStore = create((set, get) => ({
         return "/industry/dashboard";
       case ROLES.ADMIN:
         return "/admin/dashboard";
+      case ROLES.GOVT_ORG:
+      case ROLES.CITIZEN:
       case "citizen":
       case "community_reporter":
       case ROLES.REPORTER:
